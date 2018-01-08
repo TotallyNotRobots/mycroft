@@ -5,6 +5,8 @@ Tracks verious server info like ISUPPORT tokens
 from typing import Callable, Dict, MutableMapping, TypeVar
 
 from cloudbot import hook
+from cloudbot.client import Client
+from cloudbot.clients.irc import IrcClient
 from cloudbot.util.irc import ChannelMode, ModeType, StatusMode
 
 DEFAULT_STATUS = (
@@ -22,7 +24,7 @@ def do_isupport(bot):
 
 
 @hook.connect()
-def clear_isupport(conn):
+def clear_isupport(conn: 'IrcClient'):
     serv_info = conn.memory.setdefault("server_info", {})
     statuses = get_status_modes(serv_info, clear=True)
     for s in DEFAULT_STATUS:
@@ -30,6 +32,7 @@ def clear_isupport(conn):
         statuses[s.character] = s
 
     get_channel_modes(serv_info, clear=True)
+    serv_info["server_name"] = conn.server
 
     isupport_data = serv_info.setdefault("isupport_tokens", {})
     isupport_data.clear()
@@ -124,9 +127,10 @@ isupport_handlers = {
 
 
 @hook.irc_raw("005", singlethread=True)
-def on_isupport(conn, irc_paramlist):
+def on_isupport(conn, irc_paramlist, nick):
     serv_info = get_server_info(conn)
     token_data = serv_info["isupport_tokens"]
+    serv_info["server_name"] = nick.casefold()
     # strip the nick and trailing ':are supported by this server' message
     tokens = irc_paramlist[1:-1]
     for token in tokens:
