@@ -28,6 +28,7 @@ def clear_isupport(conn):
     statuses = {s.prefix: s for s in DEFAULT_STATUS}
     statuses.update({s.mode: s for s in DEFAULT_STATUS})
     serv_info["statuses"] = statuses
+    serv_info["server_name"] = conn.server
 
     isupport_data = serv_info.setdefault("isupport_tokens", {})
     isupport_data.clear()
@@ -65,9 +66,10 @@ def handle_extbans(value, serv_info):
 
 
 @hook.irc_raw('005', singlethread=True)
-def on_isupport(conn, irc_paramlist):
+def on_isupport(conn, irc_paramlist, nick):
     serv_info = conn.memory["server_info"]
     token_data = serv_info["isupport_tokens"]
+    serv_info["server_name"] = nick.casefold()
     tokens = irc_paramlist[1:-1]  # strip the nick and trailing ':are supported by this server' message
     for token in tokens:
         name, _, value = token.partition('=')
