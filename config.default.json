@@ -100,30 +100,7 @@
             "minimum_users": 5
         }
     },
-    "api_keys": {
-        "openweathermap": "",
-        "tvdb": "",
-        "bing_azure": "",
-        "wolframalpha": "",
-        "lastfm": "",
-        "rottentomatoes": "",
-        "imgur_client_id": "",
-        "imgur_client_secret": "",
-        "spotify_client_id": "",
-        "spotify_client_secret": "",
-        "rdio_key": "",
-        "rdio_secret": "",
-        "google_dev_key": "",
-        "google_cse_id": "",
-        "octopart": "",
-        "wordnik": "",
-        "lyricsnmusic": "",
-        "cleverbot": "",
-        "brewerydb": "",
-        "alphavantage": "",
-        "coinmarketcap": "",
-        "giphy": ""
-    },
+    "api_keys": {},
     "database": "sqlite:///cloudbot.db",
     "location_bias_cc": null,
     "plugin_loading": {
