@@ -10,25 +10,6 @@ except ImportError:
 
 from cloudbot import hook
 from cloudbot.util.filesize import size as format_bytes
-import cloudbot
-
-
-def _get_repo_link(bot):
-    return bot.config.get(
-        'repo_link', 'https://github.com/TotallyNotRobots/CloudBot/'
-    )
-
-
-@hook.command(autohelp=False)
-def about(text, conn, bot):
-    """- Gives information about CloudBot. Use .about license for licensing information"""
-    if text.lower() in ("license", "gpl", "source"):
-        return "CloudBot Refresh is released under the GPL v3 license, get the source code " \
-               "at {}".format(_get_repo_link(bot))
-
-    return "{} is powered by CloudBot Refresh! ({}) - {}".format(
-        conn.nick, cloudbot.__version__, _get_repo_link(bot)
-    )
 
 
 @hook.command(autohelp=False)
@@ -74,11 +55,3 @@ def system(reply, message):
                 memory_usage
             )
         )
-
-
-@hook.command("sauce", "source", autohelp=False)
-def sauce(bot):
-    """- Returns a link to the source"""
-    return "Check out my source code! I am a fork of cloudbot: " \
-           "https://github.com/CloudBotIRC/CloudBot/ and my source is here: " \
-           "{}".format(_get_repo_link(bot))
