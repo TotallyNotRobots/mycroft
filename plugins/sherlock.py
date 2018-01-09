@@ -437,6 +437,11 @@ def check_command(conn, chan, text, db, message):
 
     query_time = datetime.datetime.now() - start
 
+    nicks = set(nicks)
+    masks = set(masks)
+    hosts = set(hosts)
+    addresses = set(addresses)
+
     for line in format_results_or_paste(nick, query_time.total_seconds(), nicks, masks, hosts, addresses, admin):
         message(line)
 
@@ -461,7 +466,7 @@ def check_host_command(db, conn, chan, text, message):
 
     query_time = end - start
 
-    for line in format_results_or_paste(host, query_time.total_seconds(), nicks, [], [], [], admin):
+    for line in format_results_or_paste(host, query_time.total_seconds(), set(nicks), [], [], [], admin):
         message(line)
 
 
