@@ -6,8 +6,12 @@ Author:
 """
 import asyncio
 import datetime
+import random
 import re
+import string
 
+import requests
+from requests import RequestException
 from sqlalchemy import Table, Column, String, DateTime, Boolean, select
 
 from cloudbot import hook
@@ -298,30 +302,57 @@ HANDLERS = {
 # Commands
 
 
-def format_results(nick, duration, nicks, masks, hosts, addresses, is_admin):
-    yield "Results for {} ({:.3f}s)".format(nick, duration)
-
-    has_results = False
-
+def format_results(nicks, masks, hosts, addresses, is_admin):
     if nicks:
-        has_results = True
         yield from format_list('nicks', nicks)
 
     if masks:
-        has_results = True
         yield from format_list('masks', masks)
 
     if is_admin:
         if hosts:
-            has_results = True
             yield from format_list('hosts', hosts)
 
         if addresses:
-            has_results = True
             yield from format_list('addrs', addresses)
 
-    if not has_results:
-        yield "None."
+
+def paste_results(nicks, masks, hosts, addresses, is_admin):
+    if nicks:
+        yield 'Nicks:'
+        yield from ("  - '{}'".format(nick) for nick in nicks)
+        yield ""
+
+    if masks:
+        yield 'Masks:'
+        yield from ("  - '{}'".format(mask) for mask in masks)
+        yield ""
+
+    if is_admin:
+        if hosts:
+            yield 'Hosts:'
+            yield from ("  - '{}'".format(host) for host in hosts)
+            yield ""
+
+        if addresses:
+            yield 'Addresses:'
+            yield from ("  - '{}'".format(addr) for addr in addresses)
+            yield ""
+
+
+def format_count(nicks, masks, hosts, addresses, is_admin, duration):
+    counts = [
+        (len(nicks), 'nick'),
+        (len(masks), 'mask'),
+    ]
+    if is_admin:
+        counts.extend([
+            (len(hosts), 'host'),
+            (len(addresses), 'address'),
+        ])
+
+    if all(count == 0 for count, thing in counts):
+        return "None."
     else:
         counts = [
             (len(nicks), 'nick'),
@@ -333,7 +364,37 @@ def format_results(nick, duration, nicks, masks, hosts, addresses, is_admin):
                 (len(addresses), 'address'),
             ])
 
-        yield "Done. Found {}".format(get_text_list([pluralize(count, thing) for count, thing in counts], 'and'))
+        return "Done. Found {} in {:.3f} seconds".format(
+            get_text_list([pluralize(count, thing) for count, thing in counts], 'and'), duration)
+
+
+def do_paste(it):
+    out = '\n'.join(it)
+    passwd = "".join(random.choice(string.ascii_letters + string.digits + "!@#$%^&*(),./") for _ in range(16))
+    args = {
+        "text": out,
+        "expire": '1h',
+        "lang": "text",
+        "password": passwd
+    }
+    try:
+        r = requests.post("https://paste.snoonet.org/paste/new", data=args)
+        r.raise_for_status()
+    except RequestException as e:
+        return "Paste failed. ({})".format(e)
+
+    return "Paste: {} Password: {} (paste expires in 1 hour)".format(r.url, passwd)
+
+
+def format_results_or_paste(nick, duration, nicks, masks, hosts, addresses, is_admin):
+    yield "Results for '{}':".format(nick)
+    lines = list(format_results(nicks, masks, hosts, addresses, is_admin))
+    if len(lines) > 5:
+        yield do_paste(paste_results(nicks, masks, hosts, addresses, is_admin))
+    else:
+        yield from lines
+
+    yield format_count(nicks, masks, hosts, addresses, is_admin, duration)
 
 
 @hook.command("check")
@@ -376,7 +437,7 @@ def check_command(conn, chan, text, db, message):
 
     query_time = datetime.datetime.now() - start
 
-    for line in format_results(nick, query_time.total_seconds(), nicks, masks, hosts, addresses, admin):
+    for line in format_results_or_paste(nick, query_time.total_seconds(), nicks, masks, hosts, addresses, admin):
         message(line)
 
 
@@ -400,5 +461,38 @@ def check_host_command(db, conn, chan, text, message):
 
     query_time = end - start
 
-    for line in format_results(host, query_time.total_seconds(), nicks, [], [], [], admin):
+    for line in format_results_or_paste(host, query_time.total_seconds(), nicks, [], [], [], admin):
         message(line)
+
+
+@hook.command("nickstats", permissions=["botcontrol"])
+def db_stats(db):
+    host_rows = db.execute(select([hosts_table.c.nick, hosts_table.c.host]))
+    address_rows = db.execute(select([address_table.c.nick, address_table.c.addr]))
+    mask_rows = db.execute(select([masks_table.c.nick, masks_table.c.mask]))
+
+    nicks = set()
+    hosts = set()
+    masks = set()
+    addresses = set()
+
+    for row in host_rows:
+        nicks.add(row["nick"])
+        hosts.add(row["host"])
+
+    for row in address_rows:
+        nicks.add(row["nick"])
+        addresses.add(row["addr"])
+
+    for row in mask_rows:
+        nicks.add(row["nick"])
+        masks.add(row["mask"])
+
+    stats = [
+        pluralize(len(nicks), "nick"),
+        pluralize(len(hosts), "host"),
+        pluralize(len(addresses), "address"),
+        pluralize(len(masks), "mask"),
+    ]
+
+    return get_text_list(stats, 'and')
