@@ -101,6 +101,8 @@ async def onjoin(conn, bot):
         # Make sure we finish oper-ing before continuing
         await asyncio.sleep(1)
 
+    yield from asyncio.sleep(1)
+
     # Set bot modes
     mode = conn.config.get("mode")
     if mode:
