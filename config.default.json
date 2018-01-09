@@ -73,7 +73,24 @@
                     ]
                 }
             },
-            "plugins": {},
+            "plugins": {
+                "sherlock": {
+                    "regex": {
+                        "nick": "^\\*\\*\\*\\s(?:REMOTE)?NICK:\\sUser\\s(?P<oldnick>.+?)\\schanged\\stheir\\snickname\\sto\\s(?P<newnick>.+?)$",
+                        "connect": "^\\*\\*\\*\\s(?:REMOTE)?CONNECT:\\s.+:\\s(?P<nick>[^!]+)!(?P<ident>[^@]+)@(?P<host>[^\\s]+)\\s\\((?P<addr>[^\\)]+)\\)\\s\\[(?P<realname>.*)\\]$"
+                    },
+                    "channels": {
+                        "normal": [
+                            "#optalk"
+                        ],
+                        "admin": [
+                            "##sherlock",
+                            "##mycroft",
+                            "#staff"
+                        ]
+                    }
+                }
+            },
             "command_prefix": "."
         }
     ],
