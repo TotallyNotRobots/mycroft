@@ -95,13 +95,13 @@ async def onjoin(conn, bot):
         # Make sure we finish oper-ing before continuing
         await asyncio.sleep(1)
 
-    yield from asyncio.sleep(1)
+    await asyncio.sleep(1)
 
     # Set bot modes
     mode = conn.config.get('mode')
     if mode:
         logger.info("[%s|misc] Bot is setting mode on itself: %s", conn.name, mode)
-        conn.cmd('MODE', conn.nick, mode)
+        conn.send('MODE {} {}'.format(conn.nick, mode))
 
     log_chan = conn.config.get('log_channel')
     if log_chan:
