@@ -9,6 +9,7 @@ import datetime
 import random
 import re
 import string
+from contextlib import suppress
 
 import requests
 from requests import RequestException
@@ -159,7 +160,13 @@ def await_command_response(conn, name, cmd, nick):
         futs[nick] = fut = create_future(conn.loop)
         conn.cmd(cmd, nick)
 
-    return (yield from await_response(fut))
+    try:
+        res = yield from await_response(fut)
+    finally:
+        with suppress(KeyError):
+            del futs[nick]
+
+    return res
 
 
 @asyncio.coroutine
@@ -354,16 +361,6 @@ def format_count(nicks, masks, hosts, addresses, is_admin, duration):
     if all(count == 0 for count, thing in counts):
         return "None."
     else:
-        counts = [
-            (len(nicks), 'nick'),
-            (len(masks), 'mask'),
-        ]
-        if is_admin:
-            counts.extend([
-                (len(hosts), 'host'),
-                (len(addresses), 'address'),
-            ])
-
         return "Done. Found {} in {:.3f} seconds".format(
             get_text_list([pluralize(count, thing) for count, thing in counts], 'and'), duration)
 
