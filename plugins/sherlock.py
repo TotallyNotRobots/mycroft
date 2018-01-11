@@ -33,7 +33,8 @@ address_table = Table(
     Column('id', String(MAX_NICK + 1 + MAX_IP), unique=True),
     Column('created', DateTime),
     Column('seen', DateTime),
-    Column('reg', Boolean)
+    Column('reg', Boolean),
+    Column('nick_case', String(MAX_NICK))
 )
 
 hosts_table = Table(
@@ -44,7 +45,8 @@ hosts_table = Table(
     Column('id', String(MAX_NICK + 1 + MAX_HOST), unique=True),
     Column('created', DateTime),
     Column('seen', DateTime),
-    Column('reg', Boolean)
+    Column('reg', Boolean),
+    Column('nick_case', String(MAX_NICK))
 )
 
 masks_table = Table(
@@ -55,8 +57,18 @@ masks_table = Table(
     Column('id', String(MAX_NICK + 1 + MAX_HOST), unique=True),
     Column('created', DateTime),
     Column('seen', DateTime),
-    Column('reg', Boolean)
+    Column('reg', Boolean),
+    Column('nick_case', String(MAX_NICK))
 )
+
+RFC_CASEMAP = str.maketrans(dict(zip(
+    string.ascii_uppercase + "[]\\",
+    string.ascii_lowercase + "{}|"
+)))
+
+
+def rfc_casefold(text):
+    return text.translate(RFC_CASEMAP)
 
 
 def format_list(name, data):
@@ -67,16 +79,18 @@ def format_list(name, data):
 
 
 def update_user_data(db, table, column_name, now, nick, value):
-    id_value = nick + "+" + value
+    nick_cf = rfc_casefold(nick)
+    id_value = nick_cf + "+" + value
     res = db.execute(table.update().values(seen=now).where(table.c.id == id_value))
     if res.rowcount == 0:
         args = {
-            'nick': nick,
+            'nick': nick_cf,
             column_name: value,
             'id': id_value,
             'created': now,
             'seen': now,
-            'reg': False
+            'reg': False,
+            'nick_case': nick
         }
 
         db.execute(table.insert().values(**args))
@@ -154,17 +168,18 @@ def await_response(fut):
 @asyncio.coroutine
 def await_command_response(conn, name, cmd, nick):
     futs = conn.memory["sherlock"]["futures"][name]
+    nick_cf = rfc_casefold(nick)
     try:
-        fut = futs[nick]
+        fut = futs[nick_cf]
     except LookupError:
-        futs[nick] = fut = create_future(conn.loop)
+        futs[nick_cf] = fut = create_future(conn.loop)
         conn.cmd(cmd, nick)
 
     try:
         res = yield from await_response(fut)
     finally:
         with suppress(KeyError):
-            del futs[nick]
+            del futs[nick_cf]
 
     return res
 
@@ -233,7 +248,7 @@ def handle_response_numerics(conn, irc_command, irc_paramlist):
 
     futs = conn.memory["sherlock"]["futures"][name]
     try:
-        fut = futs.pop(nick.lower())
+        fut = futs.pop(rfc_casefold(nick))
     except LookupError:
         return
 
@@ -261,8 +276,8 @@ def set_user_data(event, db, table, column_name, now, nick, value_func):
 
 @asyncio.coroutine
 def on_nickchange(db, event, match):
-    old_nick = match.group('oldnick').lower()
-    new_nick = match.group('newnick').lower()
+    old_nick = match.group('oldnick')
+    new_nick = match.group('newnick')
     now = datetime.datetime.now()
 
     @asyncio.coroutine
@@ -284,7 +299,7 @@ def on_nickchange(db, event, match):
 
 @asyncio.coroutine
 def on_connect(db, event, match):
-    nick = match.group('nick').lower()
+    nick = match.group('nick')
     ident = match.group('ident')
     host = match.group('host')
     addr = match.group('addr')
@@ -404,7 +419,7 @@ def check_command(conn, chan, text, db, message):
 
     nick = text.split(None, 1)[0].strip()
 
-    lower_nick = nick.lower()
+    lower_nick = rfc_casefold(nick)
 
     start = datetime.datetime.now()
 
@@ -412,29 +427,31 @@ def check_command(conn, chan, text, db, message):
 
     hosts = [row["host"] for row in host_rows]
 
-    nick_rows = db.execute(select([hosts_table.c.nick, hosts_table.c.reg], hosts_table.c.host.in_(hosts)))
+    nick_rows = db.execute(select([hosts_table.c.nick, hosts_table.c.nick_case], hosts_table.c.host.in_(hosts)))
 
-    nicks = [row["nick"] for row in nick_rows]
+    nicks = {row["nick"]: row["nick_case"] for row in nick_rows}
 
     addr_rows = db.execute(select([address_table.c.addr], address_table.c.nick == lower_nick))
 
     addresses = [row["addr"] for row in addr_rows]
 
-    nick_addr_rows = db.execute(select([address_table.c.nick], address_table.c.addr.in_(addresses)))
+    nick_addr_rows = db.execute(
+        select([address_table.c.nick, address_table.c.nick_case], address_table.c.addr.in_(addresses)))
 
-    nicks.extend(row["nick"] for row in nick_addr_rows)
+    nicks.update((row["nick"], row["nick_case"]) for row in nick_addr_rows)
 
     mask_rows = db.execute(select([masks_table.c.mask], masks_table.c.nick == lower_nick))
 
     masks = [row["mask"] for row in mask_rows]
 
-    nick_mask_rows = db.execute(select([masks_table.c.nick], masks_table.c.mask.in_(addresses)))
+    nick_mask_rows = db.execute(
+        select([masks_table.c.nick, masks_table.c.nick_case], masks_table.c.mask.in_(addresses)))
 
-    nicks.extend(row["nick"] for row in nick_mask_rows)
+    nicks.update((row["nick"], row["nick_case"]) for row in nick_mask_rows)
 
     query_time = datetime.datetime.now() - start
 
-    nicks = set(nicks)
+    nicks = set(nicks.values())
     masks = set(masks)
     hosts = set(hosts)
     addresses = set(addresses)
@@ -455,9 +472,9 @@ def check_host_command(db, conn, chan, text, message):
 
     start = datetime.datetime.now()
 
-    nick_rows = db.execute(select([hosts_table.c.nick], hosts_table.c.host == host))
+    nick_rows = db.execute(select([hosts_table.c.nick_case], hosts_table.c.host == host))
 
-    nicks = [row["nick"] for row in nick_rows]
+    nicks = [row["nick_case"] for row in nick_rows]
 
     end = datetime.datetime.now()
 
