@@ -77,7 +77,7 @@ def format_list(name, data):
 def update_user_data(db, table, column_name, now, nick, value):
     nick_cf = rfc_casefold(nick)
     clause = and_(table.c.nick == nick_cf, getattr(table.c, column_name) == value)
-    res = db.execute(table.update().values(seen=now).where(clause))
+    res = db.execute(table.update().values(seen=now, nick_case=nick).where(clause))
     if res.rowcount == 0:
         args = {
             'nick': nick_cf,
