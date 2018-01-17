@@ -71,12 +71,16 @@ def find_hooks(parent, module) -> HookDict:
     for func in module.__dict__.values():
         if hasattr(func, HOOK_ATTR) and not hasattr(func, "_not_" + HOOK_ATTR):
             # if it has cloudbot hook
-            func_hooks = getattr(func, HOOK_ATTR)
 
-            for hook_type, func_hook in func_hooks.items():
-                hooks[hook_type].append(
-                    hook_name_to_plugin(hook_type)(parent, func_hook)
-                )
+            try:
+                func_hooks = getattr(func, HOOK_ATTR)
+
+                for hook_type, func_hook in func_hooks.items():
+                    hooks[hook_type].append(
+                        hook_name_to_plugin(hook_type)(parent, func_hook)
+                    )
+            except (NotImplementedError, AttributeError, LookupError):
+                continue
 
             # delete the hook to free memory
             delattr(func, HOOK_ATTR)
