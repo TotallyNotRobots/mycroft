@@ -258,7 +258,6 @@ def handle_snotice(db, event):
         regex = get_regex(conn, name)
         match = regex.match(content)
         if match:
-            print(name)
             yield from handler(db, event, match)
             break
 
@@ -267,6 +266,12 @@ def handle_snotice(db, event):
 def set_user_data(event, db, table, column_name, now, nick, value_func):
     value = yield from value_func(event.conn, nick)
     yield from event.async_call(update_user_data, db, table, column_name, now, nick, value)
+
+
+@asyncio.coroutine
+def delay_call(coro, timeout):
+    yield from asyncio.sleep(timeout)
+    return (yield from coro)
 
 
 @asyncio.coroutine
@@ -287,6 +292,7 @@ def on_nickchange(db, event, match):
         _handle_set(hosts_table, 'host', get_user_host),
         _handle_set(address_table, 'addr', get_user_ip),
         _handle_set(masks_table, 'mask', get_user_mask),
+        delay_call(_handle_set(masks_table, 'mask', get_user_mask), 60),
     ]
 
     yield from asyncio.gather(*coros)
@@ -305,6 +311,7 @@ def on_connect(db, event, match):
         event.async_call(update_user_data, db, hosts_table, 'host', now, nick, host),
         event.async_call(update_user_data, db, address_table, 'addr', now, nick, addr),
         set_user_data(event, db, masks_table, 'mask', now, nick, get_user_mask),
+        delay_call(set_user_data(event, db, masks_table, 'mask', now, nick, get_user_mask), 60),
     ]
 
     yield from asyncio.gather(*coros)
