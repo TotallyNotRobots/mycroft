@@ -440,7 +440,7 @@ def check_command(conn, chan, text, db, message):
     masks = [row["mask"] for row in mask_rows]
 
     nick_mask_rows = db.execute(
-        select([masks_table.c.nick, masks_table.c.nick_case], masks_table.c.mask.in_(addresses)))
+        select([masks_table.c.nick, masks_table.c.nick_case], masks_table.c.mask.in_(masks)))
 
     nicks.update((row["nick"], row["nick_case"]) for row in nick_mask_rows)
 
