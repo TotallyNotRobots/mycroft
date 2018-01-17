@@ -17,7 +17,7 @@ from sqlalchemy import Table, Column, DateTime, Boolean, select, Text, PrimaryKe
 
 from cloudbot import hook
 from cloudbot.event import EventType
-from cloudbot.util import database, colors
+from cloudbot.util import database, colors, timeparse
 from cloudbot.util.async_util import create_future
 from cloudbot.util.formatting import chunk_str, pluralize, get_text_list
 
@@ -406,41 +406,65 @@ def format_results_or_paste(nick, duration, nicks, masks, hosts, addresses, is_a
 
 @hook.command("check")
 def check_command(conn, chan, text, db, message):
-    """<nick> - Looks up [nick] in the users database"""
+    """<nick> [last_seen] - Looks up [nick] in the users database, optionally filtering to entries newer than [last_seen] specified in the format [-|+]5w4d3h2m1s, defaulting to -90d"""
     allowed, admin = check_channel(conn, chan)
 
     if not allowed:
         return
 
-    nick = text.split(None, 1)[0].strip()
+    split = text.split(None, 1)
+    nick = split.pop(0).strip()
+    now = datetime.datetime.now()
+    if split:
+        interval_str = split[0].strip()
+        if interval_str == '*':
+            last_time = datetime.datetime.fromtimestamp(0)
+        else:
+            time_span = datetime.timedelta(seconds=timeparse.time_parse(interval_str))
+            last_time = now + time_span
+    else:
+        last_time = datetime.datetime.fromtimestamp(0)
 
     lower_nick = rfc_casefold(nick)
 
     start = datetime.datetime.now()
 
-    host_rows = db.execute(select([hosts_table.c.host], hosts_table.c.nick == lower_nick))
+    host_rows = db.execute(
+        select([hosts_table.c.host], and_(hosts_table.c.nick == lower_nick, hosts_table.c.seen >= last_time))
+    )
 
     hosts = [row["host"] for row in host_rows]
 
-    nick_rows = db.execute(select([hosts_table.c.nick, hosts_table.c.nick_case], hosts_table.c.host.in_(hosts)))
+    nick_rows = db.execute(
+        select([hosts_table.c.nick, hosts_table.c.nick_case],
+               and_(hosts_table.c.host.in_(hosts), hosts_table.c.seen >= last_time))
+    )
 
     nicks = {row["nick"]: row["nick_case"] for row in nick_rows}
 
-    addr_rows = db.execute(select([address_table.c.addr], address_table.c.nick == lower_nick))
+    addr_rows = db.execute(
+        select([address_table.c.addr], and_(address_table.c.nick == lower_nick, address_table.c.seen >= last_time))
+    )
 
     addresses = [row["addr"] for row in addr_rows]
 
     nick_addr_rows = db.execute(
-        select([address_table.c.nick, address_table.c.nick_case], address_table.c.addr.in_(addresses)))
+        select([address_table.c.nick, address_table.c.nick_case],
+               and_(address_table.c.addr.in_(addresses), address_table.c.seen >= last_time))
+    )
 
     nicks.update((row["nick"], row["nick_case"]) for row in nick_addr_rows)
 
-    mask_rows = db.execute(select([masks_table.c.mask], masks_table.c.nick == lower_nick))
+    mask_rows = db.execute(
+        select([masks_table.c.mask], and_(masks_table.c.nick == lower_nick, masks_table.c.seen >= last_time))
+    )
 
     masks = [row["mask"] for row in mask_rows]
 
     nick_mask_rows = db.execute(
-        select([masks_table.c.nick, masks_table.c.nick_case], masks_table.c.mask.in_(masks)))
+        select([masks_table.c.nick, masks_table.c.nick_case],
+               and_(masks_table.c.mask.in_(masks), masks_table.c.seen >= last_time))
+    )
 
     nicks.update((row["nick"], row["nick_case"]) for row in nick_mask_rows)
 
@@ -457,17 +481,30 @@ def check_command(conn, chan, text, db, message):
 
 @hook.command("check2", "checkhost")
 def check_host_command(db, conn, chan, text, message):
-    """<host> - Looks up [host] in the users database"""
+    """<nick> [last_seen] - Looks up [nick] in the users database, optionally filtering to entries newer than [last_seen] specified in the format [-|+]5w4d3h2m1s, defaulting to -90d"""
     allowed, admin = check_channel(conn, chan)
 
     if not allowed:
         return
 
-    host = text.split(None, 1)[0].strip()
+    split = text.split(None, 1)
+    host = split.pop(0).strip()
+    now = datetime.datetime.now()
+    if split:
+        interval_str = split[0].strip()
+        if interval_str == '*':
+            last_time = datetime.datetime.fromtimestamp(0)
+        else:
+            time_span = datetime.timedelta(seconds=timeparse.time_parse(interval_str))
+            last_time = now + time_span
+    else:
+        last_time = datetime.datetime.fromtimestamp(0)
 
     start = datetime.datetime.now()
 
-    nick_rows = db.execute(select([hosts_table.c.nick_case], hosts_table.c.host == host))
+    nick_rows = db.execute(
+        select([hosts_table.c.nick_case], and_(hosts_table.c.host == host, hosts_table.c.seen >= last_time))
+    )
 
     nicks = [row["nick_case"] for row in nick_rows]
 
