@@ -479,7 +479,7 @@ def check_command(conn, chan, text, db, message):
         message(line)
 
 
-@hook.command("check2", "checkhost")
+@hook.command("checkhost", "check2")
 def check_host_command(db, conn, chan, text, message):
     """<host|mask|addr> [last_seen] - Looks up [host|mask|addr] in the users database, optionally filtering to entries newer than [last_seen] specified in the format [-|+]5w4d3h2m1s, defaulting to forever"""
     allowed, admin = check_channel(conn, chan)
