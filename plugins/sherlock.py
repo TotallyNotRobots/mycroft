@@ -13,7 +13,7 @@ from contextlib import suppress
 
 import requests
 from requests import RequestException
-from sqlalchemy import Table, Column, String, DateTime, Boolean, select
+from sqlalchemy import Table, Column, DateTime, Boolean, select, Text, PrimaryKeyConstraint, and_
 
 from cloudbot import hook
 from cloudbot.event import EventType
@@ -21,44 +21,40 @@ from cloudbot.util import database, colors
 from cloudbot.util.async_util import create_future
 from cloudbot.util.formatting import chunk_str, pluralize, get_text_list
 
-MAX_NICK = 40
-MAX_IP = 39
-MAX_HOST = 64
-
 address_table = Table(
     'addrs',
     database.metadata,
-    Column('nick', String(MAX_NICK)),
-    Column('addr', String(MAX_IP)),
-    Column('id', String(MAX_NICK + 1 + MAX_IP), unique=True),
+    Column('nick', Text),
+    Column('addr', Text),
     Column('created', DateTime),
     Column('seen', DateTime),
-    Column('reg', Boolean),
-    Column('nick_case', String(MAX_NICK))
+    Column('reg', Boolean, default=False),
+    Column('nick_case', Text),
+    PrimaryKeyConstraint('nick', 'addr')
 )
 
 hosts_table = Table(
     'hosts',
     database.metadata,
-    Column('nick', String(MAX_NICK)),
-    Column('host', String(MAX_HOST)),
-    Column('id', String(MAX_NICK + 1 + MAX_HOST), unique=True),
+    Column('nick', Text),
+    Column('host', Text),
     Column('created', DateTime),
     Column('seen', DateTime),
-    Column('reg', Boolean),
-    Column('nick_case', String(MAX_NICK))
+    Column('reg', Boolean, default=False),
+    Column('nick_case', Text),
+    PrimaryKeyConstraint('nick', 'host')
 )
 
 masks_table = Table(
     'masks',
     database.metadata,
-    Column('nick', String(MAX_NICK)),
-    Column('mask', String(MAX_HOST)),
-    Column('id', String(MAX_NICK + 1 + MAX_HOST), unique=True),
+    Column('nick', Text),
+    Column('mask', Text),
     Column('created', DateTime),
     Column('seen', DateTime),
-    Column('reg', Boolean),
-    Column('nick_case', String(MAX_NICK))
+    Column('reg', Boolean, default=False),
+    Column('nick_case', Text),
+    PrimaryKeyConstraint('nick', 'mask')
 )
 
 RFC_CASEMAP = str.maketrans(dict(zip(
@@ -80,13 +76,12 @@ def format_list(name, data):
 
 def update_user_data(db, table, column_name, now, nick, value):
     nick_cf = rfc_casefold(nick)
-    id_value = nick_cf + "+" + value
-    res = db.execute(table.update().values(seen=now).where(table.c.id == id_value))
+    clause = and_(table.c.nick == nick_cf, getattr(table.c, column_name) == value)
+    res = db.execute(table.update().values(seen=now).where(clause))
     if res.rowcount == 0:
         args = {
             'nick': nick_cf,
             column_name: value,
-            'id': id_value,
             'created': now,
             'seen': now,
             'reg': False,
