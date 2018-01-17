@@ -17,7 +17,7 @@ from sqlalchemy import Table, Column, DateTime, Boolean, select, Text, PrimaryKe
 
 from cloudbot import hook
 from cloudbot.event import EventType
-from cloudbot.util import database, colors, timeparse
+from cloudbot.util import database, colors, timeparse, web
 from cloudbot.util.async_util import create_future
 from cloudbot.util.formatting import chunk_str, pluralize, get_text_list
 
@@ -548,6 +548,38 @@ def check_host_command(db, conn, chan, text, message):
 
     for line in format_results_or_paste(host, query_time.total_seconds(), nicks, masks, hosts, addrs, admin):
         message(line)
+
+
+@hook.command("rawquery", permissions=["botcontrol"])
+def raw_query(text, db, reply, conn):
+    if not conn.nick.lower().endswith('-dev'):
+        # This command should be disabled in the production bot
+        return "This command may only be used in testing"
+
+    try:
+        start = datetime.datetime.now()
+        res = db.execute(text)
+        end = datetime.datetime.now()
+        duration = end - start
+    except Exception as e:
+        reply(str(e))
+        raise
+    else:
+        if res.returns_rows:
+            lines = [
+                "Results for '{}':".format(text),
+                *res,
+                "Completed in {:.3f} seconds".format(duration.total_seconds())
+            ]
+        else:
+            lines = [
+                "{} rows affected in {:.3f} seconds.".format(res.rowcount, duration.total_seconds())
+            ]
+
+        if len(lines) > 5:
+            return web.paste('\n'.join(lines))
+        else:
+            return lines
 
 
 @hook.command("nickstats", permissions=["botcontrol"])
