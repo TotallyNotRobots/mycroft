@@ -13,7 +13,7 @@ from contextlib import suppress
 
 import requests
 from requests import RequestException
-from sqlalchemy import Table, Column, DateTime, Boolean, select, Text, PrimaryKeyConstraint, and_
+from sqlalchemy import Table, Column, DateTime, Boolean, select, Text, PrimaryKeyConstraint, and_, func
 
 from cloudbot import hook
 from cloudbot.event import EventType
@@ -406,7 +406,7 @@ def format_results_or_paste(nick, duration, nicks, masks, hosts, addresses, is_a
 
 @hook.command("check")
 def check_command(conn, chan, text, db, message):
-    """<nick> [last_seen] - Looks up [nick] in the users database, optionally filtering to entries newer than [last_seen] specified in the format [-|+]5w4d3h2m1s, defaulting to -90d"""
+    """<nick> [last_seen] - Looks up [nick] in the users database, optionally filtering to entries newer than [last_seen] specified in the format [-|+]5w4d3h2m1s, defaulting to forever"""
     allowed, admin = check_channel(conn, chan)
 
     if not allowed:
@@ -481,7 +481,7 @@ def check_command(conn, chan, text, db, message):
 
 @hook.command("check2", "checkhost")
 def check_host_command(db, conn, chan, text, message):
-    """<nick> [last_seen] - Looks up [nick] in the users database, optionally filtering to entries newer than [last_seen] specified in the format [-|+]5w4d3h2m1s, defaulting to -90d"""
+    """<host|mask|addr> [last_seen] - Looks up [host|mask|addr] in the users database, optionally filtering to entries newer than [last_seen] specified in the format [-|+]5w4d3h2m1s, defaulting to forever"""
     allowed, admin = check_channel(conn, chan)
 
     if not allowed:
@@ -489,6 +489,7 @@ def check_host_command(db, conn, chan, text, message):
 
     split = text.split(None, 1)
     host = split.pop(0).strip()
+    host_lower = host.lower()
     now = datetime.datetime.now()
     if split:
         interval_str = split[0].strip()
@@ -501,18 +502,44 @@ def check_host_command(db, conn, chan, text, message):
         last_time = datetime.datetime.fromtimestamp(0)
 
     start = datetime.datetime.now()
+    nicks = set()
+    masks = set()
+    hosts = set()
+    addrs = set()
 
-    nick_rows = db.execute(
-        select([hosts_table.c.nick_case], and_(hosts_table.c.host == host, hosts_table.c.seen >= last_time))
-    )
+    mask_rows = db.execute(
+        select([masks_table.c.nick_case, masks_table.c.mask],
+               and_(func.lower(masks_table.c.mask) == host_lower, masks_table.c.seen >= last_time))
+    ).fetchall()
 
-    nicks = [row["nick_case"] for row in nick_rows]
+    masks.update(row["mask"] for row in mask_rows)
+
+    nicks.update(row["nick_case"] for row in mask_rows)
+
+    if admin:
+        host_rows = db.execute(
+            select([hosts_table.c.nick_case, hosts_table.c.host],
+                   and_(func.lower(hosts_table.c.host) == host_lower, hosts_table.c.seen >= last_time))
+        ).fetchall()
+
+        hosts.update(row["host"] for row in host_rows)
+
+        nicks.update(row["nick_case"] for row in host_rows)
+
+        addr_rows = db.execute(
+            select([address_table.c.nick_case, address_table.c.addr],
+                   and_(func.lower(address_table.c.addr) == host_lower, address_table.c.seen >= last_time))
+        ).fetchall()
+
+        addrs.update(row["addr"] for row in addr_rows)
+
+        nicks.update(row["nick_case"] for row in addr_rows)
 
     end = datetime.datetime.now()
 
     query_time = end - start
 
-    for line in format_results_or_paste(host, query_time.total_seconds(), set(nicks), [], [], [], admin):
+    for line in format_results_or_paste(host, query_time.total_seconds(), nicks, masks, hosts, addrs, admin):
         message(line)
 
 
