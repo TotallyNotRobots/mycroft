@@ -18,7 +18,7 @@ from sqlalchemy import Table, Column, DateTime, Boolean, select, Text, PrimaryKe
 from cloudbot import hook
 from cloudbot.event import EventType
 from cloudbot.util import database, colors, timeparse, web
-from cloudbot.util.async_util import create_future
+from cloudbot.util.async_util import create_future, wrap_future
 from cloudbot.util.formatting import chunk_str, pluralize, get_text_list
 
 address_table = Table(
@@ -157,7 +157,7 @@ response_map = {
 
 @asyncio.coroutine
 def await_response(fut):
-    return (yield from asyncio.wait_for(fut, 30))
+    return (yield from asyncio.wait_for(fut, 60))
 
 
 @asyncio.coroutine
@@ -263,9 +263,13 @@ def handle_snotice(db, event):
 
 
 @asyncio.coroutine
-def set_user_data(event, db, table, column_name, now, nick, value_func):
-    value = yield from value_func(event.conn, nick)
-    yield from event.async_call(update_user_data, db, table, column_name, now, nick, value)
+def set_user_data(event, db, table, column_name, now, nick, value_func, conn=None):
+    try:
+        value = yield from value_func(event.conn if conn is None else conn, nick)
+    except asyncio.TimeoutError:
+        event.logger.exception("Timeout reached waiting for {} for '{}'".format(column_name, nick))
+    else:
+        yield from event.async_call(update_user_data, db, table, column_name, now, nick, value)
 
 
 @asyncio.coroutine
@@ -299,7 +303,7 @@ def on_nickchange(db, event, match):
 
 
 @asyncio.coroutine
-def on_connect(db, event, match):
+def on_user_connect(db, event, match):
     nick = match.group('nick')
     ident = match.group('ident')
     host = match.group('host')
@@ -319,7 +323,7 @@ def on_connect(db, event, match):
 
 HANDLERS = {
     'nick': on_nickchange,
-    'connect': on_connect,
+    'connect': on_user_connect,
 }
 
 
@@ -409,6 +413,88 @@ def format_results_or_paste(nick, duration, nicks, masks, hosts, addresses, is_a
         yield from lines
 
     yield format_count(nicks, masks, hosts, addresses, is_admin, duration)
+
+
+@hook.irc_raw('352')
+@asyncio.coroutine
+def on_who(conn, irc_paramlist):
+    try:
+        lines, fut = conn.memory["sherlock"]["futures"]["who_0"]
+    except LookupError:
+        return
+
+    if not fut.done():
+        lines.append(irc_paramlist[1:])
+
+
+@hook.irc_raw('315')
+@asyncio.coroutine
+def on_who_end(conn, irc_paramlist):
+    name = irc_paramlist[1]
+    if name != "0":
+        return
+
+    try:
+        lines, fut = conn.memory["sherlock"]["futures"]["who_0"]
+    except LookupError:
+        return
+
+    if not fut.done():
+        fut.set_result(lines)
+
+
+@hook.on_start
+@asyncio.coroutine
+def get_initial_data(bot, loop, db, event):
+    wrap_future(asyncio.gather(
+        *[get_initial_connection_data(conn, loop, db, event) for conn in bot.connections.values() if conn.connected]
+    ))
+
+
+@hook.irc_raw('376')
+@asyncio.coroutine
+def get_initial_connection_data(conn, loop, db, event):
+    fut = create_future(loop)
+    try:
+        lines, fut = conn.memory["sherlock"]["futures"]["who_0"]
+    except LookupError:
+        pass
+    else:
+        if not fut.done():
+            return
+
+    conn.memory["sherlock"]["futures"]["who_0"] = ([], fut)
+
+    yield from asyncio.sleep(10)
+
+    now = datetime.datetime.now()
+    conn.send("WHO 0")
+    try:
+        lines = yield from asyncio.wait_for(fut, 30 * 60)
+    except asyncio.TimeoutError:
+        return
+    finally:
+        with suppress(LookupError):
+            del conn.memory["sherlock"]["futures"]["who_0"]
+
+    users = []
+    for line in lines:
+        chan, ident, host, server, nick, status, realname = line
+        num_hops, _, realname = realname.partition(' ')
+        users.append((nick, host))
+
+    futs = [
+        wrap_future(event.async_call(update_user_data, db, masks_table, 'mask', now, nick, mask))
+        for nick, mask in users
+    ]
+
+    for nick, mask in users:
+        yield from asyncio.gather(
+            set_user_data(event, db, hosts_table, 'host', now, nick, get_user_host, conn),
+            set_user_data(event, db, address_table, 'addr', now, nick, get_user_ip, conn)
+        )
+
+    yield from asyncio.gather(*futs)
 
 
 @hook.command("check")
