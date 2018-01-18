@@ -264,12 +264,8 @@ def handle_snotice(db, event):
 
 @asyncio.coroutine
 def set_user_data(event, db, table, column_name, now, nick, value_func, conn=None):
-    try:
-        value = yield from value_func(event.conn if conn is None else conn, nick)
-    except asyncio.TimeoutError:
-        event.logger.exception("Timeout reached waiting for {} for '{}'".format(column_name, nick))
-    else:
-        yield from event.async_call(update_user_data, db, table, column_name, now, nick, value)
+    value = yield from value_func(event.conn if conn is None else conn, nick)
+    yield from event.async_call(update_user_data, db, table, column_name, now, nick, value)
 
 
 @asyncio.coroutine
@@ -415,6 +411,14 @@ def format_results_or_paste(nick, duration, nicks, masks, hosts, addresses, is_a
     yield format_count(nicks, masks, hosts, addresses, is_admin, duration)
 
 
+@asyncio.coroutine
+def ignore_timeout(coro):
+    try:
+        return (yield from coro)
+    except (asyncio.TimeoutError, asyncio.CancelledError):
+        pass
+
+
 @hook.irc_raw('352')
 @asyncio.coroutine
 def on_who(conn, irc_paramlist):
@@ -490,8 +494,8 @@ def get_initial_connection_data(conn, loop, db, event):
 
     for nick, mask in users:
         yield from asyncio.gather(
-            set_user_data(event, db, hosts_table, 'host', now, nick, get_user_host, conn),
-            set_user_data(event, db, address_table, 'addr', now, nick, get_user_ip, conn)
+            ignore_timeout(set_user_data(event, db, hosts_table, 'host', now, nick, get_user_host, conn)),
+            ignore_timeout(set_user_data(event, db, address_table, 'addr', now, nick, get_user_ip, conn))
         )
 
     yield from asyncio.gather(*futs)
