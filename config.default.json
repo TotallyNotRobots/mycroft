@@ -94,7 +94,8 @@
                 "sherlock": {
                     "regex": {
                         "nick": "^\\*\\*\\*\\s(?:REMOTE)?NICK:\\sUser\\s(?P<oldnick>.+?)\\schanged\\stheir\\snickname\\sto\\s(?P<newnick>.+?)$",
-                        "connect": "^\\*\\*\\*\\s(?:REMOTE)?CONNECT:\\s.+:\\s(?P<nick>[^!]+)!(?P<ident>[^@]+)@(?P<host>[^\\s]+)\\s\\((?P<addr>[^\\)]+)\\)\\s\\[(?P<realname>.*)\\]$"
+                        "connect": "^\\*\\*\\*\\s(?:REMOTE)?CONNECT:\\s.+:\\s(?P<nick>[^!]+)!(?P<ident>[^@]+)@(?P<host>[^\\s]+)\\s\\((?P<addr>[^\\)]+)\\)\\s\\[(?P<realname>.*)\\]$",
+                        "quit": "^\\*\\*\\*\\s(?:REMOTE)?QUIT:\\s.+:\\s(?P<nick>[^!]+)!(?P<ident>[^@]+)@(?P<host>[^\\s]+)\\s\\((?P<addr>[^\\)]+)\\)\\s\\[(?P<reason>.*)\\]$"
                     },
                     "channels": {
                         "normal": [
