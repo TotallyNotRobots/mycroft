@@ -983,7 +983,7 @@ def on_whois_away(conn, irc_paramlist):
     user.away_message = msg
 
 
-@hook.irc_raw('312')
+# @hook.irc_raw('312')
 def on_whois_server(conn, irc_paramlist):
     """
     :type irc_paramlist: cloudbot.util.parsers.irc.ParamList
