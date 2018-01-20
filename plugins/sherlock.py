@@ -197,7 +197,7 @@ response_map = {
 
 @asyncio.coroutine
 def await_response(fut):
-    return (yield from asyncio.wait_for(fut, 15))
+    return (yield from asyncio.wait_for(fut, 60))
 
 
 @asyncio.coroutine
@@ -309,7 +309,8 @@ def handle_response_numerics(conn, irc_command, irc_paramlist):
     except LookupError:
         return
 
-    fut.set_result(value.strip())
+    if not fut.done():
+        fut.set_result(value.strip())
 
 
 @asyncio.coroutine
@@ -361,14 +362,18 @@ def on_nickchange(db, event, match):
         'mask': mask_fut,
     }
 
-    conn.memory["sherlock"]["futures"]["data"][new_nick_cf] = futs
+    data_futs = conn.memory["sherlock"]["futures"]["data"]
+
+    data_futs[new_nick_cf] = futs
 
     @asyncio.coroutine
     def _handle_set(table, name, value_func):
         try:
             value = yield from value_func(event.conn, new_nick)
         except (asyncio.TimeoutError, asyncio.CancelledError):
-            value = yield from asyncio.wait_for(futs[name], 60)
+            value = yield from futs[name]
+
+        del futs[name]
 
         with suppress(KeyError):
             old_futs[name].set_result(value)
@@ -411,6 +416,9 @@ def on_nickchange(db, event, match):
         _timeout_whowas(),
     )
 
+    with suppress(KeyError):
+        del data_futs[new_nick_cf]
+
 
 @asyncio.coroutine
 def on_user_connect(db, event, match):
@@ -430,14 +438,18 @@ def on_user_connect(db, event, match):
         'mask': mask_fut,
     }
 
-    conn.memory["sherlock"]["futures"]["data"][nick_cf] = futs
+    data_futs = conn.memory["sherlock"]["futures"]["data"]
+
+    data_futs[nick_cf] = futs
 
     @asyncio.coroutine
     def _handle_set(table, name, value_func):
         try:
             value = yield from value_func(event.conn, nick)
         except (asyncio.TimeoutError, asyncio.CancelledError):
-            value = yield from asyncio.wait_for(futs[name], 300)
+            value = yield from futs[name]
+
+        del futs[name]
 
         yield from event.async_call(update_user_data, db, table, name, now, nick, value)
 
@@ -450,6 +462,9 @@ def on_user_connect(db, event, match):
         event.async_call(update_user_data, db, address_table, 'addr', now, nick, addr),
         _do_mask(),
     )
+
+    with suppress(LookupError):
+        del data_futs[nick_cf]
 
 
 @asyncio.coroutine
