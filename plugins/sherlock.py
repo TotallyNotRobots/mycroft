@@ -15,6 +15,7 @@ from contextlib import suppress
 import requests
 from requests import RequestException
 from sqlalchemy import Table, Column, DateTime, Boolean, select, Text, PrimaryKeyConstraint, and_, func
+from sqlalchemy.exc import IntegrityError
 
 from cloudbot import hook
 from cloudbot.event import EventType
@@ -76,22 +77,33 @@ def format_list(name, data):
 
 
 def update_user_data(db, table, column_name, now, nick, value):
+    """
+    :type db: sqlalchemy.orm.Session
+    :type table: Table
+    :type column_name: str
+    :type now: datetime.datetime
+    :type nick: str
+    :type value: str
+    """
     nick_cf = rfc_casefold(nick)
     clause = and_(table.c.nick == nick_cf, getattr(table.c, column_name) == value)
-    res = db.execute(table.update().values(seen=now, nick_case=nick).where(clause))
-    if res.rowcount == 0:
-        args = {
-            'nick': nick_cf,
-            column_name: value,
-            'created': now,
-            'seen': now,
-            'reg': False,
-            'nick_case': nick
-        }
 
+    args = {
+        'nick': nick_cf,
+        column_name: value,
+        'created': now,
+        'seen': now,
+        'reg': False,
+        'nick_case': nick
+    }
+
+    try:
         db.execute(table.insert().values(**args))
-
-    db.commit()
+    except IntegrityError:
+        db.rollback()
+        db.execute(table.update().values(seen=now, nick_case=nick).where(clause))
+    finally:
+        db.commit()
 
 
 def get_regex_cache(conn):
