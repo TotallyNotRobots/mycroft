@@ -13,6 +13,7 @@ from collections import defaultdict
 from contextlib import suppress
 
 import requests
+import sqlalchemy
 from requests import RequestException
 from sqlalchemy import Table, Column, DateTime, Boolean, select, Text, PrimaryKeyConstraint, and_, func
 from sqlalchemy.exc import IntegrityError
@@ -21,6 +22,7 @@ from cloudbot import hook
 from cloudbot.event import EventType
 from cloudbot.util import database, colors, timeparse, web
 from cloudbot.util.async_util import create_future, wrap_future
+from cloudbot.util.backoff import Delayer
 from cloudbot.util.formatting import chunk_str, pluralize, get_text_list
 
 address_table = Table(
@@ -85,6 +87,16 @@ def update_user_data(db, table, column_name, now, nick, value):
     :type nick: str
     :type value: str
     """
+
+    def _insert_or_update():
+        try:
+            db.execute(table.insert().values(**args))
+        except IntegrityError:
+            db.rollback()
+            db.execute(table.update().values(seen=now, nick_case=nick).where(clause))
+        finally:
+            db.commit()
+
     nick_cf = rfc_casefold(nick)
     clause = and_(table.c.nick == nick_cf, getattr(table.c, column_name) == value)
 
@@ -97,13 +109,15 @@ def update_user_data(db, table, column_name, now, nick, value):
         'nick_case': nick
     }
 
-    try:
-        db.execute(table.insert().values(**args))
-    except IntegrityError:
-        db.rollback()
-        db.execute(table.update().values(seen=now, nick_case=nick).where(clause))
-    finally:
-        db.commit()
+    delayer = Delayer(2)
+    while True:
+        with delayer:
+            try:
+                _insert_or_update()
+            except sqlalchemy.exc.TimeoutError:
+                pass
+            else:
+                break
 
 
 def get_regex_cache(conn):
