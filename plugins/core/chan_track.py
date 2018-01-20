@@ -796,7 +796,7 @@ def on_whois_away(conn, irc_paramlist):
     user.away_message = msg
 
 
-@hook.irc_raw("312", do_sieve=False)
+# @hook.irc_raw('312')
 def on_whois_server(conn, irc_paramlist):
     _, nick, server, _ = irc_paramlist
     get_users(conn).getuser(nick).server = server

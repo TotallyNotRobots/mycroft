@@ -9,6 +9,7 @@ import datetime
 import random
 import re
 import string
+from collections import defaultdict
 from contextlib import suppress
 
 import requests
@@ -148,10 +149,23 @@ def _handle_userhost_response(irc_paramlist):
     return nick, host
 
 
+def _handle_whowas(irc_paramlist):
+    return irc_paramlist[1], irc_paramlist[3]
+
+
+def _handle_whowas_host(irc_paramlist):
+    nick = irc_paramlist[1]
+    hostmask = irc_paramlist[-1].strip().rsplit(None, 1)[1]
+    host = hostmask.split('@', 1)[1]
+    return nick, host
+
+
 response_map = {
     '352': ("user_mask", _handle_who_response),
     '302': ("user_host", _handle_userhost_response),
     '340': ("user_ip", _handle_userhost_response),  # USERIP responds with the same format as USERHOST
+    '314': ("user_whowas_mask", _handle_whowas),
+    '379': ("user_whowas_host", _handle_whowas_host),
 }
 
 
@@ -194,6 +208,32 @@ def get_user_mask(conn, nick):
     return (yield from await_command_response(conn, "user_mask", "WHO", nick))
 
 
+@asyncio.coroutine
+def get_user_whowas(conn, nick):
+    nick_cf = rfc_casefold(nick)
+    futs = conn.memory["sherlock"]["futures"]
+    send_command = False
+    try:
+        mask_fut = futs["user_whowas_mask"][nick_cf]
+    except LookupError:
+        send_command = True
+        futs["user_whowas_mask"][nick_cf] = mask_fut = create_future(conn.loop)
+
+    try:
+        host_fut = futs["user_whowas_host"][nick_cf]
+    except LookupError:
+        send_command = True
+        futs["user_whowas_host"][nick_cf] = host_fut = create_future(conn.loop)
+
+    if send_command:
+        conn.cmd("WHOWAS", nick)
+
+    try:
+        return (yield from await_response(asyncio.gather(mask_fut, host_fut)))
+    except asyncio.TimeoutError:
+        return None, None
+
+
 @hook.on_start
 def clear_regex_cache(bot):
     for conn in bot.connections.values():
@@ -204,11 +244,7 @@ def clear_regex_cache(bot):
 def init_futures(bot):
     for conn in bot.connections.values():
         conn.memory["sherlock"] = {
-            "futures": {
-                "user_host": {},
-                "user_ip": {},
-                "user_mask": {}
-            }
+            "futures": defaultdict(dict),
         }
 
 
@@ -288,14 +324,33 @@ def on_nickchange(db, event, match):
             event.async_call(update_user_data, db, table, name, now, new_nick, value)
         )
 
-    coros = [
-        _handle_set(hosts_table, 'host', get_user_host),
-        _handle_set(address_table, 'addr', get_user_ip),
-        _handle_set(masks_table, 'mask', get_user_mask),
-        delay_call(_handle_set(masks_table, 'mask', get_user_mask), 60),
-    ]
+    @asyncio.coroutine
+    def _do_mask():
+        yield from _handle_set(masks_table, 'mask', get_user_mask)
+        yield from delay_call(_handle_set(masks_table, 'mask', get_user_mask), 60)
 
-    yield from asyncio.gather(*coros)
+    @asyncio.coroutine
+    def _timeout_whowas():
+        try:
+            yield from asyncio.gather(
+                _handle_set(hosts_table, 'host', get_user_host),
+                _do_mask(),
+            )
+        except (asyncio.TimeoutError, asyncio.CancelledError):
+            mask, host = yield from get_user_whowas(event.conn, new_nick)
+            if mask and host:
+                yield from asyncio.gather(
+                    event.async_call(update_user_data, db, hosts_table, 'host', now, old_nick, host),
+                    event.async_call(update_user_data, db, hosts_table, 'host', now, new_nick, host),
+
+                    event.async_call(update_user_data, db, masks_table, 'mask', now, old_nick, mask),
+                    event.async_call(update_user_data, db, masks_table, 'mask', now, new_nick, mask),
+                )
+
+    yield from asyncio.gather(
+        _handle_set(address_table, 'addr', get_user_ip),
+        _timeout_whowas(),
+    )
 
 
 @asyncio.coroutine
@@ -307,14 +362,25 @@ def on_user_connect(db, event, match):
 
     now = datetime.datetime.now()
 
-    coros = [
+    @asyncio.coroutine
+    def _timeout_whowas():
+        try:
+            yield from _do_mask()
+        except (asyncio.TimeoutError, asyncio.CancelledError):
+            mask, _ = yield from get_user_whowas(event.conn, nick)
+            if mask:
+                yield from event.async_call(update_user_data, db, masks_table, 'mask', now, nick, mask)
+
+    @asyncio.coroutine
+    def _do_mask():
+        yield from set_user_data(event, db, masks_table, 'mask', now, nick, get_user_mask)
+        yield from delay_call(set_user_data(event, db, masks_table, 'mask', now, nick, get_user_mask), 60)
+
+    yield from asyncio.gather(
         event.async_call(update_user_data, db, hosts_table, 'host', now, nick, host),
         event.async_call(update_user_data, db, address_table, 'addr', now, nick, addr),
-        set_user_data(event, db, masks_table, 'mask', now, nick, get_user_mask),
-        delay_call(set_user_data(event, db, masks_table, 'mask', now, nick, get_user_mask), 60),
-    ]
-
-    yield from asyncio.gather(*coros)
+        _timeout_whowas(),
+    )
 
 
 HANDLERS = {
@@ -423,7 +489,7 @@ def ignore_timeout(coro):
 @asyncio.coroutine
 def on_who(conn, irc_paramlist):
     try:
-        lines, fut = conn.memory["sherlock"]["futures"]["who_0"]
+        lines, fut = conn.memory["sherlock"]["futures"]["who_0"][0]
     except LookupError:
         return
 
@@ -439,7 +505,7 @@ def on_who_end(conn, irc_paramlist):
         return
 
     try:
-        lines, fut = conn.memory["sherlock"]["futures"]["who_0"]
+        lines, fut = conn.memory["sherlock"]["futures"]["who_0"][0]
     except LookupError:
         return
 
@@ -456,18 +522,23 @@ def get_initial_data(bot, loop, db, event):
 
 
 @hook.irc_raw('376')
+@hook.command("getdata", permissions=["botcontrl"], autohelp=False)
 @asyncio.coroutine
 def get_initial_connection_data(conn, loop, db, event):
+    if conn.nick.endswith('-dev') and not hasattr(event, 'triggered_command'):
+        # Ignore initial data update on development instances
+        return
+
     fut = create_future(loop)
     try:
-        lines, fut = conn.memory["sherlock"]["futures"]["who_0"]
+        lines, fut = conn.memory["sherlock"]["futures"]["who_0"][0]
     except LookupError:
         pass
     else:
         if not fut.done():
             return
 
-    conn.memory["sherlock"]["futures"]["who_0"] = ([], fut)
+    conn.memory["sherlock"]["futures"]["who_0"][0] = ([], fut)
 
     yield from asyncio.sleep(10)
 
@@ -479,7 +550,7 @@ def get_initial_connection_data(conn, loop, db, event):
         return
     finally:
         with suppress(LookupError):
-            del conn.memory["sherlock"]["futures"]["who_0"]
+            del conn.memory["sherlock"]["futures"]["who_0"][0]
 
     users = []
     for line in lines:
