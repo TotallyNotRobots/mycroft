@@ -66,6 +66,8 @@ RFC_CASEMAP = str.maketrans(dict(zip(
     string.ascii_lowercase + "{}|"
 )))
 
+counts = defaultdict(int)
+
 
 def rfc_casefold(text):
     return text.translate(RFC_CASEMAP)
@@ -321,7 +323,12 @@ def handle_snotice(db, event):
         regex = get_regex(conn, name)
         match = regex.match(content)
         if match:
-            yield from handler(db, event, match)
+            counts[name] += 1
+            try:
+                yield from handler(db, event, match)
+            finally:
+                counts[name] -= 1
+
             break
 
 
@@ -347,31 +354,45 @@ def on_nickchange(db, event, match):
     old_nick_cf = rfc_casefold(old_nick)
     new_nick_cf = rfc_casefold(new_nick)
 
-    try:
-        old_futs = conn.memory["sherlock"]["futures"]["data"].pop(old_nick_cf)
-    except LookupError:
-        old_futs = {}
+    futures = conn.memory["sherlock"]["futures"]
 
-    ip_fut = create_future(conn.loop)
-    host_fut = create_future(conn.loop)
-    mask_fut = create_future(conn.loop)
+    data_futs = futures["data"]
+    nick_change_futs = futures["nick_changes"]
 
     futs = {
-        'addr': ip_fut,
-        'host': host_fut,
-        'mask': mask_fut,
+        'addr': create_future(conn.loop),
+        'host': create_future(conn.loop),
+        'mask': create_future(conn.loop),
     }
 
-    data_futs = conn.memory["sherlock"]["futures"]["data"]
-
     data_futs[new_nick_cf] = futs
+
+    try:
+        old_futs = data_futs.pop(old_nick_cf)
+    except LookupError:
+        nick_change_futs[old_nick_cf] = fut = create_future(conn.loop)
+        try:
+            old_futs = yield from asyncio.wait_for(fut, 30)
+        except asyncio.TimeoutError:
+            old_futs = {}
+        finally:
+            with suppress(LookupError):
+                del nick_change_futs[old_nick_cf]
+
+    try:
+        nick_fut = nick_change_futs.pop(new_nick_cf)
+    except LookupError:
+        pass
+    else:
+        if not nick_fut.done():
+            nick_fut.set_result(futs)
 
     @asyncio.coroutine
     def _handle_set(table, name, value_func):
         try:
             value = yield from value_func(event.conn, new_nick)
         except (asyncio.TimeoutError, asyncio.CancelledError):
-            value = yield from futs[name]
+            value = yield from asyncio.wait_for(futs[name], 300)
 
         del futs[name]
 
@@ -479,10 +500,22 @@ def on_user_quit(db, event, match):
     nick_cf = rfc_casefold(nick)
     conn = event.conn
 
+    futures = conn.memory["sherlock"]["futures"]
+
+    data_futs = futures["data"]
+    nick_change_futs = futures["nick_changes"]
+
     try:
-        old_futs = conn.memory["sherlock"]["futures"]["data"].pop(nick_cf)
+        old_futs = data_futs.pop(nick_cf)
     except LookupError:
-        old_futs = {}
+        nick_change_futs[nick_cf] = fut = create_future(conn.loop)
+        try:
+            old_futs = yield from asyncio.wait_for(fut, 30)
+        except asyncio.TimeoutError:
+            old_futs = {}
+        finally:
+            with suppress(LookupError):
+                del nick_change_futs[nick_cf]
 
     with suppress(KeyError):
         old_futs['host'].set_result(host)
@@ -646,7 +679,7 @@ def get_initial_data(bot, loop, db, event):
 
 
 @hook.irc_raw('376')
-@hook.command("getdata", permissions=["botcontrl"], autohelp=False)
+@hook.command("getdata", permissions=["botcontrol"], autohelp=False)
 @asyncio.coroutine
 def get_initial_connection_data(conn, loop, db, event):
     if conn.nick.endswith('-dev') and not hasattr(event, 'triggered_command'):
@@ -898,3 +931,17 @@ def db_stats(db):
     ]
 
     return get_text_list(stats, 'and')
+
+
+@hook.command("futcount", permissions=["botcontrol"])
+def fut_count(conn, message):
+    message(counts)
+    futs = conn.memory["sherlock"]["futures"]
+    message(len(futs))
+    for key, data in futs.items():
+        message("{}: {}".format(key, len(data)))
+
+
+@hook.command("dumpdata", permissions=["botcontrol"])
+def dump_data(conn):
+    return conn.memory["sherlock"]["futures"]
