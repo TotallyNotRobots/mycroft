@@ -34,7 +34,7 @@ class Event:
     :type host: str
     :type mask: str
     :type db: sqlalchemy.orm.Session
-    :type db_executor: concurrent.futures.ThreadPoolExecutor
+    :type db_executor: ExecutorWrapper
     :type irc_raw: str
     :type irc_prefix: str
     :type irc_command: str
@@ -152,7 +152,7 @@ class Event:
             # logger.debug("Opening database session for {}:threaded=False".format(self.hook.description))
 
             # we're running a coroutine hook with a db, so initialise an executor pool
-            self.db_executor = concurrent.futures.ThreadPoolExecutor(1)
+            self.db_executor = self.bot.db_executor_pool.get()
             # be sure to initialize the db in the database executor, so it will be accessible in that thread.
             self.db = await self.async_call(self.bot.db_session)
 
@@ -367,7 +367,7 @@ class Event:
 
     async def async_call(self, func, *args, **kwargs):
         if self.db_executor is not None:
-            executor = self.db_executor
+            executor = self.db_executor.executor
         else:
             executor = None
 

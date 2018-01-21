@@ -23,6 +23,7 @@ from cloudbot.hook import Action
 from cloudbot.plugin import PluginManager
 from cloudbot.reloader import PluginReloader, ConfigReloader
 from cloudbot.util import database, formatting, async_util
+from cloudbot.util.executor_pool import ExecutorPool
 from cloudbot.util.mapping import KeyFoldDict
 
 logger = logging.getLogger("cloudbot")
@@ -151,6 +152,8 @@ class CloudBot:
         self.db_session = scoped_session(self.db_factory)
         self.db_metadata = database.metadata
         self.db_base = declarative_base(metadata=self.db_metadata, bind=self.db_engine)
+
+        self.db_executor_pool = ExecutorPool(50, max_workers=1, thread_name_prefix='cloudbot-db')
 
         # set botvars so plugins can access when loading
         database.base = self.db_base
