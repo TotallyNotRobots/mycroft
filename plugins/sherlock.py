@@ -11,6 +11,7 @@ import re
 import string
 from collections import defaultdict
 from contextlib import suppress
+from operator import itemgetter
 
 import requests
 import sqlalchemy
@@ -75,7 +76,7 @@ def rfc_casefold(text):
 
 def format_list(name, data):
     begin = colors.parse("$(dgreen){}$(clear): ".format(name))
-    body = ', '.join(set(data))
+    body = ', '.join(data)
 
     return chunk_str(begin + body)
 
@@ -754,51 +755,44 @@ def check_command(conn, chan, text, db, message):
 
     start = datetime.datetime.now()
 
-    host_rows = db.execute(
-        select([hosts_table.c.host], and_(hosts_table.c.nick == lower_nick, hosts_table.c.seen >= last_time))
-    )
+    def _query(table, column):
+        sub_query = select([table.c[column]], and_(table.c.nick == lower_nick, table.c.seen >= last_time))
+        return select(
+            [table.c.nick_case, table.c[column], table.c.seen],
+            and_(table.c[column].in_(sub_query), table.c.seen >= last_time)
+        )
 
-    hosts = [row["host"] for row in host_rows]
+    hosts_rows = db.execute(_query(hosts_table, 'host')).fetchall()
 
-    nick_rows = db.execute(
-        select([hosts_table.c.nick, hosts_table.c.nick_case],
-               and_(hosts_table.c.host.in_(hosts), hosts_table.c.seen >= last_time))
-    )
+    addrs_rows = db.execute(_query(address_table, 'addr')).fetchall()
 
-    nicks = {row["nick"]: row["nick_case"] for row in nick_rows}
-
-    addr_rows = db.execute(
-        select([address_table.c.addr], and_(address_table.c.nick == lower_nick, address_table.c.seen >= last_time))
-    )
-
-    addresses = [row["addr"] for row in addr_rows]
-
-    nick_addr_rows = db.execute(
-        select([address_table.c.nick, address_table.c.nick_case],
-               and_(address_table.c.addr.in_(addresses), address_table.c.seen >= last_time))
-    )
-
-    nicks.update((row["nick"], row["nick_case"]) for row in nick_addr_rows)
-
-    mask_rows = db.execute(
-        select([masks_table.c.mask], and_(masks_table.c.nick == lower_nick, masks_table.c.seen >= last_time))
-    )
-
-    masks = [row["mask"] for row in mask_rows]
-
-    nick_mask_rows = db.execute(
-        select([masks_table.c.nick, masks_table.c.nick_case],
-               and_(masks_table.c.mask.in_(masks), masks_table.c.seen >= last_time))
-    )
-
-    nicks.update((row["nick"], row["nick_case"]) for row in nick_mask_rows)
+    masks_rows = db.execute(_query(masks_table, 'mask')).fetchall()
 
     query_time = datetime.datetime.now() - start
 
-    nicks = set(nicks.values())
-    masks = set(masks)
-    hosts = set(hosts)
-    addresses = set(addresses)
+    nicks = [
+        (row['nick_case'], row['seen']) for row in hosts_rows
+    ]
+
+    nicks.extend(
+        (row['nick_case'], row['seen']) for row in addrs_rows
+    )
+
+    nicks.extend(
+        (row['nick_case'], row['seen']) for row in masks_rows
+    )
+
+    nick_map = defaultdict(lambda: datetime.datetime.fromtimestamp(0))
+
+    for _nick, seen in nicks:
+        nick_map[_nick] = max(nick_map[_nick], seen)
+
+    nicks = list(map(itemgetter(0), sorted(nick_map.items(), key=itemgetter(1), reverse=True)))
+
+    # nicks.sort(key=itemgetter(1), reverse=True)
+    masks = set(row['mask'] for row in masks_rows)
+    hosts = set(row['host'] for row in hosts_rows)
+    addresses = set(row['addr'] for row in addrs_rows)
 
     for line in format_results_or_paste(nick, query_time.total_seconds(), nicks, masks, hosts, addresses, admin):
         message(line)
@@ -832,29 +826,27 @@ def check_host_command(db, conn, chan, text, message):
     hosts = set()
     addrs = set()
 
-    mask_rows = db.execute(
-        select([masks_table.c.nick_case, masks_table.c.mask],
-               and_(func.lower(masks_table.c.mask) == host_lower, masks_table.c.seen >= last_time))
-    ).fetchall()
+    def _query(table, column):
+        query = select(
+            [table.c.nick_case, table.c[column]],
+            and_(func.lower(table.c[column]) == host_lower, table.c.seen >= last_time)
+        )
+        return db.execute(query).fetchall()
+
+    mask_rows = _query(masks_table, 'mask')
 
     masks.update(row["mask"] for row in mask_rows)
 
     nicks.update(row["nick_case"] for row in mask_rows)
 
     if admin:
-        host_rows = db.execute(
-            select([hosts_table.c.nick_case, hosts_table.c.host],
-                   and_(func.lower(hosts_table.c.host) == host_lower, hosts_table.c.seen >= last_time))
-        ).fetchall()
+        host_rows = _query(hosts_table, 'host')
 
         hosts.update(row["host"] for row in host_rows)
 
         nicks.update(row["nick_case"] for row in host_rows)
 
-        addr_rows = db.execute(
-            select([address_table.c.nick_case, address_table.c.addr],
-                   and_(func.lower(address_table.c.addr) == host_lower, address_table.c.seen >= last_time))
-        ).fetchall()
+        addr_rows = _query(address_table, 'addr')
 
         addrs.update(row["addr"] for row in addr_rows)
 
