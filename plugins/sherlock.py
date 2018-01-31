@@ -878,7 +878,7 @@ def raw_query(text, db, reply, conn):
         if res.returns_rows:
             lines = [
                 "Results for '{}':".format(text),
-                "{}".format(tuple(res)),
+                *("{}".format(tuple(r)) for r in res),
                 "Completed in {:.3f} seconds".format(duration.total_seconds())
             ]
         else:
