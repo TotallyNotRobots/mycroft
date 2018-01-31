@@ -24,7 +24,7 @@ from cloudbot.event import EventType
 from cloudbot.util import database, colors, timeparse, web
 from cloudbot.util.async_util import create_future, wrap_future
 from cloudbot.util.backoff import Delayer
-from cloudbot.util.formatting import chunk_str, pluralize, get_text_list
+from cloudbot.util.formatting import chunk_str, get_text_list, pluralize_auto
 
 address_table = Table(
     'addrs',
@@ -603,7 +603,7 @@ def format_count(nicks, masks, hosts, addresses, is_admin, duration):
         return "None."
     else:
         return "Done. Found {} in {:.3f} seconds".format(
-            get_text_list([pluralize(count, thing) for count, thing in counts], 'and'), duration)
+            get_text_list([pluralize_auto(count, thing) for count, thing in counts], 'and'), duration)
 
 
 def do_paste(it):
@@ -916,10 +916,10 @@ def db_stats(db):
         masks.add(row["mask"])
 
     stats = [
-        pluralize(len(nicks), "nick"),
-        pluralize(len(hosts), "host"),
-        pluralize(len(addresses), "address"),
-        pluralize(len(masks), "mask"),
+        pluralize_auto(len(nicks), "nick"),
+        pluralize_auto(len(hosts), "host"),
+        pluralize_auto(len(addresses), "address"),
+        pluralize_auto(len(masks), "mask"),
     ]
 
     return get_text_list(stats, 'and')
