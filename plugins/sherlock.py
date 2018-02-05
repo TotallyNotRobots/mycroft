@@ -237,7 +237,11 @@ def query(db, nicks=None, masks=None, hosts=None, addrs=None, last_seen=None, de
 def query_and_format(db, nick=None, mask=None, host=None, addr=None, last_seen=None, depth=1, is_admin=False,
                      paste=None):
     start = datetime.datetime.now()
-    lower_nick = rfc_casefold(nick)
+    if nick:
+        lower_nick = rfc_casefold(nick)
+    else:
+        lower_nick = nick
+
     if not is_admin:
         # Don't perform host and address lookups in non-admin channels
         host = None
