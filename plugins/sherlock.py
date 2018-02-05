@@ -834,6 +834,12 @@ def query_and_format(db, nick=None, mask=None, host=None, addr=None, last_seen=N
         host = None
         addr = None
 
+        if depth > 5:
+            return "Recursion depth can not exceed 5 for non-admin users."
+
+    elif depth > 20:
+        return "Recursion depth can not exceed 20."
+
     _nicks = [((lower_nick, nick), datetime.datetime.now())]
 
     nicks, masks, hosts, addrs = query(db, _nicks, mask, host, addr, last_seen, depth)
@@ -869,44 +875,7 @@ def query_and_format(db, nick=None, mask=None, host=None, addr=None, last_seen=N
 
 @hook.command("checkadv", "newcheck", "checkadvanced", singlethread=True)
 def new_check(conn, chan, triggered_command, text, db):
-    """[options] -
-    Options:
-        -h, --help
-            Return this help
-
-        --nick=NICK
-            Look up NICK in the database
-
-        --host=HOST
-            Look up HOST in the database
-
-        --mask=MASK
-            Look up MASK in the database
-
-        --addr=ADDRESS
-            Look up ADDRESS in the addresses table
-
-        -d, --depth=N
-            Limit the recursive lookup to a maximum depth of N
-
-        --[no]nicks
-            Enable / disable the output of linked nicknames
-
-        --[no]masks
-            Enable / disable the output of linked masks
-
-        --[no]hosts
-            Enable / disable the output of linked hosts
-
-        --[no]addresses
-            Enable / disable the output of linked IP addresses
-
-        --nick-max=N
-            Limit the number of nicks to look up for linking to N
-
-        --[no]paste
-            Overrides the automatic pastebin options
-    """
+    """[options] - Use -h to view full help for this command"""
     allowed, admin = check_channel(conn, chan)
 
     if not allowed:
@@ -925,9 +894,12 @@ def new_check(conn, chan, triggered_command, text, db):
         'auto': None,
     }
 
-    parser.add_argument('--paste', choices=list(paste_options), default='auto')
+    parser.add_argument(
+        '--paste', choices=list(paste_options), default='auto',
+        help="Controls whether to force pasting of the results or not"
+    )
 
-    parser.add_argument('--depth', '-d', type=int, default=1)
+    parser.add_argument('--depth', '-d', type=int, default=1, help="Set the maximum recursion depth")
 
     s_out = StringIO()
     s_err = StringIO()
