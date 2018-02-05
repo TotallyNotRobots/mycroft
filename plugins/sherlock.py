@@ -9,8 +9,10 @@ import datetime
 import random
 import re
 import string
+from argparse import ArgumentParser
 from collections import defaultdict
-from contextlib import suppress
+from contextlib import suppress, redirect_stdout, redirect_stderr
+from io import StringIO
 from operator import itemgetter
 
 import requests
@@ -624,10 +626,14 @@ def do_paste(it):
     return "Paste: {} Password: {} (paste expires in 1 hour)".format(r.url, passwd)
 
 
-def format_results_or_paste(nick, duration, nicks, masks, hosts, addresses, is_admin):
-    yield "Results for '{}':".format(nick)
+def format_results_or_paste(terms, duration, nicks, masks, hosts, addresses, is_admin, paste=None):
+    if isinstance(terms, str):
+        terms = [terms]
+
+    terms_list = get_text_list(["'{}'".format(term) for term in terms], 'and')
+    yield "Results for {}:".format(terms_list)
     lines = list(format_results(nicks, masks, hosts, addresses, is_admin))
-    if len(lines) > 5:
+    if (len(lines) > 5 and paste is not False) or paste is True:
         yield do_paste(paste_results(nicks, masks, hosts, addresses, is_admin))
     else:
         yield from lines
@@ -730,8 +736,218 @@ def get_initial_connection_data(conn, loop, db, event):
     yield from asyncio.gather(*futs)
 
 
+# QUERY FUNCTIONS
+
+def filter_seen(table, _query, last_seen):
+    if last_seen is not None:
+        return _query.where(table.c.seen > last_seen)
+
+    return _query
+
+
+def get_for_nicks(db, table, column, nicks, last_seen=None):
+    nicks = [row[0][0] for row in nicks]
+    _query = filter_seen(table, table.select().where(table.c.nick.in_(nicks)), last_seen)
+
+    results = db.execute(_query)
+
+    return [[row[column], row['seen']] for row in results]
+
+
+def get_hosts_for_nicks(db, nicks, last_seen=None):
+    return get_for_nicks(db, hosts_table, 'host', nicks, last_seen)
+
+
+def get_addrs_for_nicks(db, nicks, last_seen=None):
+    return get_for_nicks(db, address_table, 'addr', nicks, last_seen)
+
+
+def get_masks_for_nicks(db, nicks, last_seen=None):
+    return get_for_nicks(db, masks_table, 'mask', nicks, last_seen)
+
+
+def get_nicks(db, table, column, values, last_seen=None):
+    values = [v[0].lower() for v in values]
+    _query = filter_seen(table, table.select().where(func.lower(table.c[column]).in_(values)), last_seen)
+
+    results = db.execute(_query)
+
+    return [((row['nick'], row['nick_case']), row['seen']) for row in results]
+
+
+def get_nicks_for_mask(db, mask, last_seen=None):
+    return get_nicks(db, masks_table, 'mask', mask, last_seen)
+
+
+def get_nicks_for_host(db, host, last_seen=None):
+    return get_nicks(db, hosts_table, 'host', host, last_seen)
+
+
+def get_nicks_for_addr(db, addr, last_seen=None):
+    return get_nicks(db, address_table, 'addr', addr, last_seen)
+
+
+def query(db, nicks=None, masks=None, hosts=None, addrs=None, last_seen=None, depth=0):
+    _nicks = []
+    _masks = []
+    _hosts = []
+    _addrs = []
+
+    def _to_list(var):
+        if not var:
+            return []
+        elif isinstance(var, str):
+            return [(var, datetime.datetime.now())]
+        return var
+
+    nicks = _to_list(nicks)
+    masks = _to_list(masks)
+    hosts = _to_list(hosts)
+    addrs = _to_list(addrs)
+
+    if depth < 0:
+        return nicks, masks, hosts, addrs
+
+    if nicks:
+        _masks.extend(get_masks_for_nicks(db, nicks, last_seen))
+        _hosts.extend(get_hosts_for_nicks(db, nicks, last_seen))
+        _addrs.extend(get_addrs_for_nicks(db, nicks, last_seen))
+
+    if masks:
+        _nicks.extend(get_nicks_for_mask(db, masks, last_seen))
+
+    if hosts:
+        _nicks.extend(get_nicks_for_host(db, hosts, last_seen))
+
+    if addrs:
+        _nicks.extend(get_nicks_for_addr(db, addrs, last_seen))
+
+    return query(db, _nicks + nicks, _masks + masks, _hosts + hosts, _addrs + addrs, last_seen, depth - 1)
+
+
+def query_and_format(db, nick=None, mask=None, host=None, addr=None, last_seen=None, depth=1, is_admin=False,
+                     paste=None):
+    start = datetime.datetime.now()
+    lower_nick = rfc_casefold(nick)
+    if not is_admin:
+        # Don't perform host and address lookups in non-admin channels
+        host = None
+        addr = None
+
+    _nicks = [((lower_nick, nick), datetime.datetime.now())]
+
+    nicks, masks, hosts, addrs = query(db, _nicks, mask, host, addr, last_seen, depth)
+    end = datetime.datetime.now()
+    query_time = end - start
+    nicks = [(nick_case, time) for (_nick, nick_case), time in nicks]
+
+    tables = {
+        "nicks": nicks,
+        "masks": masks,
+        "hosts": hosts,
+        "addresses": addrs,
+    }
+
+    data = {name: defaultdict(lambda: datetime.datetime.fromtimestamp(0)) for name in tables}
+    for name, tbl in tables.items():
+        _data = data[name]
+        for val, seen in tbl:
+            _data[val] = max(_data[val], seen)
+
+    out = {
+        name: list(map(itemgetter(0), sorted(values.items(), key=itemgetter(1), reverse=True)))
+        for name, values in data.items()
+    }
+
+    search_terms = [term for term in (nick, mask, host, addr) if term]
+    lines = tuple(
+        format_results_or_paste(search_terms, query_time.total_seconds(), **out, is_admin=is_admin, paste=paste)
+    )
+
+    return lines
+
+
+@hook.command("checkadv", "newcheck", "checkadvanced", singlethread=True)
+def new_check(conn, chan, triggered_command, text, db):
+    """[options] -
+    Options:
+        -h, --help
+            Return this help
+
+        --nick=NICK
+            Look up NICK in the database
+
+        --host=HOST
+            Look up HOST in the database
+
+        --mask=MASK
+            Look up MASK in the database
+
+        --addr=ADDRESS
+            Look up ADDRESS in the addresses table
+
+        -d, --depth=N
+            Limit the recursive lookup to a maximum depth of N
+
+        --[no]nicks
+            Enable / disable the output of linked nicknames
+
+        --[no]masks
+            Enable / disable the output of linked masks
+
+        --[no]hosts
+            Enable / disable the output of linked hosts
+
+        --[no]addresses
+            Enable / disable the output of linked IP addresses
+
+        --nick-max=N
+            Limit the number of nicks to look up for linking to N
+
+        --[no]paste
+            Overrides the automatic pastebin options
+    """
+    allowed, admin = check_channel(conn, chan)
+
+    if not allowed:
+        return
+
+    parser = ArgumentParser(prog=triggered_command)
+
+    parser.add_argument('--nick', help="Gather all data linked to NICK")
+    parser.add_argument('--host', help="Gather all data linked to HOST")
+    parser.add_argument('--mask', help="Gather all data linked to MASK")
+    parser.add_argument('--addr', help="Gather all data linked to ADDR")
+
+    paste_options = {
+        'yes': True,
+        'no': False,
+        'auto': None,
+    }
+
+    parser.add_argument('--paste', choices=list(paste_options), default='auto')
+
+    parser.add_argument('--depth', '-d', type=int, default=1)
+
+    s_out = StringIO()
+    s_err = StringIO()
+
+    with redirect_stdout(s_out), redirect_stderr(s_err):
+        try:
+            args = parser.parse_args(text.split())
+        except SystemExit:
+            out = s_out.getvalue() + s_err.getvalue()
+            return web.paste(out)
+
+    paste = paste_options[args.paste]
+
+    return query_and_format(
+        db, args.nick, args.mask, args.host, args.addr, depth=args.depth, is_admin=admin, paste=paste
+    )
+
+
 @hook.command("check")
-def check_command(conn, chan, text, db, message):
+def check_command(conn, chan, text, db):
     """<nick> [last_seen] - Looks up [nick] in the users database, optionally filtering to entries newer than [last_seen] specified in the format [-|+]5w4d3h2m1s, defaulting to forever"""
     allowed, admin = check_channel(conn, chan)
 
@@ -744,58 +960,14 @@ def check_command(conn, chan, text, db, message):
     if split:
         interval_str = split[0].strip()
         if interval_str == '*':
-            last_time = datetime.datetime.fromtimestamp(0)
+            last_time = None
         else:
             time_span = datetime.timedelta(seconds=timeparse.time_parse(interval_str))
             last_time = now + time_span
     else:
-        last_time = datetime.datetime.fromtimestamp(0)
+        last_time = None
 
-    lower_nick = rfc_casefold(nick)
-
-    start = datetime.datetime.now()
-
-    def _query(table, column):
-        sub_query = select([table.c[column]], and_(table.c.nick == lower_nick, table.c.seen >= last_time))
-        return select(
-            [table.c.nick_case, table.c[column], table.c.seen],
-            and_(table.c[column].in_(sub_query), table.c.seen >= last_time)
-        )
-
-    hosts_rows = db.execute(_query(hosts_table, 'host')).fetchall()
-
-    addrs_rows = db.execute(_query(address_table, 'addr')).fetchall()
-
-    masks_rows = db.execute(_query(masks_table, 'mask')).fetchall()
-
-    query_time = datetime.datetime.now() - start
-
-    nicks = [
-        (row['nick_case'], row['seen']) for row in hosts_rows
-    ]
-
-    nicks.extend(
-        (row['nick_case'], row['seen']) for row in addrs_rows
-    )
-
-    nicks.extend(
-        (row['nick_case'], row['seen']) for row in masks_rows
-    )
-
-    nick_map = defaultdict(lambda: datetime.datetime.fromtimestamp(0))
-
-    for _nick, seen in nicks:
-        nick_map[_nick] = max(nick_map[_nick], seen)
-
-    nicks = list(map(itemgetter(0), sorted(nick_map.items(), key=itemgetter(1), reverse=True)))
-
-    # nicks.sort(key=itemgetter(1), reverse=True)
-    masks = set(row['mask'] for row in masks_rows)
-    hosts = set(row['host'] for row in hosts_rows)
-    addresses = set(row['addr'] for row in addrs_rows)
-
-    for line in format_results_or_paste(nick, query_time.total_seconds(), nicks, masks, hosts, addresses, admin):
-        message(line)
+    return query_and_format(db, nick, last_seen=last_time, is_admin=admin)
 
 
 @hook.command("checkhost", "check2")
@@ -813,51 +985,14 @@ def check_host_command(db, conn, chan, text, message):
     if split:
         interval_str = split[0].strip()
         if interval_str == '*':
-            last_time = datetime.datetime.fromtimestamp(0)
+            last_time = None
         else:
             time_span = datetime.timedelta(seconds=timeparse.time_parse(interval_str))
             last_time = now + time_span
     else:
-        last_time = datetime.datetime.fromtimestamp(0)
+        last_time = None
 
-    start = datetime.datetime.now()
-    nicks = set()
-    masks = set()
-    hosts = set()
-    addrs = set()
-
-    def _query(table, column):
-        query = select(
-            [table.c.nick_case, table.c[column]],
-            and_(func.lower(table.c[column]) == host_lower, table.c.seen >= last_time)
-        )
-        return db.execute(query).fetchall()
-
-    mask_rows = _query(masks_table, 'mask')
-
-    masks.update(row["mask"] for row in mask_rows)
-
-    nicks.update(row["nick_case"] for row in mask_rows)
-
-    if admin:
-        host_rows = _query(hosts_table, 'host')
-
-        hosts.update(row["host"] for row in host_rows)
-
-        nicks.update(row["nick_case"] for row in host_rows)
-
-        addr_rows = _query(address_table, 'addr')
-
-        addrs.update(row["addr"] for row in addr_rows)
-
-        nicks.update(row["nick_case"] for row in addr_rows)
-
-    end = datetime.datetime.now()
-
-    query_time = end - start
-
-    for line in format_results_or_paste(host, query_time.total_seconds(), nicks, masks, hosts, addrs, admin):
-        message(line)
+    return query_and_format(db, mask=host_lower, host=host_lower, addr=host_lower, last_seen=last_time, is_admin=admin)
 
 
 @hook.command("rawquery", permissions=["botcontrol"])
