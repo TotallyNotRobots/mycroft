@@ -234,18 +234,37 @@ def query(db, nicks=None, masks=None, hosts=None, addrs=None, last_seen=None, de
     return query(db, _nicks + nicks, _masks + masks, _hosts + hosts, _addrs + addrs, last_seen, depth - 1)
 
 
-def query_and_format(db, nick=None, mask=None, host=None, addr=None, last_seen=None, depth=1, is_admin=False,
+def query_and_format(db, _nicks=None, _masks=None, _hosts=None, _addrs=None, last_seen=None, depth=1, is_admin=False,
                      paste=None):
+    def _to_list(_arg):
+        if _arg is None:
+            return []
+        elif isinstance(_arg, str):
+            return [_arg]
+
+        return _arg
+
+    _nicks = _to_list(_nicks)
+    _masks = _to_list(_masks)
+    _hosts = _to_list(_hosts)
+    _addrs = _to_list(_addrs)
+
     start = datetime.datetime.now()
-    if nick:
-        lower_nick = rfc_casefold(nick)
-    else:
-        lower_nick = nick
+
+    def _wrap_list(_data):
+        return [(item, datetime.datetime.fromtimestamp(0)) for item in _data]
+
+    __nicks = _wrap_list(_nicks)
+    __masks = _wrap_list(_masks)
+    __hosts = _wrap_list(_hosts)
+    __addrs = _wrap_list(_addrs)
+
+    __nicks = [((rfc_casefold(_nick), _nick), _seen) for _nick, _seen in __nicks]
 
     if not is_admin:
         # Don't perform host and address lookups in non-admin channels
-        host = None
-        addr = None
+        _hosts = None
+        _addrs = None
 
         if depth > 5:
             return "Recursion depth can not exceed 5 for non-admin users."
@@ -253,9 +272,7 @@ def query_and_format(db, nick=None, mask=None, host=None, addr=None, last_seen=N
     elif depth > 20:
         return "Recursion depth can not exceed 20."
 
-    _nicks = [((lower_nick, nick), datetime.datetime.now())]
-
-    nicks, masks, hosts, addrs = query(db, _nicks, mask, host, addr, last_seen, depth)
+    nicks, masks, hosts, addrs = query(db, __nicks, __masks, __hosts, __addrs, last_seen, depth)
     end = datetime.datetime.now()
     query_time = end - start
     nicks = [(nick_case, time) for (_nick, nick_case), time in nicks]
@@ -278,7 +295,7 @@ def query_and_format(db, nick=None, mask=None, host=None, addr=None, last_seen=N
         for name, values in data.items()
     }
 
-    search_terms = [term for term in (nick, mask, host, addr) if term]
+    search_terms = [term for term in set(_nicks + _masks + _hosts + _addrs) if term]
     lines = tuple(
         format_results_or_paste(search_terms, query_time.total_seconds(), **out, is_admin=is_admin, paste=paste)
     )
@@ -296,10 +313,10 @@ def new_check(conn, chan, triggered_command, text, db):
 
     parser = ArgumentParser(prog=triggered_command)
 
-    parser.add_argument('--nick', help="Gather all data linked to NICK")
-    parser.add_argument('--host', help="Gather all data linked to HOST")
-    parser.add_argument('--mask', help="Gather all data linked to MASK")
-    parser.add_argument('--addr', help="Gather all data linked to ADDR")
+    parser.add_argument('--nick', help="Gather all data linked to NICK", action="append")
+    parser.add_argument('--host', help="Gather all data linked to HOST", action="append")
+    parser.add_argument('--mask', help="Gather all data linked to MASK", action="append")
+    parser.add_argument('--addr', help="Gather all data linked to ADDR", action="append")
 
     paste_options = {
         'yes': True,
@@ -377,7 +394,8 @@ def check_host_command(db, conn, chan, text, message):
     else:
         last_time = None
 
-    return query_and_format(db, mask=host_lower, host=host_lower, addr=host_lower, last_seen=last_time, is_admin=admin)
+    return query_and_format(db, _masks=host_lower, _hosts=host_lower, _addrs=host_lower, last_seen=last_time,
+                            is_admin=admin)
 
 
 @hook.command("rawquery", permissions=["botcontrol"])
