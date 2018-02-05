@@ -244,6 +244,17 @@ def query_and_format(db, _nicks=None, _masks=None, _hosts=None, _addrs=None, las
 
         return _arg
 
+    if not is_admin:
+        # Don't perform host and address lookups in non-admin channels
+        _hosts = None
+        _addrs = None
+
+        if depth > 5:
+            return "Recursion depth can not exceed 5 for non-admin users."
+
+    elif depth > 20:
+        return "Recursion depth can not exceed 20."
+
     _nicks = _to_list(_nicks)
     _masks = _to_list(_masks)
     _hosts = _to_list(_hosts)
@@ -260,17 +271,6 @@ def query_and_format(db, _nicks=None, _masks=None, _hosts=None, _addrs=None, las
     __addrs = _wrap_list(_addrs)
 
     __nicks = [((rfc_casefold(_nick), _nick), _seen) for _nick, _seen in __nicks]
-
-    if not is_admin:
-        # Don't perform host and address lookups in non-admin channels
-        _hosts = None
-        _addrs = None
-
-        if depth > 5:
-            return "Recursion depth can not exceed 5 for non-admin users."
-
-    elif depth > 20:
-        return "Recursion depth can not exceed 20."
 
     nicks, masks, hosts, addrs = query(db, __nicks, __masks, __hosts, __addrs, last_seen, depth)
     end = datetime.datetime.now()
