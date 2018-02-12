@@ -7,6 +7,7 @@ Author:
 
 import datetime
 import random
+import shlex
 import string
 from argparse import ArgumentParser
 from collections import defaultdict
@@ -16,7 +17,7 @@ from operator import itemgetter
 
 import requests
 from requests import RequestException
-from sqlalchemy import func
+from sqlalchemy import func, column
 
 from cloudbot import hook
 from cloudbot.util import colors, timeparse, web
@@ -147,16 +148,16 @@ def format_results_or_paste(terms, duration, nicks, masks, hosts, addresses, is_
 
 # QUERY FUNCTIONS
 
-def filter_seen(table, _query, last_seen):
+def filter_seen(_query, last_seen):
     if last_seen is not None:
-        return _query.where(table.c.seen > last_seen)
+        return _query.where(column('seen') > last_seen)
 
     return _query
 
 
 def get_for_nicks(db, table, column, nicks, last_seen=None):
     nicks = [row[0][0] for row in nicks]
-    _query = filter_seen(table, table.select().where(table.c.nick.in_(nicks)), last_seen)
+    _query = filter_seen(table.select().where(table.c.nick.in_(nicks)), last_seen)
 
     results = db.execute(_query)
 
@@ -177,7 +178,7 @@ def get_masks_for_nicks(db, nicks, last_seen=None):
 
 def get_nicks(db, table, column, values, last_seen=None):
     values = [v[0].lower() for v in values]
-    _query = filter_seen(table, table.select().where(func.lower(table.c[column]).in_(values)), last_seen)
+    _query = filter_seen(table.select().where(func.lower(table.c[column]).in_(values)), last_seen)
 
     results = db.execute(_query)
 
@@ -304,7 +305,7 @@ def query_and_format(db, _nicks=None, _masks=None, _hosts=None, _addrs=None, las
 
 
 @hook.command("checkadv", "newcheck", "checkadvanced", singlethread=True)
-def new_check(conn, chan, triggered_command, text, db):
+def new_check(conn, chan, triggered_command, text, db, reply):
     """[options] - Use -h to view full help for this command"""
     allowed, admin = check_channel(conn, chan)
 
@@ -331,20 +332,37 @@ def new_check(conn, chan, triggered_command, text, db):
 
     parser.add_argument('--depth', '-d', type=int, default=1, help="Set the maximum recursion depth")
 
+    parser.add_argument(
+        '--last-seen', dest="lastseen", type=timeparse.time_parse, default=None,
+        help="Set the time frame to gather data from "
+             "(ex. --last-seen=\"1d12h\" to match data from the last day and a half)"
+    )
+
     s_out = StringIO()
     s_err = StringIO()
 
+    try:
+        splt = shlex.split(text)
+    except ValueError as e:
+        reply(str(e))
+        raise
+
     with redirect_stdout(s_out), redirect_stderr(s_err):
         try:
-            args = parser.parse_args(text.split())
+            args = parser.parse_args(splt)
         except SystemExit:
             out = s_out.getvalue() + s_err.getvalue()
             return web.paste(out)
 
     paste = paste_options[args.paste]
+    if args.lastseen is None:
+        last_seen = None
+    else:
+        last_seen = datetime.datetime.now() - datetime.timedelta(seconds=args.lastseen)
 
     return query_and_format(
-        db, args.nick, args.mask, args.host, args.addr, depth=args.depth, is_admin=admin, paste=paste
+        db, args.nick, args.mask, args.host, args.addr, depth=args.depth, is_admin=admin, paste=paste,
+        last_seen=last_seen
     )
 
 
