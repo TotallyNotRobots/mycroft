@@ -155,13 +155,13 @@ def filter_seen(_query, last_seen):
     return _query
 
 
-def get_for_nicks(db, table, column, nicks, last_seen=None):
+def get_for_nicks(db, table, column_name, nicks, last_seen=None):
     nicks = [row[0][0] for row in nicks]
     _query = filter_seen(table.select().where(table.c.nick.in_(nicks)), last_seen)
 
     results = db.execute(_query)
 
-    return [[row[column], row['seen']] for row in results]
+    return [[row[column_name], row['seen']] for row in results]
 
 
 def get_hosts_for_nicks(db, nicks, last_seen=None):
@@ -176,9 +176,9 @@ def get_masks_for_nicks(db, nicks, last_seen=None):
     return get_for_nicks(db, masks_table, 'mask', nicks, last_seen)
 
 
-def get_nicks(db, table, column, values, last_seen=None):
+def get_nicks(db, table, column_name, values, last_seen=None):
     values = [v[0].lower() for v in values]
-    _query = filter_seen(table.select().where(func.lower(table.c[column]).in_(values)), last_seen)
+    _query = filter_seen(table.select().where(func.lower(table.c[column_name]).in_(values)), last_seen)
 
     results = db.execute(_query)
 
@@ -391,7 +391,7 @@ def check_command(conn, chan, text, db):
 
 
 @hook.command("checkhost", "check2")
-def check_host_command(db, conn, chan, text, message):
+def check_host_command(db, conn, chan, text):
     """<host|mask|addr> [last_seen] - Looks up [host|mask|addr] in the users database, optionally filtering to entries newer than [last_seen] specified in the format [-|+]5w4d3h2m1s, defaulting to forever"""
     allowed, admin = check_channel(conn, chan)
 
