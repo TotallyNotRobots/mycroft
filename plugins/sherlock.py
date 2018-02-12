@@ -246,8 +246,8 @@ def query_and_format(db, _nicks=None, _masks=None, _hosts=None, _addrs=None, las
 
     if not is_admin:
         # Don't perform host and address lookups in non-admin channels
-        _hosts = None
-        _addrs = None
+        if _hosts or _addrs:
+            return "Non-admin users can not use the host or address lookup."
 
         if depth > 5:
             return "Recursion depth can not exceed 5 for non-admin users."
