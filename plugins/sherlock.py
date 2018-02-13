@@ -412,7 +412,14 @@ def check_host_command(db, conn, chan, text):
     else:
         last_time = None
 
-    return query_and_format(db, _masks=host_lower, _hosts=host_lower, _addrs=host_lower, last_seen=last_time,
+    if admin:
+        hosts = host_lower
+        addrs = host_lower
+    else:
+        hosts = None
+        addrs = None
+
+    return query_and_format(db, _masks=host_lower, _hosts=hosts, _addrs=addrs, last_seen=last_time,
                             is_admin=admin)
 
 
