@@ -245,14 +245,8 @@ def query_and_format(db, _nicks=None, _masks=None, _hosts=None, _addrs=None, las
 
         return _arg
 
-    if not is_admin:
-        # Don't perform host and address lookups in non-admin channels
-        if _hosts or _addrs:
-            return "Non-admin users can not use the host or address lookup."
-
-        if depth > 5:
-            return "Recursion depth can not exceed 5 for non-admin users."
-
+    if not is_admin and depth > 5:
+        return "Recursion depth can not exceed 5 for non-admin users."
     elif depth > 20:
         return "Recursion depth can not exceed 20."
 
@@ -359,6 +353,10 @@ def new_check(conn, chan, triggered_command, text, db, reply):
         last_seen = None
     else:
         last_seen = datetime.datetime.now() - datetime.timedelta(seconds=args.lastseen)
+
+    if not admin and (args.host or args.addr):
+        # Don't perform host and address lookups in non-admin channels
+        return "Non-admin users can not use the host or address lookup."
 
     return query_and_format(
         db, args.nick, args.mask, args.host, args.addr, depth=args.depth, is_admin=admin, paste=paste,
