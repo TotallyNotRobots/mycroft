@@ -7,11 +7,11 @@ Author:
 
 import asyncio
 import datetime
+import re
 import string
 from collections import defaultdict
 from contextlib import suppress
 
-import re
 import sqlalchemy.exc
 from sqlalchemy import Table, Text, Column, DateTime, PrimaryKeyConstraint, Boolean, and_
 
@@ -103,6 +103,11 @@ def update_user_data(db, table, column_name, now, nick, value):
                 pass
             else:
                 break
+
+
+def _set_result(fut, result):
+    if not fut.done():
+        fut.set_result(result)
 
 
 def get_regex_cache(conn):
@@ -276,8 +281,7 @@ def handle_response_numerics(conn, irc_command, irc_paramlist):
     except LookupError:
         return
 
-    if not fut.done():
-        fut.set_result(value.strip())
+    _set_result(fut, value.strip())
 
 
 @asyncio.coroutine
@@ -345,8 +349,7 @@ def on_nickchange(db, event, match):
     except LookupError:
         pass
     else:
-        if not nick_fut.done():
-            nick_fut.set_result(futs)
+        _set_result(nick_fut, futs)
 
     @asyncio.coroutine
     def _handle_set(table, name, value_func):
@@ -357,8 +360,8 @@ def on_nickchange(db, event, match):
 
         del futs[name]
 
-        with suppress(KeyError):
-            old_futs[name].set_result(value)
+        with suppress(LookupError):
+            _set_result(old_futs[name], value)
 
         yield from asyncio.gather(
             event.async_call(update_user_data, db, table, name, now, old_nick, value),
@@ -380,10 +383,10 @@ def on_nickchange(db, event, match):
             mask, host = yield from get_user_whowas(event.conn, new_nick)
             if mask and host:
                 with suppress(KeyError):
-                    old_futs['host'].set_result(host)
+                    _set_result(old_futs['host'], host)
 
                 with suppress(KeyError):
-                    old_futs['mask'].set_result(mask)
+                    _set_result(old_futs['mask'], mask)
 
                 yield from asyncio.gather(
                     event.async_call(update_user_data, db, hosts_table, 'host', now, old_nick, host),
@@ -479,17 +482,17 @@ def on_user_quit(db, event, match):
                 del nick_change_futs[nick_cf]
 
     with suppress(KeyError):
-        old_futs['host'].set_result(host)
+        _set_result(old_futs['host'], host)
 
     with suppress(KeyError):
-        old_futs['addr'].set_result(addr)
+        _set_result(old_futs['addr'], addr)
 
     @asyncio.coroutine
     def _do_whowas():
         mask, _ = yield from get_user_whowas(event.conn, nick)
         if mask:
             with suppress(KeyError):
-                old_futs['mask'].set_result(mask)
+                _set_result(old_futs['mask'], mask)
 
             yield from event.async_call(update_user_data, db, masks_table, 'mask', now, nick, mask)
 
@@ -539,8 +542,7 @@ def on_who_end(conn, irc_paramlist):
     except LookupError:
         return
 
-    if not fut.done():
-        fut.set_result(lines)
+    _set_result(fut, lines)
 
 
 @hook.on_start
