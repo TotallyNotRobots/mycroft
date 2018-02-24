@@ -568,7 +568,7 @@ def get_initial_connection_data(conn, loop, db, event):
         pass
     else:
         if not fut.done():
-            return
+            return "getdata command already running"
 
     conn.memory["sherlock"]["futures"]["who_0"][0] = ([], fut)
 
@@ -579,7 +579,7 @@ def get_initial_connection_data(conn, loop, db, event):
     try:
         lines = yield from asyncio.wait_for(fut, 30 * 60)
     except asyncio.TimeoutError:
-        return
+        return "Timeout reached"
     finally:
         with suppress(LookupError):
             del conn.memory["sherlock"]["futures"]["who_0"][0]
@@ -602,3 +602,5 @@ def get_initial_connection_data(conn, loop, db, event):
         )
 
     yield from asyncio.gather(*futs)
+
+    return "Done."
