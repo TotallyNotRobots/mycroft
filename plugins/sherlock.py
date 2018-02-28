@@ -197,12 +197,57 @@ def get_nicks_for_addr(db, addr, last_seen=None):
     return get_nicks(db, address_table, 'addr', addr, last_seen)
 
 
-def query(db, nicks=None, masks=None, hosts=None, addrs=None, last_seen=None, depth=0):
-    _nicks = []
-    _masks = []
-    _hosts = []
-    _addrs = []
+class QueryResults:
+    def __init__(self, nicks=(), masks=(), hosts=(), addrs=()):
+        self.nicks = list(nicks)
+        self.masks = list(masks)
+        self.hosts = list(hosts)
+        self.addrs = list(addrs)
 
+    def copy(self):
+        return type(self)(*(l.copy() for l in self))
+
+    __copy__ = copy
+
+    def __iter__(self):
+        return iter([self.nicks, self.masks, self.hosts, self.addrs])
+
+    def __add__(self, other):
+        if not isinstance(other, QueryResults):
+            other = QueryResults(*other)
+
+        self_copy = self.copy()
+
+        for a, b in zip(self_copy, other):
+            a.extend(b)
+
+        return self_copy
+
+
+def _query(db, nicks, masks, hosts, addrs, last_seen):
+    """
+    :type db: sqlalchemy.orm.Session
+    """
+    results = QueryResults()
+
+    if nicks:
+        results.masks.extend(get_masks_for_nicks(db, nicks, last_seen))
+        results.hosts.extend(get_hosts_for_nicks(db, nicks, last_seen))
+        results.addrs.extend(get_addrs_for_nicks(db, nicks, last_seen))
+
+    if masks:
+        results.nicks.extend(get_nicks_for_mask(db, masks, last_seen))
+
+    if hosts:
+        results.nicks.extend(get_nicks_for_host(db, hosts, last_seen))
+
+    if addrs:
+        results.nicks.extend(get_nicks_for_addr(db, addrs, last_seen))
+
+    return results
+
+
+def query(db, nicks=None, masks=None, hosts=None, addrs=None, last_seen=None, depth=0, first=True):
     def _to_list(var):
         if not var:
             return []
@@ -218,21 +263,14 @@ def query(db, nicks=None, masks=None, hosts=None, addrs=None, last_seen=None, de
     if depth < 0:
         return nicks, masks, hosts, addrs
 
-    if nicks:
-        _masks.extend(get_masks_for_nicks(db, nicks, last_seen))
-        _hosts.extend(get_hosts_for_nicks(db, nicks, last_seen))
-        _addrs.extend(get_addrs_for_nicks(db, nicks, last_seen))
+    results = _query(db, nicks, masks, hosts, addrs, last_seen)
 
-    if masks:
-        _nicks.extend(get_nicks_for_mask(db, masks, last_seen))
+    if not first:
+        results += (nicks, masks, hosts, addrs)
 
-    if hosts:
-        _nicks.extend(get_nicks_for_host(db, hosts, last_seen))
-
-    if addrs:
-        _nicks.extend(get_nicks_for_addr(db, addrs, last_seen))
-
-    return query(db, _nicks + nicks, _masks + masks, _hosts + hosts, _addrs + addrs, last_seen, depth - 1)
+    return query(
+        db, results.nicks, results.masks, results.hosts, results.addrs, last_seen, depth - 1, False
+    )
 
 
 def query_and_format(db, _nicks=None, _masks=None, _hosts=None, _addrs=None, last_seen=None, depth=1, is_admin=False,
