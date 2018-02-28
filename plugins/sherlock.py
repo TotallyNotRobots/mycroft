@@ -115,7 +115,7 @@ def format_count(nicks, masks, hosts, addresses, is_admin, duration):
 
 def do_paste(it):
     out = '\n'.join(it)
-    passwd = "".join(random.choice(string.ascii_letters + string.digits + "!@#$%^&*(),./") for _ in range(16))
+    passwd = "".join(random.choice(string.ascii_letters + string.digits) for _ in range(16))
     args = {
         "text": out,
         "expire": '1h',
