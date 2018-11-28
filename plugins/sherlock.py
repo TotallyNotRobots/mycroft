@@ -6,10 +6,13 @@ Author:
 """
 
 import datetime
-import random
+import hashlib
+import json
+import os
 import shlex
-import string
+import zlib
 from argparse import ArgumentParser
+from base64 import b64encode
 from collections import defaultdict
 from contextlib import redirect_stdout, redirect_stderr
 from io import StringIO
@@ -17,6 +20,7 @@ from operator import itemgetter
 
 import requests
 from requests import RequestException
+from sjcl import SJCL
 from sqlalchemy import func, column
 
 from cloudbot import hook
@@ -113,22 +117,54 @@ def format_count(nicks, masks, hosts, addresses, is_admin, duration):
             get_text_list([pluralize_auto(count, thing) for count, thing in counts], 'and'), duration)
 
 
-def do_paste(it):
-    out = '\n'.join(it)
-    passwd = "".join(random.choice(string.ascii_letters + string.digits) for _ in range(16))
-    args = {
-        "text": out,
-        "expire": '1h',
-        "lang": "text",
-        "password": passwd
+def compress(s):
+    co = zlib.compressobj(wbits=-zlib.MAX_WBITS)
+    b = co.compress(s) + co.flush()
+
+    return b64encode(''.join(map(chr, b)).encode())
+
+
+def encode_cipher(cipher):
+    for k in ['salt', 'iv', 'ct']:
+        cipher[k] = cipher[k].decode()
+
+    return cipher
+
+
+def paste(data, password=None):
+    url = 'https://privatebin.net/'
+    request = {
+        'expire': '1hour',
+        'formatter': 'plaintext',
+        'burnafterreading': 0,
+        'opendiscussion': 0,
     }
+    passphrase = b64encode(os.urandom(32))
+    if password is not None:
+        digest = hashlib.sha256(password.encode()).hexdigest()
+        password = passphrase + digest.encode()
+    else:
+        password = passphrase
+
+    cipher = SJCL().encrypt(compress(data.encode()), password, mode='gcm')
+    cipher = encode_cipher(cipher)
+    request['data'] = json.dumps(cipher, ensure_ascii=False).replace(' ', '')
+
+    headers = {'X-Requested-With': 'JSONHttpRequest'}
+
+    with requests.post(url, headers=headers, data=request) as response:
+        response.raise_for_status()
+        result = response.json()
+        return "{}?{}#{}".format(url, result['id'], passphrase.decode())
+
+
+def do_paste(it):
     try:
-        r = requests.post("https://paste.snoonet.org/paste/new", data=args)
-        r.raise_for_status()
+        url = paste('\n'.join(it))
     except RequestException as e:
         return "Paste failed. ({})".format(e)
 
-    return "Paste: {} Password: {} (paste expires in 1 hour)".format(r.url, passwd)
+    return "Paste: {} (paste expires in 1 hour)".format(url)
 
 
 def format_results_or_paste(terms, duration, nicks, masks, hosts, addresses, is_admin, paste=None):
