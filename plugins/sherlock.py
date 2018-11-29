@@ -139,7 +139,7 @@ def paste(data, password=None):
         'burnafterreading': 0,
         'opendiscussion': 0,
     }
-    passphrase = b64encode(os.urandom(32))
+    passphrase = b64encode(os.urandom(32)).rstrip('=')
     if password is not None:
         digest = hashlib.sha256(password.encode()).hexdigest()
         password = passphrase + digest.encode()
@@ -155,7 +155,7 @@ def paste(data, password=None):
     with requests.post(url, headers=headers, data=request) as response:
         response.raise_for_status()
         result = response.json()
-        return "{}?{}#{}&".format(url, result['id'], passphrase.decode())
+        return "{}?{}#{}".format(url, result['id'], passphrase.decode())
 
 
 def do_paste(it):
