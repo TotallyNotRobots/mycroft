@@ -155,7 +155,7 @@ def paste(data, password=None):
     with requests.post(url, headers=headers, data=request) as response:
         response.raise_for_status()
         result = response.json()
-        return "{}?{}#{}".format(url, result['id'], passphrase.decode())
+        return "{}?{}#{}&".format(url, result['id'], passphrase.decode())
 
 
 def do_paste(it):
