@@ -139,7 +139,7 @@ def paste(data, password=None):
         'burnafterreading': 0,
         'opendiscussion': 0,
     }
-    passphrase = b64encode(os.urandom(32)).rstrip('=')
+    passphrase = b64encode(os.urandom(32)).rstrip(b'=')
     if password is not None:
         digest = hashlib.sha256(password.encode()).hexdigest()
         password = passphrase + digest.encode()
