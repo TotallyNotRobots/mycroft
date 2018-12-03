@@ -9,6 +9,7 @@ import datetime
 import hashlib
 import json
 import os
+import re
 import shlex
 import zlib
 from argparse import ArgumentParser
@@ -221,8 +222,28 @@ def get_nicks(db, table, column_name, values, last_seen=None):
     return [((row['nick'], row['nick_case']), row['seen']) for row in results]
 
 
+CLOAK_STRIP_PREFIX_RE = re.compile(r'^(?i:Snoonet-|irc-)(.*)\.IP$')
+CLOAK_FORMATS = [
+    "Snoonet-{cloak}.IP",
+    "irc-{cloak}.IP",
+]
+
+
 def get_nicks_for_mask(db, mask, last_seen=None):
-    return get_nicks(db, masks_table, 'mask', mask, last_seen)
+    new_masks = []
+    for m in mask:
+        msk, *other = m
+        cloak = CLOAK_STRIP_PREFIX_RE.match(msk)
+        if not cloak:
+            new_masks.append(m)
+            continue
+
+        new_masks.extend((
+            (fmt.format(cloak=cloak), *other)
+            for fmt in CLOAK_FORMATS
+        ))
+
+    return get_nicks(db, masks_table, 'mask', new_masks, last_seen)
 
 
 def get_nicks_for_host(db, host, last_seen=None):
