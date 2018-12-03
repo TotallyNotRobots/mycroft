@@ -239,7 +239,7 @@ def get_nicks_for_mask(db, mask, last_seen=None):
             continue
 
         new_masks.extend((
-            (fmt.format(cloak=cloak), *other)
+            (fmt.format(cloak=cloak.group(1)), *other)
             for fmt in CLOAK_FORMATS
         ))
 
