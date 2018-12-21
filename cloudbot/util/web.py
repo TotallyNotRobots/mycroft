@@ -13,14 +13,19 @@ License:
     GPL v3
 """
 
+import hashlib
 import json
 import logging
 import time
 from operator import attrgetter
 from typing import Optional
+import os
+import zlib
+from base64 import b64encode
 
 import requests
 from requests import RequestException, Response, PreparedRequest, HTTPError
+from sjcl import SJCL
 
 # Constants
 DEFAULT_SHORTENER = 'is.gd'
@@ -351,7 +356,63 @@ class Hastebin(Pastebin):
             raise ServiceHTTPError(j['message'], r)
 
 
+class PrivateBin(Pastebin):
+    URL = 'https://privatebin.net/'
+
+    @staticmethod
+    def encode_cipher(cipher):
+        for k in ['salt', 'iv', 'ct']:
+            cipher[k] = cipher[k].decode()
+
+        return cipher
+
+    @staticmethod
+    def compress(s):
+        co = zlib.compressobj(wbits=-zlib.MAX_WBITS)
+        b = co.compress(s) + co.flush()
+
+        return b64encode(''.join(map(chr, b)).encode())
+
+    def paste(self, data, ext, password=None):
+        if ext in ('txt', 'text'):
+            syntax = 'plaintext'
+        elif ext in ('md', 'markdown'):
+            syntax = 'markdown'
+        else:
+            syntax = 'syntaxhighlighting'
+
+        request = {
+            'expire': '1day',
+            'formatter': syntax,
+            'burnafterreading': 0,
+            'opendiscussion': 0,
+        }
+        passphrase = b64encode(os.urandom(32)).rstrip(b'=')
+        if password is not None:
+            digest = hashlib.sha256(password.encode()).hexdigest()
+            password = passphrase + digest.encode()
+        else:
+            password = passphrase
+
+        cipher = SJCL().encrypt(self.compress(data.encode()), password, mode='gcm')
+        cipher = self.encode_cipher(cipher)
+        request['data'] = json.dumps(cipher, ensure_ascii=False).replace(' ', '')
+
+        headers = {'X-Requested-With': 'JSONHttpRequest'}
+
+        with requests.post(self.URL, headers=headers, data=request) as response:
+            try:
+                response.raise_for_status()
+            except RequestException as e:
+                r = e.response
+                raise ServiceError(r.reason, r)
+
+            result = response.json()
+            return "{}?{}#{}".format(self.URL, result['id'], passphrase.decode())
+
+
 pastebins.register('hastebin', Hastebin(HASTEBIN_SERVER))
+pastebins.register('privatebin', PrivateBin())
 
 shorteners.register('git.io', Gitio())
 shorteners.register('goo.gl', Googl())
