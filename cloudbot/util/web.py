@@ -405,9 +405,12 @@ class PrivateBin(Pastebin):
                 response.raise_for_status()
             except RequestException as e:
                 r = e.response
-                raise ServiceError(r.reason, r)
+                raise ServiceHTTPError(r.reason, r)
 
             result = response.json()
+            if result['status'] != 0:
+                raise ServiceError(None, result['message'])
+
             return "{}?{}#{}".format(self.URL, result['id'], passphrase.decode())
 
 
