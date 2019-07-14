@@ -13,7 +13,6 @@ License:
     GPL v3
 """
 
-import hashlib
 import json
 import logging
 import time
@@ -28,11 +27,9 @@ from requests import (
     RequestException,
     Response,
 )
-import os
-import zlib
-from base64 import b64encode
 
-from sjcl import SJCL
+from pbincli import api as pb_api
+from pbincli.format import Paste as pb_Paste
 
 # Constants
 DEFAULT_SHORTENER = "is.gd"
@@ -376,23 +373,11 @@ class Hastebin(Pastebin):
 
 
 class PrivateBin(Pastebin):
-    URL = 'https://privatebin.net/'
+    def __init__(self, url):
+        super().__init__()
+        self.api_client = pb_api.PrivateBin(url)
 
-    @staticmethod
-    def encode_cipher(cipher):
-        for k in ['salt', 'iv', 'ct']:
-            cipher[k] = cipher[k].decode()
-
-        return cipher
-
-    @staticmethod
-    def compress(s):
-        co = zlib.compressobj(wbits=-zlib.MAX_WBITS)
-        b = co.compress(s) + co.flush()
-
-        return b64encode(''.join(map(chr, b)).encode())
-
-    def paste(self, data, ext, password=None):
+    def paste(self, data, ext, password=None, expire='1day'):
         if ext in ('txt', 'text'):
             syntax = 'plaintext'
         elif ext in ('md', 'markdown'):
@@ -400,41 +385,57 @@ class PrivateBin(Pastebin):
         else:
             syntax = 'syntaxhighlighting'
 
-        request = {
-            'expire': '1day',
-            'formatter': syntax,
-            'burnafterreading': 0,
-            'opendiscussion': 0,
-        }
-        passphrase = b64encode(os.urandom(32)).rstrip(b'=')
-        if password is not None:
-            digest = hashlib.sha256(password.encode()).hexdigest()
-            password = passphrase + digest.encode()
-        else:
-            password = passphrase
+        try:
+            version = self.api_client.getVersion()
+        except HTTPError as e:
+            r = e.response
+            raise ServiceHTTPError(r.reason, r) from e
+        except RequestException as e:
+            raise ServiceError(e.request, "Connection error occurred") from e
 
-        cipher = SJCL().encrypt(self.compress(data.encode()), password, mode='gcm')
-        cipher = self.encode_cipher(cipher)
-        request['data'] = json.dumps(cipher, ensure_ascii=False).replace(' ', '')
+        _paste = pb_Paste()
+        _paste.setVersion(version)
+        _paste.setText(data)
 
-        headers = {'X-Requested-With': 'JSONHttpRequest'}
+        if version == 2:
+            _paste.setCompression("zlib")
 
-        with requests.post(self.URL, headers=headers, data=request) as response:
-            try:
+        if password:
+            _paste.setPassword(password)
+
+        _paste.encrypt(
+            formatter=syntax,
+            burnafterreading=False,
+            discussion=False,
+            expiration=expire,
+        )
+
+        request = _paste.getJSON()
+
+        try:
+            with requests.post(
+                self.api_client.server,
+                headers=self.api_client.headers,
+                data=request,
+            ) as response:
                 response.raise_for_status()
-            except RequestException as e:
-                r = e.response
-                raise ServiceHTTPError(r.reason, r)
+                result = response.json()
+        except HTTPError as e:
+            r = e.response
+            raise ServiceHTTPError(r.reason, r) from e
+        except RequestException as e:
+            raise ServiceError(e.request, "Connection error occurred") from e
 
-            result = response.json()
-            if result['status'] != 0:
-                raise ServiceError(None, result['message'])
+        if result['status'] != 0:
+            raise ServiceError(None, result['message'])
 
-            return "{}?{}#{}".format(self.URL, result['id'], passphrase.decode())
+        return "{}?{}#{}".format(
+            self.api_client.server, result['id'], _paste.getHash()
+        )
 
 
 pastebins.register('hastebin', Hastebin(HASTEBIN_SERVER))
-pastebins.register('privatebin', PrivateBin())
+pastebins.register('privatebin', PrivateBin('https://privatebin.net/'))
 
 shorteners.register("git.io", Gitio())
 shorteners.register("goo.gl", Googl())
