@@ -132,37 +132,10 @@ def encode_cipher(cipher):
     return cipher
 
 
-def paste(data, password=None):
-    url = 'https://privatebin.net/'
-    request = {
-        'expire': '1hour',
-        'formatter': 'plaintext',
-        'burnafterreading': 0,
-        'opendiscussion': 0,
-    }
-    passphrase = b64encode(os.urandom(32)).rstrip(b'=')
-    if password is not None:
-        digest = hashlib.sha256(password.encode()).hexdigest()
-        password = passphrase + digest.encode()
-    else:
-        password = passphrase
-
-    cipher = SJCL().encrypt(compress(data.encode()), password, mode='gcm')
-    cipher = encode_cipher(cipher)
-    request['data'] = json.dumps(cipher, ensure_ascii=False).replace(' ', '')
-
-    headers = {'X-Requested-With': 'JSONHttpRequest'}
-
-    with requests.post(url, headers=headers, data=request) as response:
-        response.raise_for_status()
-        result = response.json()
-        return "{}?{}#{}".format(url, result['id'], passphrase.decode())
-
-
 def do_paste(it):
     try:
-        url = paste('\n'.join(it))
-    except RequestException as e:
+        url = web.pastebins['privatebin'].paste('\n'.join(it), expire='1hour')
+    except (RequestException, web.ServiceError) as e:
         return "Paste failed. ({})".format(e)
 
     return "Paste: {} (paste expires in 1 hour)".format(url)
