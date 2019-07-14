@@ -134,7 +134,7 @@ def encode_cipher(cipher):
 
 def do_paste(it):
     try:
-        url = web.pastebins['privatebin'].paste('\n'.join(it), expire='1hour')
+        url = web.pastebins['privatebin'].paste('\n'.join(it), 'yaml', expire='1hour')
     except (RequestException, web.ServiceError) as e:
         return "Paste failed. ({})".format(e)
 
