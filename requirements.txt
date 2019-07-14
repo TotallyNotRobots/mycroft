@@ -1,5 +1,6 @@
 attrs == 23.2.0
 beautifulsoup4 == 4.12.3
+git+https://github.com/r4sas/PBinCLI.git
 isodate == 0.6.1
 lxml == 5.1.0
 multidict == 6.0.5
