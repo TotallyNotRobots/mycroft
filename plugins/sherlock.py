@@ -493,6 +493,14 @@ def check_host_command(db, conn, chan, text):
 
 @hook.command("rawquery", permissions=["botcontrol"])
 def raw_query(text, db, reply, conn):
+    """
+    <query> - Execute a raw query against the database
+
+    :type text: str
+    :type db: sqlalchemy.orm.Session
+    :type reply: function
+    :type conn: cloudbot.client.Client
+    """
     if not conn.nick.lower().endswith('-dev'):
         # This command should be disabled in the production bot
         return "This command may only be used in testing"

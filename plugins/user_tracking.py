@@ -557,6 +557,14 @@ def get_initial_data(bot, loop, db, event):
 @hook.command("getdata", permissions=["botcontrol"], autohelp=False)
 @asyncio.coroutine
 def get_initial_connection_data(conn, loop, db, event):
+    """
+    - Update all user data
+
+    :type conn: cloudbot.client.Client
+    :type loop: asyncio.AbstractEventLoop
+    :type db: sqlalchemy.orm.Session
+    :type event: cloudbot.event.Event
+    """
     if conn.nick.endswith('-dev') and not hasattr(event, 'triggered_command'):
         # Ignore initial data update on development instances
         return
