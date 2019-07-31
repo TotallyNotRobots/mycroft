@@ -356,7 +356,9 @@ class Hastebin(Pastebin):
 class PrivateBin(Pastebin):
     def __init__(self, url):
         super().__init__()
-        self.api_client = pb_api.PrivateBin(url)
+        self.api_client = pb_api.PrivateBin(
+            str(url), {'proxy': '', 'nocheckcert': False, 'noinsecurewarn': False}
+        )
 
     def paste(self, data, ext, password=None, expire='1day'):
         if ext in ('txt', 'text'):
