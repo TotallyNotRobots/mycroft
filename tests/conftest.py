@@ -1,7 +1,23 @@
 import datetime
+from unittest.mock import MagicMock
 
 import freezegun
 import pytest
+from responses import RequestsMock
+
+from cloudbot.bot import bot
+from tests.util.mock_db import MockDB
+
+
+@pytest.fixture()
+def mock_db():
+    return MockDB()
+
+
+@pytest.fixture()
+def mock_requests():
+    with RequestsMock() as reqs:
+        yield reqs
 
 
 @pytest.fixture()
@@ -14,3 +30,13 @@ def freeze_time():
 
     with freezegun.freeze_time(dt, tz) as ft:
         yield ft
+
+
+@pytest.fixture()
+def mock_api_keys():
+    try:
+        bot.set(MagicMock())
+        bot.config.get_api_key.return_value = "APIKEY"
+        yield
+    finally:
+        bot.set(None)

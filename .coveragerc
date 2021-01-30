@@ -1,5 +1,7 @@
 [report]
+fail_under = 60
 exclude_lines =
+    if TYPE_CHECKING:
     pragma: no cover
     def __repr__
     raise AssertionError
@@ -7,8 +9,11 @@ exclude_lines =
     if __name__ == .__main__.:
     if sys.version_info
     class .*\(.*(Error|Exception)\):
+    ^ *\.\.\.$
 
 [run]
+branch = true
 omit =
     tests/data/*
     tests/util/*
+    .*

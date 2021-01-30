@@ -2,7 +2,7 @@
 
 We recommend that use you use a *unix system to run CloudBot in production, or Vagrant when developing CloudBot. However, it is possible to install natively on Windows.
 
-First, make sure you have Python 3.5 installed. It can be downloaded at [python.org](https://www.python.org/downloads/release/python-341/).
+First, make sure you have Python 3.6 or higher installed. It can be downloaded at [python.org](https://www.python.org/downloads/).
 
 Next, you need to install `pip`.
 
@@ -15,7 +15,7 @@ If that doesn't work, follow [this guide](http://simpledeveloper.com/how-to-inst
 
 ### Downloading
 
-Download CloudBot from [https://github.com/TotallyNotRobots/CloudBot/zipball/gonzobot.zip](https://github.com/TotallyNotRobots/CloudBot/archive/gonzobot.zip).
+Download CloudBot from [https://github.com/TotallyNotRobots/CloudBot/archive/main.zip](https://github.com/TotallyNotRobots/CloudBot/archive/main.zip).
 
 Unzip the resulting file, and continue to read this document.
 

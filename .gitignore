@@ -61,3 +61,6 @@ config.json
 .idea/
 /venv/
 .pytest_cache
+.python-version
+.vagrant/
+.mypy_cache/

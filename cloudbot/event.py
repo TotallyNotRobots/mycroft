@@ -1,7 +1,7 @@
-import concurrent.futures
 import enum
 import logging
 from functools import partial
+from typing import Any, Iterator, Mapping
 
 from irclib.parser import Message
 
@@ -20,7 +20,7 @@ class EventType(enum.Enum):
     other = 6
 
 
-class Event:
+class Event(Mapping[str, Any]):
     """
     :type bot: cloudbot.bot.CloudBot
     :type conn: cloudbot.client.Client
@@ -38,13 +38,34 @@ class Event:
     :type irc_raw: str
     :type irc_prefix: str
     :type irc_command: str
-    :type irc_paramlist: str
+    :type irc_paramlist: list[str]
     :type irc_ctcp_text: str
+    :type irc_tags: irclib.parser.TagList
     """
 
-    def __init__(self, *, bot=None, hook=None, conn=None, base_event=None, event_type=EventType.other, content=None,
-                 content_raw=None, target=None, channel=None, nick=None, user=None, host=None, mask=None, irc_raw=None,
-                 irc_prefix=None, irc_command=None, irc_paramlist=None, irc_ctcp_text=None):
+    def __init__(
+        self,
+        *,
+        bot=None,
+        hook=None,
+        conn=None,
+        base_event=None,
+        event_type=EventType.other,
+        content=None,
+        content_raw=None,
+        target=None,
+        channel=None,
+        nick=None,
+        user=None,
+        host=None,
+        mask=None,
+        irc_raw=None,
+        irc_prefix=None,
+        irc_command=None,
+        irc_paramlist=None,
+        irc_ctcp_text=None,
+        irc_tags=None,
+    ):
         """
         All of these parameters except for `bot` and `hook` are optional.
         The irc_* parameters should only be specified for IRC events.
@@ -86,6 +107,7 @@ class Event:
         :type irc_command: str
         :type irc_paramlist: list[str]
         :type irc_ctcp_text: str
+        :type irc_tags: irclib.parser.TagList
         """
         self.db = None
         self.db_executor = None
@@ -113,6 +135,7 @@ class Event:
             self.mask = base_event.mask
             # clients-specific parameters
             self.irc_raw = base_event.irc_raw
+            self.irc_tags = base_event.irc_tags
             self.irc_prefix = base_event.irc_prefix
             self.irc_command = base_event.irc_command
             self.irc_paramlist = base_event.irc_paramlist
@@ -130,10 +153,23 @@ class Event:
             self.mask = mask
             # clients-specific parameters
             self.irc_raw = irc_raw
+            self.irc_tags = irc_tags
             self.irc_prefix = irc_prefix
             self.irc_command = irc_command
             self.irc_paramlist = irc_paramlist
             self.irc_ctcp_text = irc_ctcp_text
+
+    def __len__(self) -> int:
+        return len(self.__dict__)
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self.__dict__)
+
+    def __getitem__(self, item: str) -> Any:
+        try:
+            return getattr(self, item)
+        except AttributeError as e:
+            raise KeyError(item) from e
 
     async def prepare(self):
         """
@@ -231,7 +267,9 @@ class Event:
         """
         if target is None:
             if self.chan is None:
-                raise ValueError("Target must be specified when chan is not assigned")
+                raise ValueError(
+                    "Target must be specified when chan is not assigned"
+                )
 
             target = self.chan
 
@@ -264,15 +302,17 @@ class Event:
 
             target = self.chan
 
-        if not messages:  # if there are no messages specified, don't do anything
+        if (
+            not messages
+        ):  # if there are no messages specified, don't do anything
             return
 
         if target == self.nick or not reply_ping:
             self.conn.message(target, *messages)
         else:
-            self.conn.message(target, "({}) {}".format(
-                self.nick, messages[0]
-            ), *messages[1:])
+            self.conn.message(
+                target, "({}) {}".format(self.nick, messages[0]), *messages[1:]
+            )
 
     def action(self, message, target=None):
         """sends an action to the current channel/user
@@ -318,7 +358,9 @@ class Event:
         avoid_notices = self.conn.config.get("avoid_notices", False)
         if target is None:
             if self.nick is None:
-                raise ValueError("Target must be specified when nick is not assigned")
+                raise ValueError(
+                    "Target must be specified when nick is not assigned"
+                )
 
             target = self.nick
 
@@ -329,7 +371,7 @@ class Event:
             self.conn.notice(target, message)
 
     def has_permission(self, permission, notice=True):
-        """ returns whether or not the current user has a given permission
+        """returns whether or not the current user has a given permission
         :type permission: str
         :rtype: bool
         """
@@ -341,7 +383,7 @@ class Event:
         )
 
     async def check_permission(self, permission, notice=True):
-        """ returns whether or not the current user has a given permission
+        """returns whether or not the current user has a given permission
         :type permission: str
         :type notice: bool
         :rtype: bool
@@ -383,12 +425,6 @@ class Event:
         """
         return self.conn.is_nick_valid(nick)
 
-    def __getitem__(self, item):
-        try:
-            return getattr(self, item)
-        except AttributeError:
-            raise KeyError(item)
-
 
 class CommandEvent(Event):
     """
@@ -397,11 +433,30 @@ class CommandEvent(Event):
     :type triggered_command: str
     """
 
-    def __init__(self, *, bot=None, hook, text, triggered_command, cmd_prefix,
-                 conn=None, base_event=None, event_type=None, content=None,
-                 content_raw=None, target=None, channel=None, nick=None,
-                 user=None, host=None, mask=None, irc_raw=None, irc_prefix=None,
-                 irc_command=None, irc_paramlist=None):
+    def __init__(
+        self,
+        *,
+        bot=None,
+        hook,
+        text,
+        triggered_command,
+        cmd_prefix,
+        conn=None,
+        base_event=None,
+        event_type=None,
+        content=None,
+        content_raw=None,
+        target=None,
+        channel=None,
+        nick=None,
+        user=None,
+        host=None,
+        mask=None,
+        irc_raw=None,
+        irc_prefix=None,
+        irc_command=None,
+        irc_paramlist=None,
+    ):
         """
         :param text: The arguments for the command
         :param triggered_command: The command that was triggered
@@ -409,11 +464,23 @@ class CommandEvent(Event):
         :type triggered_command: str
         """
         super().__init__(
-            bot=bot, hook=hook, conn=conn, base_event=base_event,
-            event_type=event_type, content=content, content_raw=content_raw,
-            target=target, channel=channel, nick=nick, user=user, host=host,
-            mask=mask, irc_raw=irc_raw, irc_prefix=irc_prefix,
-            irc_command=irc_command, irc_paramlist=irc_paramlist
+            bot=bot,
+            hook=hook,
+            conn=conn,
+            base_event=base_event,
+            event_type=event_type,
+            content=content,
+            content_raw=content_raw,
+            target=target,
+            channel=channel,
+            nick=nick,
+            user=user,
+            host=host,
+            mask=mask,
+            irc_raw=irc_raw,
+            irc_prefix=irc_prefix,
+            irc_command=irc_command,
+            irc_paramlist=irc_paramlist,
         )
         self.hook = hook
         self.text = text
@@ -448,21 +515,50 @@ class RegexEvent(Event):
     :type match: re.__Match
     """
 
-    def __init__(self, *, bot=None, hook, match, conn=None, base_event=None,
-                 event_type=None, content=None, content_raw=None, target=None,
-                 channel=None, nick=None, user=None, host=None, mask=None,
-                 irc_raw=None, irc_prefix=None, irc_command=None,
-                 irc_paramlist=None):
+    def __init__(
+        self,
+        *,
+        bot=None,
+        hook,
+        match,
+        conn=None,
+        base_event=None,
+        event_type=None,
+        content=None,
+        content_raw=None,
+        target=None,
+        channel=None,
+        nick=None,
+        user=None,
+        host=None,
+        mask=None,
+        irc_raw=None,
+        irc_prefix=None,
+        irc_command=None,
+        irc_paramlist=None,
+    ):
         """
         :param: match: The match objected returned by the regex search method
         :type match: re.__Match
         """
         super().__init__(
-            bot=bot, conn=conn, hook=hook, base_event=base_event,
-            event_type=event_type, content=content, content_raw=content_raw,
-            target=target, channel=channel, nick=nick, user=user, host=host,
-            mask=mask, irc_raw=irc_raw, irc_prefix=irc_prefix,
-            irc_command=irc_command, irc_paramlist=irc_paramlist
+            bot=bot,
+            conn=conn,
+            hook=hook,
+            base_event=base_event,
+            event_type=event_type,
+            content=content,
+            content_raw=content_raw,
+            target=target,
+            channel=channel,
+            nick=nick,
+            user=user,
+            host=host,
+            mask=mask,
+            irc_raw=irc_raw,
+            irc_prefix=irc_prefix,
+            irc_command=irc_command,
+            irc_paramlist=irc_paramlist,
         )
         self.match = match
 
@@ -509,8 +605,15 @@ class IrcOutEvent(Event):
 
 
 class PostHookEvent(Event):
-    def __init__(self, *args, launched_hook=None, launched_event=None,
-                 result=None, error=None, **kwargs):
+    def __init__(
+        self,
+        *args,
+        launched_hook=None,
+        launched_event=None,
+        result=None,
+        error=None,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.launched_hook = launched_hook
         self.launched_event = launched_event
