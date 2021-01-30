@@ -17,9 +17,6 @@ jobs:
         python-ver:
         - '3.6'
         - '3.7'
-        - '3.8'
-        - '3.9'
-        - pypy3
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
