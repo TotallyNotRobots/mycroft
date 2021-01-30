@@ -93,29 +93,3 @@ def freeze_time():
     dt = datetime.datetime(2019, 8, 22, 18, 14, 36)
     with freezegun.freeze_time(dt, tz_offset=-5) as ft:
         yield ft
-
-
-@pytest.fixture()
-def mock_api_keys():
-    mock_bot = MagicMock()
-    try:
-        bot.set(mock_bot)
-        # pylint: disable=no-member
-        mock_bot.config.get_api_key.return_value = "APIKEY"
-        yield mock_bot
-    finally:
-        bot.set(None)
-
-
-@pytest.fixture()
-def unset_bot():
-    try:
-        yield
-    finally:
-        bot.set(None)
-
-
-@pytest.fixture()
-def mock_feedparse():
-    with patch("feedparser.parse") as mock:
-        yield mock
