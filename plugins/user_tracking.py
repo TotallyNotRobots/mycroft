@@ -14,54 +14,61 @@ from collections import defaultdict
 from contextlib import suppress
 
 import sqlalchemy.exc
-from sqlalchemy import Table, Text, Column, DateTime, PrimaryKeyConstraint, Boolean, and_
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    PrimaryKeyConstraint,
+    Table,
+    Text,
+    and_,
+)
 
 from cloudbot import hook
 from cloudbot.event import EventType
 from cloudbot.util import database
-from cloudbot.util.async_util import wrap_future, create_future
+from cloudbot.util.async_util import create_future, wrap_future
 from cloudbot.util.backoff import Delayer
 
 address_table = Table(
-    'addrs',
+    "addrs",
     database.metadata,
-    Column('nick', Text),
-    Column('addr', Text),
-    Column('created', DateTime),
-    Column('seen', DateTime),
-    Column('reg', Boolean, default=False),
-    Column('nick_case', Text),
-    PrimaryKeyConstraint('nick', 'addr')
+    Column("nick", Text),
+    Column("addr", Text),
+    Column("created", DateTime),
+    Column("seen", DateTime),
+    Column("reg", Boolean, default=False),
+    Column("nick_case", Text),
+    PrimaryKeyConstraint("nick", "addr"),
 )
 
 hosts_table = Table(
-    'hosts',
+    "hosts",
     database.metadata,
-    Column('nick', Text),
-    Column('host', Text),
-    Column('created', DateTime),
-    Column('seen', DateTime),
-    Column('reg', Boolean, default=False),
-    Column('nick_case', Text),
-    PrimaryKeyConstraint('nick', 'host')
+    Column("nick", Text),
+    Column("host", Text),
+    Column("created", DateTime),
+    Column("seen", DateTime),
+    Column("reg", Boolean, default=False),
+    Column("nick_case", Text),
+    PrimaryKeyConstraint("nick", "host"),
 )
 
 masks_table = Table(
-    'masks',
+    "masks",
     database.metadata,
-    Column('nick', Text),
-    Column('mask', Text),
-    Column('created', DateTime),
-    Column('seen', DateTime),
-    Column('reg', Boolean, default=False),
-    Column('nick_case', Text),
-    PrimaryKeyConstraint('nick', 'mask')
+    Column("nick", Text),
+    Column("mask", Text),
+    Column("created", DateTime),
+    Column("seen", DateTime),
+    Column("reg", Boolean, default=False),
+    Column("nick_case", Text),
+    PrimaryKeyConstraint("nick", "mask"),
 )
 
-RFC_CASEMAP = str.maketrans(dict(zip(
-    string.ascii_uppercase + "[]\\",
-    string.ascii_lowercase + "{}|"
-)))
+RFC_CASEMAP = str.maketrans(
+    dict(zip(string.ascii_uppercase + "[]\\", string.ascii_lowercase + "{}|"))
+)
 
 logger = logging.getLogger("cloudbot")
 
@@ -81,20 +88,24 @@ def update_user_data(db, table, column_name, now, nick, value):
             db.execute(table.insert().values(**args))
         except sqlalchemy.exc.IntegrityError:
             db.rollback()
-            db.execute(table.update().values(seen=now, nick_case=nick).where(clause))
+            db.execute(
+                table.update().values(seen=now, nick_case=nick).where(clause)
+            )
         finally:
             db.commit()
 
     nick_cf = rfc_casefold(nick)
-    clause = and_(table.c.nick == nick_cf, getattr(table.c, column_name) == value)
+    clause = and_(
+        table.c.nick == nick_cf, getattr(table.c, column_name) == value
+    )
 
     args = {
-        'nick': nick_cf,
+        "nick": nick_cf,
         column_name: value,
-        'created': now,
-        'seen': now,
-        'reg': False,
-        'nick_case': nick
+        "created": now,
+        "seen": now,
+        "reg": False,
+        "nick_case": nick,
     }
 
     delayer = Delayer(2)
@@ -103,7 +114,7 @@ def update_user_data(db, table, column_name, now, nick, value):
             try:
                 _insert_or_update()
             except sqlalchemy.exc.TimeoutError:
-                pass
+                logger.warning("SQL timeout hit, trying again")
             else:
                 break
 
@@ -142,11 +153,11 @@ def _handle_who_response(irc_paramlist):
 
 
 def _handle_userhost_response(irc_paramlist):
-    response = irc_paramlist[1].lstrip(':')
-    nick, _, ident_host = response.partition('=')
+    response = irc_paramlist[1].lstrip(":")
+    nick, _, ident_host = response.partition("=")
     ident_host = ident_host[1:]  # strip the +/-
-    nick = nick.rstrip('*')  # strip the * which indicates oper status
-    ident, _, host = ident_host.partition('@')
+    nick = nick.rstrip("*")  # strip the * which indicates oper status
+    _, _, host = ident_host.partition("@")
     return nick, host
 
 
@@ -157,16 +168,19 @@ def _handle_whowas(irc_paramlist):
 def _handle_whowas_host(irc_paramlist):
     nick = irc_paramlist[1]
     hostmask = irc_paramlist[-1].strip().rsplit(None, 1)[1]
-    host = hostmask.split('@', 1)[1]
+    host = hostmask.split("@", 1)[1]
     return nick, host
 
 
 response_map = {
-    '352': ("user_mask", _handle_who_response),
-    '302': ("user_host", _handle_userhost_response),
-    '340': ("user_ip", _handle_userhost_response),  # USERIP responds with the same format as USERHOST
-    '314': ("user_whowas_mask", _handle_whowas),
-    '652': ("user_whowas_host", _handle_whowas_host),
+    "352": ("user_mask", _handle_who_response),
+    "302": ("user_host", _handle_userhost_response),
+    "340": (
+        "user_ip",
+        _handle_userhost_response,
+    ),  # USERIP responds with the same format as USERHOST
+    "314": ("user_whowas_mask", _handle_whowas),
+    "652": ("user_whowas_host", _handle_whowas_host),
 }
 
 
@@ -226,6 +240,7 @@ async def get_user_whowas(conn, nick):
     try:
         return tuple(await await_response(asyncio.gather(mask_fut, host_fut)))
     except asyncio.TimeoutError:
+        logger.warning("[user_tracking] Hit timeout for whowas data")
         return None, None
 
 
@@ -292,15 +307,19 @@ async def handle_snotice(db, event):
         raise ValueError("Unmatched snotice: " + content)
 
 
-async def set_user_data(event, db, table, column_name, now, nick, value_func, conn=None):
+async def set_user_data(
+    event, db, table, column_name, now, nick, value_func, conn=None
+):
     value = await value_func(event.conn if conn is None else conn, nick)
-    await event.async_call(update_user_data, db, table, column_name, now, nick, value)
+    await event.async_call(
+        update_user_data, db, table, column_name, now, nick, value
+    )
 
 
 async def on_nickchange(db, event, match):
     conn = event.conn
-    old_nick = match.group('oldnick')
-    new_nick = match.group('newnick')
+    old_nick = match.group("oldnick")
+    new_nick = match.group("newnick")
     now = datetime.datetime.now()
 
     old_nick_cf = rfc_casefold(old_nick)
@@ -312,9 +331,9 @@ async def on_nickchange(db, event, match):
     nick_change_futs = futures["nick_changes"]
 
     futs = {
-        'addr': create_future(conn.loop),
-        'host': create_future(conn.loop),
-        'mask': create_future(conn.loop),
+        "addr": create_future(conn.loop),
+        "host": create_future(conn.loop),
+        "mask": create_future(conn.loop),
     }
 
     data_futs[new_nick_cf] = futs
@@ -350,38 +369,73 @@ async def on_nickchange(db, event, match):
             _set_result(old_futs[name], value)
 
         await asyncio.gather(
-            event.async_call(update_user_data, db, table, name, now, old_nick, value),
-            event.async_call(update_user_data, db, table, name, now, new_nick, value)
+            event.async_call(
+                update_user_data, db, table, name, now, old_nick, value
+            ),
+            event.async_call(
+                update_user_data, db, table, name, now, new_nick, value
+            ),
         )
 
     async def _do_mask():
-        await _handle_set(masks_table, 'mask', get_user_mask)
+        await _handle_set(masks_table, "mask", get_user_mask)
 
     async def _timeout_whowas():
         try:
             await asyncio.gather(
-                _handle_set(hosts_table, 'host', get_user_host),
+                _handle_set(hosts_table, "host", get_user_host),
                 _do_mask(),
             )
         except (asyncio.TimeoutError, asyncio.CancelledError):
             mask, host = await get_user_whowas(event.conn, new_nick)
             if mask and host:
                 with suppress(KeyError):
-                    _set_result(old_futs['host'], host)
+                    _set_result(old_futs["host"], host)
 
                 with suppress(KeyError):
-                    _set_result(old_futs['mask'], mask)
+                    _set_result(old_futs["mask"], mask)
 
                 await asyncio.gather(
-                    event.async_call(update_user_data, db, hosts_table, 'host', now, old_nick, host),
-                    event.async_call(update_user_data, db, hosts_table, 'host', now, new_nick, host),
-
-                    event.async_call(update_user_data, db, masks_table, 'mask', now, old_nick, mask),
-                    event.async_call(update_user_data, db, masks_table, 'mask', now, new_nick, mask),
+                    event.async_call(
+                        update_user_data,
+                        db,
+                        hosts_table,
+                        "host",
+                        now,
+                        old_nick,
+                        host,
+                    ),
+                    event.async_call(
+                        update_user_data,
+                        db,
+                        hosts_table,
+                        "host",
+                        now,
+                        new_nick,
+                        host,
+                    ),
+                    event.async_call(
+                        update_user_data,
+                        db,
+                        masks_table,
+                        "mask",
+                        now,
+                        old_nick,
+                        mask,
+                    ),
+                    event.async_call(
+                        update_user_data,
+                        db,
+                        masks_table,
+                        "mask",
+                        now,
+                        new_nick,
+                        mask,
+                    ),
                 )
 
     await asyncio.gather(
-        _handle_set(address_table, 'addr', get_user_ip),
+        _handle_set(address_table, "addr", get_user_ip),
         _timeout_whowas(),
     )
 
@@ -390,10 +444,9 @@ async def on_nickchange(db, event, match):
 
 
 async def on_user_connect(db, event, match):
-    nick = match.group('nick')
-    ident = match.group('ident')
-    host = match.group('host')
-    addr = match.group('addr')
+    nick = match.group("nick")
+    host = match.group("host")
+    addr = match.group("addr")
 
     now = datetime.datetime.now()
 
@@ -403,7 +456,7 @@ async def on_user_connect(db, event, match):
     mask_fut = create_future(conn.loop)
 
     futs = {
-        'mask': mask_fut,
+        "mask": mask_fut,
     }
 
     data_futs = conn.memory["sherlock"]["futures"]["data"]
@@ -418,14 +471,20 @@ async def on_user_connect(db, event, match):
 
         del futs[name]
 
-        await event.async_call(update_user_data, db, table, name, now, nick, value)
+        await event.async_call(
+            update_user_data, db, table, name, now, nick, value
+        )
 
     async def _do_mask():
-        await _handle_set(masks_table, 'mask', get_user_mask)
+        await _handle_set(masks_table, "mask", get_user_mask)
 
     await asyncio.gather(
-        event.async_call(update_user_data, db, hosts_table, 'host', now, nick, host),
-        event.async_call(update_user_data, db, address_table, 'addr', now, nick, addr),
+        event.async_call(
+            update_user_data, db, hosts_table, "host", now, nick, host
+        ),
+        event.async_call(
+            update_user_data, db, address_table, "addr", now, nick, addr
+        ),
         _do_mask(),
     )
 
@@ -434,9 +493,9 @@ async def on_user_connect(db, event, match):
 
 
 async def on_user_quit(db, event, match):
-    nick = match.group('nick')
-    host = match.group('host')
-    addr = match.group('addr')
+    nick = match.group("nick")
+    host = match.group("host")
+    addr = match.group("addr")
 
     now = datetime.datetime.now()
 
@@ -461,30 +520,36 @@ async def on_user_quit(db, event, match):
                 del nick_change_futs[nick_cf]
 
     with suppress(KeyError):
-        _set_result(old_futs['host'], host)
+        _set_result(old_futs["host"], host)
 
     with suppress(KeyError):
-        _set_result(old_futs['addr'], addr)
+        _set_result(old_futs["addr"], addr)
 
     async def _do_whowas():
         mask, _ = await get_user_whowas(event.conn, nick)
         if mask:
             with suppress(KeyError):
-                _set_result(old_futs['mask'], mask)
+                _set_result(old_futs["mask"], mask)
 
-            await event.async_call(update_user_data, db, masks_table, 'mask', now, nick, mask)
+            await event.async_call(
+                update_user_data, db, masks_table, "mask", now, nick, mask
+            )
 
     await asyncio.gather(
-        event.async_call(update_user_data, db, hosts_table, 'host', now, nick, host),
-        event.async_call(update_user_data, db, address_table, 'addr', now, nick, addr),
+        event.async_call(
+            update_user_data, db, hosts_table, "host", now, nick, host
+        ),
+        event.async_call(
+            update_user_data, db, address_table, "addr", now, nick, addr
+        ),
         _do_whowas(),
     )
 
 
 HANDLERS = {
-    'nick': on_nickchange,
-    'connect': on_user_connect,
-    'quit': on_user_quit,
+    "nick": on_nickchange,
+    "connect": on_user_connect,
+    "quit": on_user_quit,
 }
 
 
@@ -492,10 +557,10 @@ async def ignore_timeout(coro):
     try:
         return await coro
     except (asyncio.TimeoutError, asyncio.CancelledError):
-        pass
+        logger.warning("Timeout reached for %s", coro)
 
 
-@hook.irc_raw('352')
+@hook.irc_raw("352")
 async def on_who(conn, irc_paramlist):
     try:
         lines, fut = conn.memory["sherlock"]["futures"]["who_0"][0]
@@ -506,7 +571,7 @@ async def on_who(conn, irc_paramlist):
         lines.append(irc_paramlist[1:])
 
 
-@hook.irc_raw('315')
+@hook.irc_raw("315")
 async def on_who_end(conn, irc_paramlist):
     name = irc_paramlist[1]
     if name != "0":
@@ -522,12 +587,18 @@ async def on_who_end(conn, irc_paramlist):
 
 @hook.on_start
 async def get_initial_data(bot, loop, db, event):
-    wrap_future(asyncio.gather(
-        *[get_initial_connection_data(conn, loop, db, event) for conn in bot.connections.values() if conn.connected]
-    ))
+    wrap_future(
+        asyncio.gather(
+            *[
+                get_initial_connection_data(conn, loop, db, event)
+                for conn in bot.connections.values()
+                if conn.connected
+            ]
+        )
+    )
 
 
-@hook.irc_raw('376')
+@hook.irc_raw("376")
 @hook.command("getdata", permissions=["botcontrol"], autohelp=False)
 async def get_initial_connection_data(conn, loop, db, event):
     """
@@ -538,7 +609,7 @@ async def get_initial_connection_data(conn, loop, db, event):
     :type db: sqlalchemy.orm.Session
     :type event: cloudbot.event.Event
     """
-    if conn.nick.endswith('-dev') and not hasattr(event, 'triggered_command'):
+    if conn.nick.endswith("-dev") and not hasattr(event, "triggered_command"):
         # Ignore initial data update on development instances
         return
 
@@ -567,19 +638,45 @@ async def get_initial_connection_data(conn, loop, db, event):
 
     users = []
     for line in lines:
-        chan, ident, host, server, nick, status, realname = line
-        num_hops, _, realname = realname.partition(' ')
+        _, _, host, _, nick, _, realname = line
+        _, _, realname = realname.partition(" ")
         users.append((nick, host))
 
     futs = [
-        wrap_future(event.async_call(update_user_data, db, masks_table, 'mask', now, nick, mask))
+        wrap_future(
+            event.async_call(
+                update_user_data, db, masks_table, "mask", now, nick, mask
+            )
+        )
         for nick, mask in users
     ]
 
-    for nick, mask in users:
+    for nick, _ in users:
         await asyncio.gather(
-            ignore_timeout(set_user_data(event, db, hosts_table, 'host', now, nick, get_user_host, conn)),
-            ignore_timeout(set_user_data(event, db, address_table, 'addr', now, nick, get_user_ip, conn))
+            ignore_timeout(
+                set_user_data(
+                    event,
+                    db,
+                    hosts_table,
+                    "host",
+                    now,
+                    nick,
+                    get_user_host,
+                    conn,
+                )
+            ),
+            ignore_timeout(
+                set_user_data(
+                    event,
+                    db,
+                    address_table,
+                    "addr",
+                    now,
+                    nick,
+                    get_user_ip,
+                    conn,
+                )
+            ),
         )
 
     await asyncio.gather(*futs)
