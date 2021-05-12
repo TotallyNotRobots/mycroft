@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from cloudbot.util.async_util import create_future
 
-logger = logging.getLogger('cloudbot')
+logger = logging.getLogger("cloudbot")
 
 
 class ExecutorWrapper:
@@ -26,7 +26,9 @@ class ExecutorWrapper:
 
 
 class ExecutorPool:
-    def __init__(self, max_executors=None, executor_type=ThreadPoolExecutor, **kwargs):
+    def __init__(
+        self, max_executors=None, executor_type=ThreadPoolExecutor, **kwargs
+    ):
         if max_executors is None:
             max_executors = (os.cpu_count() or 1) * 5
 

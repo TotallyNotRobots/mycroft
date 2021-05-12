@@ -76,13 +76,15 @@ async def test_core_connects():
         "mock",
         "foo",
         "FooBot",
-        config={"connection": {"server": "example.com", "password": "foobar123"}},
+        config={
+            "connection": {"server": "example.com", "password": "foobar123"}
+        },
     )
     assert client.type == "mock"
 
     await client.connect()
 
-    from plugins.core.core_connect import conn_pass, conn_nick, conn_user
+    from plugins.core.core_connect import conn_nick, conn_pass, conn_user
 
     conn_pass(client)
     client.send.assert_called_with("PASS foobar123")
