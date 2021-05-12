@@ -20,17 +20,17 @@ from operator import attrgetter
 from typing import Optional
 
 import requests
-from requests import RequestException, Response, PreparedRequest, HTTPError
 from pbincli import api as pb_api
 from pbincli.format import Paste as pb_Paste
+from requests import HTTPError, PreparedRequest, RequestException, Response
 
 # Constants
-DEFAULT_SHORTENER = 'is.gd'
-DEFAULT_PASTEBIN = ''
+DEFAULT_SHORTENER = "is.gd"
+DEFAULT_PASTEBIN = ""
 
-HASTEBIN_SERVER = 'https://hastebin.com'
+HASTEBIN_SERVER = "https://hastebin.com"
 
-logger = logging.getLogger('cloudbot')
+logger = logging.getLogger("cloudbot")
 
 
 # Shortening / pasting
@@ -55,7 +55,7 @@ class Registry:
             if self.working:
                 return True
 
-            if (time.time() - self.last_check) > (5*60):
+            if (time.time() - self.last_check) > (5 * 60):
                 # It's been 5 minutes, try again
                 self.working = True
                 return True
@@ -81,16 +81,13 @@ class Registry:
     def get_item(self, name):
         return self._items.get(name)
 
-    def get_working(self) -> Optional['Item']:
-        working = [
-            item for item in self._items.values()
-            if item.should_use
-        ]
+    def get_working(self) -> Optional["Item"]:
+        working = [item for item in self._items.values() if item.should_use]
 
         if not working:
             return None
 
-        return min(working, key=attrgetter('uses'))
+        return min(working, key=attrgetter("uses"))
 
     def remove(self, name):
         del self._items[name]
@@ -139,7 +136,7 @@ class NoPasteException(Exception):
     """No pastebins succeeded"""
 
 
-def paste(data, ext='txt', service=DEFAULT_PASTEBIN, raise_on_no_paste=False):
+def paste(data, ext="txt", service=DEFAULT_PASTEBIN, raise_on_no_paste=False):
     if service:
         impl = pastebins.get_item(service)
     else:
@@ -176,7 +173,7 @@ class ServiceHTTPError(ServiceError):
     def __init__(self, message: str, response: Response):
         super().__init__(
             response.request,
-            '[HTTP {}] {}'.format(response.status_code, message)
+            "[HTTP {}] {}".format(response.status_code, message),
         )
         self.message = message
         self.response = response
@@ -205,10 +202,10 @@ class Shortener:
         except RequestException as e:
             raise ServiceError(e.request, "Connection error occurred") from e
 
-        if 'location' in r.headers:
-            return r.headers['location']
+        if "location" in r.headers:
+            return r.headers["location"]
 
-        raise ServiceHTTPError('That URL does not exist', r)
+        raise ServiceHTTPError("That URL does not exist", r)
 
 
 class Pastebin:
@@ -227,9 +224,9 @@ pastebins = Registry()
 
 class Isgd(Shortener):
     def shorten(self, url, custom=None, key=None):
-        p = {'url': url, 'shorturl': custom, 'format': 'json'}
+        p = {"url": url, "shorturl": custom, "format": "json"}
         try:
-            r = requests.get('http://is.gd/create.php', params=p)
+            r = requests.get("http://is.gd/create.php", params=p)
             r.raise_for_status()
         except HTTPError as e:
             r = e.response
@@ -239,15 +236,15 @@ class Isgd(Shortener):
 
         j = r.json()
 
-        if 'shorturl' in j:
-            return j['shorturl']
+        if "shorturl" in j:
+            return j["shorturl"]
 
-        raise ServiceHTTPError(j['errormessage'], r)
+        raise ServiceHTTPError(j["errormessage"], r)
 
     def expand(self, url):
-        p = {'shorturl': url, 'format': 'json'}
+        p = {"shorturl": url, "format": "json"}
         try:
-            r = requests.get('http://is.gd/forward.php', params=p)
+            r = requests.get("http://is.gd/forward.php", params=p)
             r.raise_for_status()
         except HTTPError as e:
             r = e.response
@@ -257,19 +254,24 @@ class Isgd(Shortener):
 
         j = r.json()
 
-        if 'url' in j:
-            return j['url']
+        if "url" in j:
+            return j["url"]
 
-        raise ServiceHTTPError(j['errormessage'], r)
+        raise ServiceHTTPError(j["errormessage"], r)
 
 
 class Googl(Shortener):
     def shorten(self, url, custom=None, key=None):
-        h = {'content-type': 'application/json'}
-        k = {'key': key}
-        p = {'longUrl': url}
+        h = {"content-type": "application/json"}
+        k = {"key": key}
+        p = {"longUrl": url}
         try:
-            r = requests.post('https://www.googleapis.com/urlshortener/v1/url', params=k, data=json.dumps(p), headers=h)
+            r = requests.post(
+                "https://www.googleapis.com/urlshortener/v1/url",
+                params=k,
+                data=json.dumps(p),
+                headers=h,
+            )
             r.raise_for_status()
         except HTTPError as e:
             r = e.response
@@ -279,15 +281,17 @@ class Googl(Shortener):
 
         j = r.json()
 
-        if 'error' not in j:
-            return j['id']
+        if "error" not in j:
+            return j["id"]
 
-        raise ServiceHTTPError(j['error']['message'], r)
+        raise ServiceHTTPError(j["error"]["message"], r)
 
     def expand(self, url):
-        p = {'shortUrl': url}
+        p = {"shortUrl": url}
         try:
-            r = requests.get('https://www.googleapis.com/urlshortener/v1/url', params=p)
+            r = requests.get(
+                "https://www.googleapis.com/urlshortener/v1/url", params=p
+            )
             r.raise_for_status()
         except HTTPError as e:
             r = e.response
@@ -297,17 +301,17 @@ class Googl(Shortener):
 
         j = r.json()
 
-        if 'error' not in j:
-            return j['longUrl']
+        if "error" not in j:
+            return j["longUrl"]
 
-        raise ServiceHTTPError(j['error']['message'], r)
+        raise ServiceHTTPError(j["error"]["message"], r)
 
 
 class Gitio(Shortener):
     def shorten(self, url, custom=None, key=None):
-        p = {'url': url, 'code': custom}
+        p = {"url": url, "code": custom}
         try:
-            r = requests.post('http://git.io', data=p)
+            r = requests.post("http://git.io", data=p)
             r.raise_for_status()
         except HTTPError as e:
             r = e.response
@@ -316,9 +320,9 @@ class Gitio(Shortener):
             raise ServiceError(e.request, "Connection error occurred") from e
 
         if r.status_code == requests.codes.created:
-            s = r.headers['location']
+            s = r.headers["location"]
             if custom and custom not in s:
-                raise ServiceHTTPError('That URL is already in use', r)
+                raise ServiceHTTPError("That URL is already in use", r)
 
             return s
 
@@ -337,7 +341,7 @@ class Hastebin(Pastebin):
             encoded = data
 
         try:
-            r = requests.post(self.url + '/documents', data=encoded)
+            r = requests.post(self.url + "/documents", data=encoded)
             r.raise_for_status()
         except HTTPError as e:
             r = e.response
@@ -348,25 +352,26 @@ class Hastebin(Pastebin):
             j = r.json()
 
             if r.status_code is requests.codes.ok:
-                return '{}/{}.{}'.format(self.url, j['key'], ext)
+                return "{}/{}.{}".format(self.url, j["key"], ext)
 
-            raise ServiceHTTPError(j['message'], r)
+            raise ServiceHTTPError(j["message"], r)
 
 
 class PrivateBin(Pastebin):
     def __init__(self, url):
         super().__init__()
         self.api_client = pb_api.PrivateBin(
-            str(url), {'proxy': '', 'nocheckcert': False, 'noinsecurewarn': False}
+            str(url),
+            {"proxy": "", "nocheckcert": False, "noinsecurewarn": False},
         )
 
-    def paste(self, data, ext, password=None, expire='1day'):
-        if ext in ('txt', 'text'):
-            syntax = 'plaintext'
-        elif ext in ('md', 'markdown'):
-            syntax = 'markdown'
+    def paste(self, data, ext, password=None, expire="1day"):
+        if ext in ("txt", "text"):
+            syntax = "plaintext"
+        elif ext in ("md", "markdown"):
+            syntax = "markdown"
         else:
-            syntax = 'syntaxhighlighting'
+            syntax = "syntaxhighlighting"
 
         try:
             version = self.api_client.getVersion()
@@ -409,17 +414,17 @@ class PrivateBin(Pastebin):
         except RequestException as e:
             raise ServiceError(e.request, "Connection error occurred") from e
 
-        if result['status'] != 0:
-            raise ServiceError(None, result['message'])
+        if result["status"] != 0:
+            raise ServiceError(None, result["message"])
 
         return "{}?{}#{}".format(
-            self.api_client.server, result['id'], _paste.getHash()
+            self.api_client.server, result["id"], _paste.getHash()
         )
 
 
-pastebins.register('hastebin', Hastebin(HASTEBIN_SERVER))
-pastebins.register('privatebin', PrivateBin('https://privatebin.net/'))
+pastebins.register("hastebin", Hastebin(HASTEBIN_SERVER))
+pastebins.register("privatebin", PrivateBin("https://privatebin.net/"))
 
-shorteners.register('git.io', Gitio())
-shorteners.register('goo.gl', Googl())
-shorteners.register('is.gd', Isgd())
+shorteners.register("git.io", Gitio())
+shorteners.register("goo.gl", Googl())
+shorteners.register("is.gd", Isgd())
