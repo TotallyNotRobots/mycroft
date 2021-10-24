@@ -258,6 +258,17 @@ def init_futures(bot):
         }
 
 
+def _is_server(nick, server_info):
+    if nick.casefold() == server_info["server_name"]:
+        return True
+
+    # Temp fix for servers that inconsistently send different server names
+    if "." in nick:
+        return True
+
+    return False
+
+
 @hook.event(EventType.notice)
 async def on_notice(db, nick, chan, conn, event):
     try:
@@ -271,7 +282,7 @@ async def on_notice(db, nick, chan, conn, event):
         logger.debug("Notice was not private")
         return
 
-    if nick.casefold() != server_info["server_name"]:
+    if not _is_server(nick, server_info):
         # This message isn't from the server, ignore it
         logger.debug("Private notice not from the server: %s", nick)
         return
