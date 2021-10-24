@@ -263,14 +263,17 @@ async def on_notice(db, nick, chan, conn, event):
     try:
         server_info = conn.memory["server_info"]
     except LookupError:
+        logger.debug("Unable to find server info")
         return
 
     if chan.casefold() != nick.casefold():
         # This isn't a PM / Private notice, ignore it
+        logger.debug("Notice was not private")
         return
 
     if nick.casefold() != server_info["server_name"]:
         # This message isn't from the server, ignore it
+        logger.debug("Private notice not from the server: %s", nick)
         return
 
     await handle_snotice(db, event)
