@@ -5,8 +5,8 @@ Tracks verious server info like ISUPPORT tokens
 from typing import Callable, Dict, MutableMapping, TypeVar
 
 from cloudbot import hook
-from cloudbot.client import Client
 from cloudbot.clients.irc import IrcClient
+from cloudbot.util import web
 from cloudbot.util.irc import ChannelMode, ModeType, StatusMode
 
 DEFAULT_STATUS = (
@@ -140,3 +140,10 @@ def on_isupport(conn, irc_paramlist, nick):
         handler = isupport_handlers.get(name)
         if handler:
             handler(value, serv_info)
+
+
+@hook.command("dump_server_info", permissions=["botcontrol"], autohelp=False)
+def dump_server_info(conn):
+    """- Dump all server info"""
+    serv_info = get_server_info(conn)
+    return web.paste(str(serv_info))
