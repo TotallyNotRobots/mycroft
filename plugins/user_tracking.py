@@ -635,6 +635,7 @@ def migrate_data(db):
     merge(old_masks, masks_table, 'mask')
 
     db.commit()
+    return "Done."
 
 
 @hook.irc_raw("376")
