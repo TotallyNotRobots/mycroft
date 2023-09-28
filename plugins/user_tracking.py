@@ -612,6 +612,31 @@ async def get_initial_data(bot, loop, db, event):
     )
 
 
+@hook.command("migratedata", permissions=['botcontrol'], autohelp=False)
+def migrate_data(db):
+    old_addrs = db.execute('select * from old_addrs')
+    old_hosts = db.execute('select * from old_hosts')
+    old_masks = db.execute('select * from old_masks')
+    def merge(old_data, new_table, column):
+        for old_row in old_data:
+            old_row = dict(old_row)
+            clause = and_(
+                new_table.c.nick == old_row['nick'],
+                getattr(new_table.c, column) == old_row[column],
+            )
+            existing = list(db.execute(new_table.select().where(clause)).fetchall())
+            if existing:
+                db.execute(new_table.update().values(created=old_row['created']).where(clause))
+            else:
+                db.execute(new_table.insert().values(**old_row))
+
+    merge(old_addrs, address_table, 'addr')
+    merge(old_hosts, hosts_table, 'host')
+    merge(old_masks, masks_table, 'mask')
+
+    db.commit()
+
+
 @hook.irc_raw("376")
 @hook.command("getdata", permissions=["botcontrol"], autohelp=False)
 async def get_initial_connection_data(conn, loop, db, event):
