@@ -21,9 +21,13 @@ class MockBot:
         db: Optional[MockDB] = None,
         base_dir=None,
     ):
-        self.db_executor_pool = ExecutorPool(
-            50, max_workers=1, thread_name_prefix="cloudbot-db"
-        )
+        if loop:
+            self.db_executor_pool = ExecutorPool(
+                50, max_workers=1, thread_name_prefix="cloudbot-db", loop=loop
+            )
+        else:
+            self.db_executor_pool = None
+
         self.old_db = None
         self.do_db_migrate = False
         self.loop = loop

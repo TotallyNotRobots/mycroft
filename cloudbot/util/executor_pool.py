@@ -1,3 +1,4 @@
+from asyncio import AbstractEventLoop
 import logging
 import os
 import random
@@ -27,8 +28,8 @@ class ExecutorWrapper:
 
 class ExecutorPool:
     def __init__(
-        self, max_executors=None, executor_type=ThreadPoolExecutor, **kwargs
-    ):
+        self, max_executors=None, executor_type=ThreadPoolExecutor, *, loop:AbstractEventLoop, **kwargs
+    ) -> None:
         if max_executors is None:
             max_executors = (os.cpu_count() or 1) * 5
 
@@ -41,7 +42,7 @@ class ExecutorPool:
 
         self._executors = []
         self._free_executors = []
-        self._executor_waiter = create_future()
+        self._executor_waiter = create_future(loop)
 
     def get(self):
         return ExecutorWrapper(self, self._get())
