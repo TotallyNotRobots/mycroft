@@ -9,6 +9,6 @@ py-irclib == 0.3.0
 requests == 2.31.0
 sjcl == 0.2.1
 SQLAlchemy == 1.4.32
-venusian == 1.2.0
+venusian == 3.1.0
 watchdog == 4.0.0
 yarl == 1.9.4
