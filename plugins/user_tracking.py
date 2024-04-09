@@ -244,6 +244,16 @@ async def get_user_whowas(conn, nick):
         return None, None
 
 
+@hook.command('testdata', permissions=['botcontrol'])
+async def get_nick_data(conn, text):
+    start = datetime.datetime.now()
+    ip = await get_user_ip(conn, text)
+    mask = await get_user_mask(conn, text)
+    host = await get_user_host(conn, text)
+    diff = datetime.datetime.now() - start
+    return f"Got: {ip} {host} {mask} in {diff.total_seconds()} seconds"
+
+
 @hook.on_start
 def clear_regex_cache(bot):
     for conn in bot.connections.values():
@@ -610,32 +620,6 @@ async def get_initial_data(bot, loop, db, event):
             ]
         )
     )
-
-
-@hook.command("migratedata", permissions=['botcontrol'], autohelp=False)
-def migrate_data(db):
-    old_addrs = db.execute('select * from old_addrs')
-    old_hosts = db.execute('select * from old_hosts')
-    old_masks = db.execute('select * from old_masks')
-    def merge(old_data, new_table, column):
-        for old_row in old_data:
-            old_row = dict(old_row)
-            clause = and_(
-                new_table.c.nick == old_row['nick'],
-                getattr(new_table.c, column) == old_row[column],
-            )
-            existing = list(db.execute(new_table.select().where(clause)).fetchall())
-            if existing:
-                db.execute(new_table.update().values(created=old_row['created']).where(clause))
-            else:
-                db.execute(new_table.insert().values(**old_row))
-
-    merge(old_addrs, address_table, 'addr')
-    merge(old_hosts, hosts_table, 'host')
-    merge(old_masks, masks_table, 'mask')
-
-    db.commit()
-    return "Done."
 
 
 @hook.irc_raw("376")
