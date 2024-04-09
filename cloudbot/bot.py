@@ -159,7 +159,9 @@ class CloudBot:
         db_path = self.config.get("database", "sqlite:///cloudbot.db")
         self.db_engine = create_engine(db_path)
         database.configure(self.db_engine)
-        self.db_executor_pool = ExecutorPool(50, max_workers=1, thread_name_prefix='cloudbot-db')
+        self.db_executor_pool = ExecutorPool(
+            50, max_workers=1, thread_name_prefix="cloudbot-db"
+        )
 
         logger.debug("Database system initialised.")
 

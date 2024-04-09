@@ -58,7 +58,8 @@ def run_coroutine_threadsafe(coro, loop):
     asyncio.run_coroutine_threadsafe(coro, loop)
 
 
-def create_future(loop):
+def create_future(loop=None):
+    loop = loop if loop is not None else asyncio.get_event_loop()
     return loop.create_future()
 
 

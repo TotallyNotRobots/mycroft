@@ -3,7 +3,6 @@ import platform
 import time
 from datetime import timedelta
 
-import cloudbot
 from cloudbot import hook
 from cloudbot.util.filesize import size as format_bytes
 
@@ -11,9 +10,6 @@ try:
     import psutil
 except ImportError:
     psutil = None
-
-from cloudbot import hook
-from cloudbot.util.filesize import size as format_bytes
 
 
 @hook.command(autohelp=False)

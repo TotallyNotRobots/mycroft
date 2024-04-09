@@ -1,5 +1,4 @@
 import random
-
 import time
 
 
@@ -17,7 +16,7 @@ class Delayer:
 
     def __enter__(self):
         self._exp = min(self._exp + 1, self._max)
-        wait = self.randfunc(0, self._base * (2 ** self._exp))
+        wait = self.randfunc(0, self._base * (2**self._exp))
         time.sleep(wait)
         return self
 

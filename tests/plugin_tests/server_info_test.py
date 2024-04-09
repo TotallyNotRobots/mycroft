@@ -14,7 +14,7 @@ def test_parse_isupport():
         "Foo=bar",
     ]
     params = ["foo"] + list(tokens) + ["blah"]
-    server_info.on_isupport(conn, params)
+    server_info.on_isupport(conn, params, "server")
     mode_a = ChannelMode("a", ModeType.A)
     mode_b = ChannelMode("b", ModeType.B)
     mode_c = ChannelMode("c", ModeType.C)
@@ -33,6 +33,7 @@ def test_parse_isupport():
                 "o": op,
                 "v": voice,
             },
+            "server_name": "server",
             "extban_prefix": "$",
             "extbans": "abcd",
             "isupport_tokens": {

@@ -24,7 +24,7 @@ def do_isupport(bot):
 
 
 @hook.connect()
-def clear_isupport(conn: 'IrcClient'):
+def clear_isupport(conn: "IrcClient"):
     serv_info = conn.memory.setdefault("server_info", {})
     statuses = get_status_modes(serv_info, clear=True)
     for s in DEFAULT_STATUS:

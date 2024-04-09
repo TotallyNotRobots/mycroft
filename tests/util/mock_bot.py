@@ -7,6 +7,7 @@ from cloudbot.bot import CloudBot
 from cloudbot.client import Client
 from cloudbot.plugin import PluginManager
 from cloudbot.util.async_util import create_future
+from cloudbot.util.executor_pool import ExecutorPool
 from tests.util.mock_config import MockConfig
 from tests.util.mock_db import MockDB
 
@@ -20,6 +21,9 @@ class MockBot:
         db: Optional[MockDB] = None,
         base_dir=None,
     ):
+        self.db_executor_pool = ExecutorPool(
+            50, max_workers=1, thread_name_prefix="cloudbot-db"
+        )
         self.old_db = None
         self.do_db_migrate = False
         self.loop = loop

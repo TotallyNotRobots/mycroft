@@ -2,7 +2,7 @@ import datetime
 import importlib
 import logging
 from typing import List
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import freezegun
 import pytest
@@ -93,3 +93,11 @@ def freeze_time():
     dt = datetime.datetime(2019, 8, 22, 18, 14, 36)
     with freezegun.freeze_time(dt, tz_offset=-5) as ft:
         yield ft
+
+
+@pytest.fixture()
+def unset_bot():
+    try:
+        yield
+    finally:
+        bot.set(None)

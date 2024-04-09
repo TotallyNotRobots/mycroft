@@ -20,6 +20,8 @@ from operator import attrgetter
 from typing import Dict, Optional, Union
 
 import requests
+from pbincli import api as pb_api
+from pbincli.format import Paste as pb_Paste
 from requests import (
     HTTPError,
     PreparedRequest,
@@ -27,9 +29,6 @@ from requests import (
     RequestException,
     Response,
 )
-
-from pbincli import api as pb_api
-from pbincli.format import Paste as pb_Paste
 
 # Constants
 DEFAULT_SHORTENER = "is.gd"
@@ -376,16 +375,17 @@ class PrivateBin(Pastebin):
     def __init__(self, url):
         super().__init__()
         self.api_client = pb_api.PrivateBin(
-            str(url), {'proxy': '', 'nocheckcert': False, 'noinsecurewarn': False}
+            str(url),
+            {"proxy": "", "nocheckcert": False, "noinsecurewarn": False},
         )
 
-    def paste(self, data, ext, password=None, expire='1day'):
-        if ext in ('txt', 'text'):
-            syntax = 'plaintext'
-        elif ext in ('md', 'markdown'):
-            syntax = 'markdown'
+    def paste(self, data, ext, password=None, expire="1day"):
+        if ext in ("txt", "text"):
+            syntax = "plaintext"
+        elif ext in ("md", "markdown"):
+            syntax = "markdown"
         else:
-            syntax = 'syntaxhighlighting'
+            syntax = "syntaxhighlighting"
 
         try:
             version = self.api_client.getVersion()
@@ -428,16 +428,16 @@ class PrivateBin(Pastebin):
         except RequestException as e:
             raise ServiceError(e.request, "Connection error occurred") from e
 
-        if result['status'] != 0:
-            raise ServiceError(None, result['message'])
+        if result["status"] != 0:
+            raise ServiceError(None, result["message"])
 
         return "{}?{}#{}".format(
-            self.api_client.server, result['id'], _paste.getHash()
+            self.api_client.server, result["id"], _paste.getHash()
         )
 
 
-pastebins.register('hastebin', Hastebin(HASTEBIN_SERVER))
-pastebins.register('privatebin', PrivateBin('https://privatebin.net/'))
+pastebins.register("hastebin", Hastebin(HASTEBIN_SERVER))
+pastebins.register("privatebin", PrivateBin("https://privatebin.net/"))
 
 shorteners.register("git.io", Gitio())
 shorteners.register("goo.gl", Googl())

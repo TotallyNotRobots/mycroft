@@ -6,33 +6,34 @@ Author:
 """
 
 import datetime
-import hashlib
-import json
-import os
 import re
 import shlex
 import zlib
 from argparse import ArgumentParser
 from base64 import b64encode
 from collections import defaultdict
-from contextlib import redirect_stdout, redirect_stderr
+from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 from operator import itemgetter
+from typing import Dict, List, Tuple
 
-import requests
 from requests import RequestException
-from sjcl import SJCL
-from sqlalchemy import func, column
+from sqlalchemy import column, func
 
 from cloudbot import hook
 from cloudbot.util import colors, timeparse, web
 from cloudbot.util.formatting import chunk_str, get_text_list, pluralize_auto
-from plugins.user_tracking import hosts_table, address_table, masks_table, rfc_casefold
+from plugins.user_tracking import (
+    address_table,
+    hosts_table,
+    masks_table,
+    rfc_casefold,
+)
 
 
 def format_list(name, data):
-    begin = colors.parse("$(dgreen){}$(clear): ".format(name))
-    body = ', '.join(data)
+    begin = colors.parse(f"$(dgreen){name}$(clear): ")
+    body = ", ".join(data)
 
     return chunk_str(begin + body)
 
@@ -64,69 +65,75 @@ def check_channel(conn, chan):
 
 def format_results(nicks, masks, hosts, addresses, is_admin):
     if nicks:
-        yield from format_list('nicks', nicks)
+        yield from format_list("nicks", nicks)
 
     if masks:
-        yield from format_list('masks', masks)
+        yield from format_list("masks", masks)
 
     if is_admin:
         if hosts:
-            yield from format_list('hosts', hosts)
+            yield from format_list("hosts", hosts)
 
         if addresses:
-            yield from format_list('addrs', addresses)
+            yield from format_list("addrs", addresses)
 
 
 def paste_results(nicks, masks, hosts, addresses, is_admin):
     if nicks:
-        yield 'Nicks:'
-        yield from ("  - '{}'".format(nick) for nick in nicks)
+        yield "Nicks:"
+        yield from (f"  - '{nick}'" for nick in nicks)
         yield ""
 
     if masks:
-        yield 'Masks:'
-        yield from ("  - '{}'".format(mask) for mask in masks)
+        yield "Masks:"
+        yield from (f"  - '{mask}'" for mask in masks)
         yield ""
 
     if is_admin:
         if hosts:
-            yield 'Hosts:'
-            yield from ("  - '{}'".format(host) for host in hosts)
+            yield "Hosts:"
+            yield from (f"  - '{host}'" for host in hosts)
             yield ""
 
         if addresses:
-            yield 'Addresses:'
-            yield from ("  - '{}'".format(addr) for addr in addresses)
+            yield "Addresses:"
+            yield from (f"  - '{addr}'" for addr in addresses)
             yield ""
 
 
 def format_count(nicks, masks, hosts, addresses, is_admin, duration):
     counts = [
-        (len(nicks), 'nick'),
-        (len(masks), 'mask'),
+        (len(nicks), "nick"),
+        (len(masks), "mask"),
     ]
     if is_admin:
-        counts.extend([
-            (len(hosts), 'host'),
-            (len(addresses), 'address'),
-        ])
+        counts.extend(
+            [
+                (len(hosts), "host"),
+                (len(addresses), "address"),
+            ]
+        )
 
     if all(count == 0 for count, thing in counts):
         return "None."
     else:
         return "Done. Found {} in {:.3f} seconds".format(
-            get_text_list([pluralize_auto(count, thing) for count, thing in counts], 'and'), duration)
+            get_text_list(
+                [pluralize_auto(count, thing) for count, thing in counts], "and"
+            ),
+            duration,
+        )
 
 
 def compress(s):
     co = zlib.compressobj(wbits=-zlib.MAX_WBITS)
     b = co.compress(s) + co.flush()
 
-    return b64encode(''.join(map(chr, b)).encode())
+    return b64encode("".join(map(chr, b)).encode())
 
 
 def encode_cipher(cipher):
-    for k in ['salt', 'iv', 'ct']:
+    for k in ["salt", "iv", "ct"]:
         cipher[k] = cipher[k].decode()
 
     return cipher
@@ -134,19 +141,23 @@ def encode_cipher(cipher):
 
 def do_paste(it):
     try:
-        url = web.pastebins['privatebin'].paste('\n'.join(it), 'yaml', expire='1hour')
+        url = web.pastebins["privatebin"].paste(
+            "\n".join(it), "yaml", expire="1hour"
+        )
     except (RequestException, web.ServiceError) as e:
-        return "Paste failed. ({})".format(e)
+        return f"Paste failed. ({e})"
 
-    return "Paste: {} (paste expires in 1 hour)".format(url)
+    return f"Paste: {url} (paste expires in 1 hour)"
 
 
-def format_results_or_paste(terms, duration, nicks, masks, hosts, addresses, is_admin, paste=None):
+def format_results_or_paste(
+    terms, duration, nicks, masks, hosts, addresses, is_admin, paste=None
+):
     if isinstance(terms, str):
         terms = [terms]
 
-    terms_list = get_text_list(["'{}'".format(term) for term in terms], 'and')
-    yield "Results for {}:".format(terms_list)
+    terms_list = get_text_list([f"'{term}'" for term in terms], "and")
+    yield f"Results for {terms_list}:"
     lines = list(format_results(nicks, masks, hosts, addresses, is_admin))
     if (len(lines) > 5 and paste is not False) or paste is True:
         yield do_paste(paste_results(nicks, masks, hosts, addresses, is_admin))
@@ -158,44 +169,50 @@ def format_results_or_paste(terms, duration, nicks, masks, hosts, addresses, is_
 
 # QUERY FUNCTIONS
 
+
 def filter_seen(_query, last_seen):
     if last_seen is not None:
-        return _query.where(column('seen') > last_seen)
+        return _query.where(column("seen") > last_seen)
 
     return _query
 
 
 def get_for_nicks(db, table, column_name, nicks, last_seen=None):
     nicks = [row[0][0] for row in nicks]
-    _query = filter_seen(table.select().where(table.c.nick.in_(nicks)), last_seen)
+    _query = filter_seen(
+        table.select().where(table.c.nick.in_(nicks)), last_seen
+    )
 
     results = db.execute(_query)
 
-    return [[row[column_name], row['seen']] for row in results]
+    return [[row[column_name], row["seen"]] for row in results]
 
 
 def get_hosts_for_nicks(db, nicks, last_seen=None):
-    return get_for_nicks(db, hosts_table, 'host', nicks, last_seen)
+    return get_for_nicks(db, hosts_table, "host", nicks, last_seen)
 
 
 def get_addrs_for_nicks(db, nicks, last_seen=None):
-    return get_for_nicks(db, address_table, 'addr', nicks, last_seen)
+    return get_for_nicks(db, address_table, "addr", nicks, last_seen)
 
 
 def get_masks_for_nicks(db, nicks, last_seen=None):
-    return get_for_nicks(db, masks_table, 'mask', nicks, last_seen)
+    return get_for_nicks(db, masks_table, "mask", nicks, last_seen)
 
 
 def get_nicks(db, table, column_name, values, last_seen=None):
     values = [v[0].lower() for v in values]
-    _query = filter_seen(table.select().where(func.lower(table.c[column_name]).in_(values)), last_seen)
+    _query = filter_seen(
+        table.select().where(func.lower(table.c[column_name]).in_(values)),
+        last_seen,
+    )
 
     results = db.execute(_query)
 
-    return [((row['nick'], row['nick_case']), row['seen']) for row in results]
+    return [((row["nick"], row["nick_case"]), row["seen"]) for row in results]
 
 
-CLOAK_STRIP_PREFIX_RE = re.compile(r'^(?i:Snoonet-|irc-)(.*)\.IP$')
+CLOAK_STRIP_PREFIX_RE = re.compile(r"^(?i:Snoonet-|irc-)(.*)\.IP$")
 CLOAK_FORMATS = [
     "Snoonet-{cloak}.IP",
     "irc-{cloak}.IP",
@@ -203,7 +220,7 @@ CLOAK_FORMATS = [
 
 
 def get_nicks_for_mask(db, mask, last_seen=None):
-    new_masks = []
+    new_masks: List[Tuple[str, ...]] = []
     for m in mask:
         msk, *other = m
         cloak = CLOAK_STRIP_PREFIX_RE.match(msk)
@@ -211,20 +228,19 @@ def get_nicks_for_mask(db, mask, last_seen=None):
             new_masks.append(m)
             continue
 
-        new_masks.extend((
-            (fmt.format(cloak=cloak.group(1)), *other)
-            for fmt in CLOAK_FORMATS
-        ))
+        new_masks.extend(
+            (fmt.format(cloak=cloak.group(1)), *other) for fmt in CLOAK_FORMATS
+        )
 
-    return get_nicks(db, masks_table, 'mask', new_masks, last_seen)
+    return get_nicks(db, masks_table, "mask", new_masks, last_seen)
 
 
 def get_nicks_for_host(db, host, last_seen=None):
-    return get_nicks(db, hosts_table, 'host', host, last_seen)
+    return get_nicks(db, hosts_table, "host", host, last_seen)
 
 
 def get_nicks_for_addr(db, addr, last_seen=None):
-    return get_nicks(db, address_table, 'addr', addr, last_seen)
+    return get_nicks(db, address_table, "addr", addr, last_seen)
 
 
 class QueryResults:
@@ -277,7 +293,16 @@ def _query(db, nicks, masks, hosts, addrs, last_seen):
     return results
 
 
-def query(db, nicks=None, masks=None, hosts=None, addrs=None, last_seen=None, depth=0, first=True):
+def query(
+    db,
+    nicks=None,
+    masks=None,
+    hosts=None,
+    addrs=None,
+    last_seen=None,
+    depth=0,
+    first=True,
+):
     def _to_list(var):
         if not var:
             return []
@@ -299,12 +324,28 @@ def query(db, nicks=None, masks=None, hosts=None, addrs=None, last_seen=None, de
         results += (nicks, masks, hosts, addrs)
 
     return query(
-        db, results.nicks, results.masks, results.hosts, results.addrs, last_seen, depth - 1, False
+        db,
+        results.nicks,
+        results.masks,
+        results.hosts,
+        results.addrs,
+        last_seen,
+        depth - 1,
+        False,
     )
 
 
-def query_and_format(db, _nicks=None, _masks=None, _hosts=None, _addrs=None, last_seen=None, depth=1, is_admin=False,
-                     paste=None):
+def query_and_format(
+    db,
+    _nicks=None,
+    _masks=None,
+    _hosts=None,
+    _addrs=None,
+    last_seen=None,
+    depth=1,
+    is_admin=False,
+    paste=None,
+):
     def _to_list(_arg):
         if _arg is None:
             return []
@@ -339,9 +380,13 @@ def query_and_format(db, _nicks=None, _masks=None, _hosts=None, _addrs=None, las
     __hosts = _wrap_list(_hosts)
     __addrs = _wrap_list(_addrs)
 
-    __nicks = [((rfc_casefold(_nick), _nick), _seen) for _nick, _seen in __nicks]
+    __nicks = [
+        ((rfc_casefold(_nick), _nick), _seen) for _nick, _seen in __nicks
+    ]
 
-    nicks, masks, hosts, addrs = query(db, __nicks, __masks, __hosts, __addrs, last_seen, depth)
+    nicks, masks, hosts, addrs = query(
+        db, __nicks, __masks, __hosts, __addrs, last_seen, depth
+    )
     end = datetime.datetime.now()
     query_time = end - start
     nicks = [(nick_case, time) for (_nick, nick_case), time in nicks]
@@ -353,20 +398,36 @@ def query_and_format(db, _nicks=None, _masks=None, _hosts=None, _addrs=None, las
         "addresses": addrs,
     }
 
-    data = {name: defaultdict(lambda: datetime.datetime.fromtimestamp(0)) for name in tables}
+    data: Dict[str, Dict[str, datetime.datetime]] = {
+        name: defaultdict(lambda: datetime.datetime.fromtimestamp(0))
+        for name in tables
+    }
     for name, tbl in tables.items():
         _data = data[name]
         for val, seen in tbl:
             _data[val] = max(_data[val], seen)
 
     out = {
-        name: list(map(itemgetter(0), sorted(values.items(), key=itemgetter(1), reverse=True)))
+        name: list(
+            map(
+                itemgetter(0),
+                sorted(values.items(), key=itemgetter(1), reverse=True),
+            )
+        )
         for name, values in data.items()
     }
 
-    search_terms = [term for term in set(_nicks + _masks + _hosts + _addrs) if term]
+    search_terms = [
+        term for term in set(_nicks + _masks + _hosts + _addrs) if term
+    ]
     lines = tuple(
-        format_results_or_paste(search_terms, query_time.total_seconds(), **out, is_admin=is_admin, paste=paste)
+        format_results_or_paste(
+            search_terms,
+            query_time.total_seconds(),
+            **out,
+            is_admin=is_admin,
+            paste=paste,
+        )
     )
 
     return lines
@@ -378,32 +439,51 @@ def new_check(conn, chan, triggered_command, text, db, reply):
     allowed, admin = check_channel(conn, chan)
 
     if not allowed:
-        return
+        return None
 
     parser = ArgumentParser(prog=triggered_command)
 
-    parser.add_argument('--nick', help="Gather all data linked to NICK", action="append")
-    parser.add_argument('--host', help="Gather all data linked to HOST", action="append")
-    parser.add_argument('--mask', help="Gather all data linked to MASK", action="append")
-    parser.add_argument('--addr', help="Gather all data linked to ADDR", action="append")
+    parser.add_argument(
+        "--nick", help="Gather all data linked to NICK", action="append"
+    )
+    parser.add_argument(
+        "--host", help="Gather all data linked to HOST", action="append"
+    )
+    parser.add_argument(
+        "--mask", help="Gather all data linked to MASK", action="append"
+    )
+    parser.add_argument(
+        "--addr", help="Gather all data linked to ADDR", action="append"
+    )
 
     paste_options = {
-        'yes': True,
-        'no': False,
-        'auto': None,
+        "yes": True,
+        "no": False,
+        "auto": None,
     }
 
     parser.add_argument(
-        '--paste', choices=list(paste_options), default='auto',
-        help="Controls whether to force pasting of the results or not"
+        "--paste",
+        choices=list(paste_options),
+        default="auto",
+        help="Controls whether to force pasting of the results or not",
     )
 
-    parser.add_argument('--depth', '-d', type=int, default=1, help="Set the maximum recursion depth")
+    parser.add_argument(
+        "--depth",
+        "-d",
+        type=int,
+        default=1,
+        help="Set the maximum recursion depth",
+    )
 
     parser.add_argument(
-        '--last-seen', dest="lastseen", type=timeparse.time_parse, default=None,
+        "--last-seen",
+        dest="lastseen",
+        type=timeparse.time_parse,
+        default=None,
         help="Set the time frame to gather data from "
-             "(ex. --last-seen=\"1d12h\" to match data from the last day and a half)"
+        '(ex. --last-seen="1d12h" to match data from the last day and a half)',
     )
 
     s_out = StringIO()
@@ -426,11 +506,20 @@ def new_check(conn, chan, triggered_command, text, db, reply):
     if args.lastseen is None:
         last_seen = None
     else:
-        last_seen = datetime.datetime.now() - datetime.timedelta(seconds=args.lastseen)
+        last_seen = datetime.datetime.now() - datetime.timedelta(
+            seconds=args.lastseen
+        )
 
     return query_and_format(
-        db, args.nick, args.mask, args.host, args.addr, depth=args.depth, is_admin=admin, paste=paste,
-        last_seen=last_seen
+        db,
+        args.nick,
+        args.mask,
+        args.host,
+        args.addr,
+        depth=args.depth,
+        is_admin=admin,
+        paste=paste,
+        last_seen=last_seen,
     )
 
 
@@ -440,17 +529,19 @@ def check_command(conn, chan, text, db):
     allowed, admin = check_channel(conn, chan)
 
     if not allowed:
-        return
+        return None
 
     split = text.split(None, 1)
     nick = split.pop(0).strip()
     now = datetime.datetime.now()
     if split:
         interval_str = split[0].strip()
-        if interval_str == '*':
+        if interval_str == "*":
             last_time = None
         else:
-            time_span = datetime.timedelta(seconds=timeparse.time_parse(interval_str))
+            time_span = datetime.timedelta(
+                seconds=timeparse.time_parse(interval_str)
+            )
             last_time = now + time_span
     else:
         last_time = None
@@ -464,7 +555,7 @@ def check_host_command(db, conn, chan, text):
     allowed, admin = check_channel(conn, chan)
 
     if not allowed:
-        return
+        return None
 
     split = text.split(None, 1)
     host = split.pop(0).strip()
@@ -472,10 +563,12 @@ def check_host_command(db, conn, chan, text):
     now = datetime.datetime.now()
     if split:
         interval_str = split[0].strip()
-        if interval_str == '*':
+        if interval_str == "*":
             last_time = None
         else:
-            time_span = datetime.timedelta(seconds=timeparse.time_parse(interval_str))
+            time_span = datetime.timedelta(
+                seconds=timeparse.time_parse(interval_str)
+            )
             last_time = now + time_span
     else:
         last_time = None
@@ -487,8 +580,14 @@ def check_host_command(db, conn, chan, text):
         hosts = None
         addrs = None
 
-    return query_and_format(db, _masks=host_lower, _hosts=hosts, _addrs=addrs, last_seen=last_time,
-                            is_admin=admin)
+    return query_and_format(
+        db,
+        _masks=host_lower,
+        _hosts=hosts,
+        _addrs=addrs,
+        last_seen=last_time,
+        is_admin=admin,
+    )
 
 
 @hook.command("rawquery", permissions=["botcontrol"])
@@ -501,7 +600,7 @@ def raw_query(text, db, reply, conn):
     :type reply: function
     :type conn: cloudbot.client.Client
     """
-    if not conn.nick.lower().endswith('-dev'):
+    if not conn.nick.lower().endswith("-dev"):
         # This command should be disabled in the production bot
         return "This command may only be used in testing"
 
@@ -516,16 +615,18 @@ def raw_query(text, db, reply, conn):
     else:
         if res.returns_rows:
             lines = [
-                "Results for '{}':".format(text),
-                *("{}".format(tuple(r)) for r in res),
-                "Completed in {:.3f} seconds".format(duration.total_seconds())
+                f"Results for '{text}':",
+                *(f"{tuple(r)}" for r in res),
+                f"Completed in {duration.total_seconds():.3f} seconds",
             ]
         else:
             lines = [
-                "{} rows affected in {:.3f} seconds.".format(res.rowcount, duration.total_seconds())
+                "{} rows affected in {:.3f} seconds.".format(
+                    res.rowcount, duration.total_seconds()
+                )
             ]
 
         if len(lines) > 5:
-            return web.paste('\n'.join(lines))
+            return web.paste("\n".join(lines))
         else:
             return lines

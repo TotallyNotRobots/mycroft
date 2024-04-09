@@ -244,8 +244,9 @@ async def get_user_whowas(conn, nick):
         return None, None
 
 
-@hook.command('testdata', permissions=['botcontrol'])
+@hook.command("testdata", permissions=["botcontrol"])
 async def get_nick_data(conn, text):
+    """<nick> - Get data for <nick> to debug"""
     start = datetime.datetime.now()
     ip = await get_user_ip(conn, text)
     mask = await get_user_mask(conn, text)
@@ -254,13 +255,13 @@ async def get_nick_data(conn, text):
     return f"Got: {ip} {host} {mask} in {diff.total_seconds()} seconds"
 
 
-@hook.on_start
+@hook.on_start()
 def clear_regex_cache(bot):
     for conn in bot.connections.values():
         get_regex_cache(conn).clear()
 
 
-@hook.on_start
+@hook.on_start()
 def init_futures(bot):
     for conn in bot.connections.values():
         conn.memory["sherlock"] = {
@@ -609,7 +610,7 @@ async def on_who_end(conn, irc_paramlist):
     _set_result(fut, lines)
 
 
-@hook.on_start
+@hook.on_start()
 async def get_initial_data(bot, loop, db, event):
     wrap_future(
         asyncio.gather(

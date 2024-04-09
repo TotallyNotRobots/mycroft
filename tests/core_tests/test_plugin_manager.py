@@ -10,7 +10,7 @@ from sqlalchemy import Column, String, Table, inspect
 
 from cloudbot import hook
 from cloudbot.event import CommandEvent, EventType
-from cloudbot.plugin import Plugin
+from cloudbot.plugin import Plugin, PluginManager
 from cloudbot.util import database
 from tests.util.mock_module import MockModule
 
@@ -684,7 +684,7 @@ async def test_launch(
     ),
 )
 async def test_launch_async(
-    mock_manager,
+    mock_manager: PluginManager,
     patch_import_module,
     do_sieve,
     sieve_allow,
@@ -720,11 +720,12 @@ async def test_launch_async(
         post_called += 1
         assert db is not None
 
-    mod = MockModule()
-
-    mod.sieve_cb = sieve_cb  # type: ignore[attr-defined]
-    mod.foo_cb = foo_cb  # type: ignore[attr-defined]
-    mod.post_hook = post_hook  # type: ignore[attr-defined]
+    mod = MockModule(
+        "foo",
+        sieve_cb=sieve_cb,
+        foo_cb=foo_cb,
+        post_hook=post_hook,
+    )
 
     patch_import_module.return_value = mod
 
