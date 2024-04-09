@@ -1,4 +1,5 @@
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from typing import Awaitable, Dict, Optional
 
 from watchdog.observers import Observer
@@ -23,7 +24,11 @@ class MockBot:
     ):
         if loop:
             self.db_executor_pool = ExecutorPool(
-                50, max_workers=1, thread_name_prefix="cloudbot-db", loop=loop
+                50,
+                max_workers=1,
+                thread_name_prefix="cloudbot-db",
+                loop=loop,
+                executor_type=ThreadPoolExecutor,
             )
         else:
             self.db_executor_pool = None

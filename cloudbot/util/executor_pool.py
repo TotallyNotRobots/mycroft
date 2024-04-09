@@ -1,8 +1,9 @@
-from asyncio import AbstractEventLoop
 import logging
 import os
 import random
-from concurrent.futures import ThreadPoolExecutor
+from asyncio import AbstractEventLoop
+from concurrent.futures import Executor
+from typing import Generic, List, Optional, Type, TypeVar
 
 from cloudbot.util.async_util import create_future
 
@@ -26,9 +27,17 @@ class ExecutorWrapper:
         self.release()
 
 
-class ExecutorPool:
+T = TypeVar("T", bound=Executor)
+
+
+class ExecutorPool(Generic[T]):
     def __init__(
-        self, max_executors=None, executor_type=ThreadPoolExecutor, *, loop:AbstractEventLoop, **kwargs
+        self,
+        max_executors: Optional[int] = None,
+        *,
+        executor_type: Type[T],
+        loop: AbstractEventLoop,
+        **kwargs,
     ) -> None:
         if max_executors is None:
             max_executors = (os.cpu_count() or 1) * 5
@@ -40,14 +49,14 @@ class ExecutorPool:
         self._exec_class = executor_type
         self._exec_args = kwargs
 
-        self._executors = []
-        self._free_executors = []
+        self._executors: List[T] = []
+        self._free_executors: List[T] = []
         self._executor_waiter = create_future(loop)
 
-    def get(self):
+    def get(self) -> ExecutorWrapper:
         return ExecutorWrapper(self, self._get())
 
-    def _get(self):
+    def _get(self) -> T:
         if not self._free_executors:
             if len(self._executors) < self._max:
                 return self._add_executor()
@@ -56,10 +65,10 @@ class ExecutorPool:
 
         return self._free_executors.pop()
 
-    def release_executor(self, executor):
+    def release_executor(self, executor: T) -> None:
         self._free_executors.append(executor)
 
-    def _add_executor(self):
+    def _add_executor(self) -> T:
         exc = self._exec_class(**self._exec_args)
         self._executors.append(exc)
 
