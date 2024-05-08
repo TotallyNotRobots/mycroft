@@ -114,4 +114,5 @@ class PluginEventHandler(ReloadHandler):
 
 class ConfigEventHandler(ReloadHandler):
     def on_any_event(self, event):
+        self.bot.logger.info("Config event: %s", event)
         self.loader.reload(getattr(event, "dest_path", event.src_path))
