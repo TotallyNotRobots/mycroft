@@ -109,7 +109,7 @@ async def onjoin(conn, bot):
         logger.info(
             "[%s|misc] Bot is setting mode on itself: %s", conn.name, mode
         )
-        conn.cmd("MODE", conn.nick, mode)
+        conn.send(f"MODE {conn.nick} {mode}")
 
     log_chan = conn.config.get("log_channel")
     if log_chan:
