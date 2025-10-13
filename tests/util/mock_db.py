@@ -8,7 +8,7 @@ from cloudbot.util.database import Session
 
 class MockDB:
     def __init__(self, path="sqlite:///:memory:", force_session=False):
-        self.engine = create_engine(path)
+        self.engine = create_engine(path, future=True)
         if force_session:
             self.session = scoped_session(
                 sessionmaker(bind=self.engine, future=True)
