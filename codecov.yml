@@ -12,8 +12,6 @@ component_management:
   individual_components:
   - component_id: tests
     name: tests
-    flag_regexes:
-    - unittests
     paths:
     - tests/
     statuses:
@@ -24,8 +22,6 @@ component_management:
 
   - component_id: core
     name: core
-    flag_regexes:
-    - unittests
     paths:
     - cloudbot/
     statuses:
@@ -35,8 +31,6 @@ component_management:
 
   - component_id: plugins
     name: plugins
-    flag_regexes:
-    - unittests
     paths:
     - plugins/
     statuses:

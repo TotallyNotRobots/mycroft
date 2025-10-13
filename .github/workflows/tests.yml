@@ -73,7 +73,7 @@ jobs:
       run: pre-commit run yamlfmt --all
 
     - name: Test with pytest
-      run: pytest --junitxml=junit.xml -o junit_family=legacy
+      run: pytest --junitxml=junit.xml
       env:
         PYTHONDEVMODE: 1
         PYTHONPATH: .
@@ -84,7 +84,6 @@ jobs:
         name: build-${{ matrix.python-ver }}
         fail_ci_if_error: true
         use_oidc: true
-        flags: unittests
 
     - name: Upload test results to Codecov
       if: ${{ !cancelled() }}
@@ -93,4 +92,3 @@ jobs:
         name: build-${{ matrix.python-ver }}
         fail_ci_if_error: true
         use_oidc: true
-        flags: unittests
