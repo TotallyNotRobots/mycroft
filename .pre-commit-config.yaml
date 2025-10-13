@@ -37,7 +37,7 @@ repos:
   hooks:
   - id: black
 - repo: https://github.com/pycqa/isort
-  rev: ec0efaee4acfce198521e43caa3029b06cedd64a  # frozen: 6.1.0
+  rev: 0a09c783808cfe77bb3269250f663ff733d23302  # frozen: 7.0.0
   hooks:
   - id: isort
 - repo: https://github.com/pre-commit/pygrep-hooks
