@@ -1,6 +1,6 @@
 # CONSTANTS
 
 ATTR_PREFIX = "_cloudbot"
-HOOK_ATTR = ATTR_PREFIX + "_hook"
-CLIENT_ATTR = ATTR_PREFIX + "_client"
-LOADED_ATTR = ATTR_PREFIX + "_loaded"
+HOOK_ATTR = f"{ATTR_PREFIX}_hook"
+CLIENT_ATTR = f"{ATTR_PREFIX}_client"
+LOADED_ATTR = f"{ATTR_PREFIX}_loaded"

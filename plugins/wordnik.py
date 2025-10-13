@@ -39,8 +39,8 @@ class WordnikAPIError(Exception):
         self.message = message
 
     def user_msg(self):
-        return "There was a problem contacting the Wordnik API ({})".format(
-            self.message
+        return (
+            f"There was a problem contacting the Wordnik API ({self.message})"
         )
 
 
@@ -134,7 +134,7 @@ class WordLookupRequest:
 
     @property
     def endpoint(self) -> str:
-        return "word.json/" + self.sanitize(self.word) + "/" + self.operation
+        return f"word.json/{self.sanitize(self.word)}/{self.operation}"
 
     def get_params(self) -> GetParams:
         params = dict(self.extra_params)
@@ -240,7 +240,7 @@ def format_attrib(attr_id):
     try:
         return ATTRIB_NAMES[attr_id]
     except KeyError:
-        return attr_id.title() + "/Wordnik"
+        return f"{attr_id.title()}/Wordnik"
 
 
 @hook.command("define", "dictionary")

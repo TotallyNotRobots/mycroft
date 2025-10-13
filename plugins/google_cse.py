@@ -47,7 +47,7 @@ def gse(text):
     else:
         content = formatting.truncate_str(content.replace("\n", ""), 150)
 
-    return '{} -- \x02{}\x02: "{}"'.format(result["link"], title, content)
+    return f"{result['link']} -- \x02{title}\x02: \"{content}\""
 
 
 @hook.command("gseis", "image")
@@ -71,9 +71,7 @@ def gse_gis(text):
     except KeyError:
         return "No results found."
 
-    dimens = "{}x{}px".format(metadata["width"], metadata["height"])
+    dimens = f"{metadata['width']}x{metadata['height']}px"
     size = filesize.size(int(metadata["byteSize"]))
 
-    return "{} [{}, {}, {}]".format(
-        result["link"], dimens, result["mime"], size
-    )
+    return f"{result['link']} [{dimens}, {result['mime']}, {size}]"

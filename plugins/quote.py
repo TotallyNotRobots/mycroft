@@ -87,9 +87,7 @@ def migrate_table(db: Session, logger):
 def format_quote(q, num, n_quotes):
     """Returns a formatted string of a quote"""
     _, nick, msg = q
-    return "[{}/{}] <{}\u200b{}> {}".format(
-        num, n_quotes, nick[:1], nick[1:], msg
-    )
+    return f"[{num}/{n_quotes}] <{nick[:1]}\u200b{nick[1:]}> {msg}"
 
 
 def add_quote(db, chan, target, sender, message):
@@ -119,9 +117,7 @@ def get_quote_num(num, count, name):
         num = count + num + 1 if num + count > -1 else count + 1
     if num and num > count:  # If there are not enough quotes, raise an error
         raise Exception(
-            "I only have {} quote{} for {}.".format(
-                count, ("s", "")[count == 1], name
-            )
+            f"I only have {count} quote{('s', '')[count == 1]} for {name}."
         )
     if num and num == 0:  # If the number is zero, set it to one
         num = 1

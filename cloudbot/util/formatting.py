@@ -224,7 +224,7 @@ def chunk_str(content, length=420):
 
     def chunk(c, l):
         while c:
-            out = (c + " ")[:l].rsplit(" ", 1)[0]
+            out = f"{c} "[:l].rsplit(" ", 1)[0]
             c = c[len(out) :].strip()
             yield out
 
@@ -272,19 +272,19 @@ pluralise_select = pluralize_select
 
 def pluralize_auto(count, thing):
     if thing.endswith("us"):
-        return pluralize_select(count, thing, thing[:-2] + "i")
+        return pluralize_select(count, thing, f"{thing[:-2]}i")
 
     if thing.endswith("is"):
-        return pluralize_select(count, thing, thing[:-2] + "es")
+        return pluralize_select(count, thing, f"{thing[:-2]}es")
 
     if thing.endswith(("s", "ss", "sh", "ch", "x", "z")):
         return pluralize_suffix(count, thing, "es")
 
     if thing.endswith(("f", "fe")):
-        return pluralize_select(count, thing, thing.rsplit("f", 1)[0] + "ves")
+        return pluralize_select(count, thing, f"{thing.rsplit('f', 1)[0]}ves")
 
     if thing.endswith("y") and thing[-2:-1].lower() not in "aeiou":
-        return pluralize_select(count, thing, thing[:-1] + "ies")
+        return pluralize_select(count, thing, f"{thing[:-1]}ies")
 
     if thing.endswith("y") and thing[-2:-1].lower() in "aeiou":
         return pluralize_suffix(count, thing)
@@ -293,7 +293,7 @@ def pluralize_auto(count, thing):
         return pluralize_suffix(count, thing, "es")
 
     if thing.endswith("on"):
-        return pluralize_select(count, thing, thing[:-2] + "a")
+        return pluralize_select(count, thing, f"{thing[:-2]}a")
 
     return pluralize_suffix(count, thing)
 
@@ -387,9 +387,7 @@ def gen_markdown_table(headers, rows):
     sizes = tuple(map(lambda l: max(max(map(len, l)), 3), rotated))
     rows.insert(1, tuple(("-" * size) for size in sizes))
     lines = [
-        "| {} |".format(
-            " | ".join(cell.ljust(sizes[i]) for i, cell in enumerate(row))
-        )
+        f"| {' | '.join((cell.ljust(sizes[i]) for i, cell in enumerate(row)))} |"
         for row in rows
     ]
     return "\n".join(lines)

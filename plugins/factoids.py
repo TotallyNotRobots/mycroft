@@ -92,17 +92,15 @@ def remember(text, nick, db, chan, notice, event):
         # remove + symbol
         new_data = data[1:]
         # append new_data to the old_data
-        puncts = string.punctuation + " "
+        puncts = f"{string.punctuation} "
         if len(new_data) > 1 and new_data[1] in puncts:
             data = old_data + new_data
         else:
-            data = old_data + " " + new_data
+            data = f"{old_data} {new_data}"
         notice(f"Appending \x02{new_data}\x02 to \x02{old_data}\x02")
     else:
         notice(
-            "Remembering \x02{0}\x02 for \x02{1}\x02. Type {2}{1} to see it.".format(
-                data, word, FACTOID_CHAR
-            )
+            f"Remembering \x02{data}\x02 for \x02{word}\x02. Type {FACTOID_CHAR}{word} to see it."
         )
         if old_data:
             notice(f"Previous data was \x02{old_data}\x02")
@@ -129,9 +127,7 @@ def remove_fact(chan, names, db, notice):
 
     if missing:
         notice(
-            "Unknown factoids: {}".format(
-                get_text_list([repr(s) for s in missing], "and")
-            )
+            f"Unknown factoids: {get_text_list([repr(s) for s in missing], 'and')}"
         )
 
     if found:

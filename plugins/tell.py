@@ -304,9 +304,7 @@ def tellinput(conn, db, nick, notice, content):
     reply = first_tell.format_for_message()
 
     if len(tells) > 1:
-        reply += " (+{} more, {}showtells to view)".format(
-            len(tells) - 1, conn.config["command_prefix"][0]
-        )
+        reply += f" (+{len(tells) - 1} more, {conn.config['command_prefix'][0]}showtells to view)"
 
     notice(reply)
 
@@ -365,9 +363,7 @@ def tell_cmd(text, nick, db, conn, mask, event):
 
     add_tell(db, conn.name, sender, target.lower(), message)
     event.notice(
-        "Your message has been saved, and {} will be notified once they are active.".format(
-            target
-        )
+        f"Your message has been saved, and {target} will be notified once they are active."
     )
 
 
@@ -388,13 +384,11 @@ def tell_disable(conn, db, text, nick, event):
 
     target = text.split()[0]
     if is_disable(conn, target):
-        return "Tells are already disabled for {}.".format(
-            "you" if is_self else f"{target!r}"
-        )
+        return f"Tells are already disabled for {('you' if is_self else f'{target!r}')}."
 
     add_disable(db, conn, nick, target)
-    return "Tells are now disabled for {}.".format(
-        "you" if is_self else f"{target!r}"
+    return (
+        f"Tells are now disabled for {('you' if is_self else f'{target!r}')}."
     )
 
 
@@ -411,21 +405,17 @@ def tell_enable(conn, db, text, event, nick):
 
     target = text.split()[0]
     if not is_disable(conn, target):
-        return "Tells are already enabled for {}.".format(
-            "you" if is_self else f"{target!r}"
-        )
+        return f"Tells are already enabled for {('you' if is_self else f'{target!r}')}."
 
     del_disable(db, conn, target)
-    return "Tells are now enabled for {}.".format(
-        "you" if is_self else f"{target!r}"
-    )
+    return f"Tells are now enabled for {('you' if is_self else f'{target!r}')}."
 
 
 @hook.command(
     "listtelldisabled", permissions=["botcontrol", "ignore"], autohelp=False
 )
 def list_tell_disabled(conn, db):
-    """- Returns the current list of people who are not able to recieve tells"""
+    """- Returns the current list of people who are not able to receive tells"""
     ignores = list(list_disabled(db, conn))
     md = gen_markdown_table(
         ["Connection", "Target", "Setter", "Set At"], ignores
@@ -466,6 +456,4 @@ def list_tell_ignores(conn, nick):
     if not ignores:
         return "You are not ignoring tells from any users"
 
-    return "You are ignoring tell from: {}".format(
-        ", ".join(map(repr, ignores))
-    )
+    return f"You are ignoring tell from: {', '.join(map(repr, ignores))}"

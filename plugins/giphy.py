@@ -12,7 +12,7 @@ def giphy(text, bot):
     """<query> - Searches giphy.com for a gif using the provided search term."""
     api_key = bot.config.get_api_key("giphy")
     term = text.strip()
-    search_url = api_url + "/search"
+    search_url = f"{api_url}/search"
     params = {"q": term, "limit": 10, "fmt": "json", "api_key": api_key}
     results = requests.get(search_url, params=params)
     results.raise_for_status()
@@ -22,10 +22,8 @@ def giphy(text, bot):
 
     gif = random.choice(r["data"])
     if gif["rating"]:
-        out = "{} content rating: \x02{}\x02. (Powered by GIPHY)".format(
-            gif["embed_url"], gif["rating"].upper()
-        )
+        out = f"{gif['embed_url']} content rating: \x02{gif['rating'].upper()}\x02. (Powered by GIPHY)"
     else:
-        out = "{} - (Powered by GIPHY)".format(gif["embed_url"])
+        out = f"{gif['embed_url']} - (Powered by GIPHY)"
 
     return out

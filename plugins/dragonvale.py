@@ -34,11 +34,7 @@ def dragonsearch(text, reply):
         return f"The API returned error code {r.status_code}."
 
     data = r.json()["items"][0]
-    out = "\x02{}\x02 -- {}: {}".format(
-        data["title"],
-        striphtml(data["snippet"]).split("&hellip;")[0].strip(),
-        data["url"],
-    )
+    out = f"\x02{data['title']}\x02 -- {striphtml(data['snippet']).split('&hellip;')[0].strip()}: {data['url']}"
     return out
 
 

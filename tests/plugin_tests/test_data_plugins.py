@@ -29,7 +29,7 @@ async def _do_test(
     nick=None,
     bot_nick=None,
 ):
-    plugin = importlib.import_module("plugins." + plugin_name)
+    plugin = importlib.import_module(f"plugins.{plugin_name}")
     bot = mock_bot_factory(base_dir=Path().resolve(), loop=loop)
     event = Event(
         hook=MagicMock(),

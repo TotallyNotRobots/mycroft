@@ -13,7 +13,7 @@ def test_poll_close():
     event = MagicMock()
     message = event.message
     reply = event.reply
-    uid = ":".join([conn.name, chan, nick]).lower()
+    uid = f"{conn.name}:{chan}:{nick}".lower()
     poll.polls[uid] = poll.Poll("thing?", nick)
     res = poll.poll(text, conn, nick, chan, message, reply)
     assert res is None
@@ -35,7 +35,7 @@ def test_poll_create():
     event = MagicMock()
     message = event.message
     reply = event.reply
-    uid = ":".join([conn.name, chan, nick]).lower()
+    uid = f"{conn.name}:{chan}:{nick}".lower()
     res = poll.poll(text, conn, nick, chan, message, reply)
     assert res is None
     assert event.mock_calls == [
@@ -56,7 +56,7 @@ def test_poll_create_default():
     event = MagicMock()
     message = event.message
     reply = event.reply
-    uid = ":".join([conn.name, chan, nick]).lower()
+    uid = f"{conn.name}:{chan}:{nick}".lower()
     res = poll.poll(text, conn, nick, chan, message, reply)
     assert res is None
     assert event.mock_calls == [
@@ -90,7 +90,7 @@ def test_vote():
     conn = MockConn()
     nick = "foo"
     chan = "#bar"
-    uid = ":".join([conn.name, chan, nick]).lower()
+    uid = f"{conn.name}:{chan}:{nick}".lower()
     poll.polls[uid] = p = poll.Poll("foo?", "foo")
     event = MagicMock()
     notice = event.notice
@@ -108,7 +108,7 @@ def test_vote_unknown_opttion():
     conn = MockConn()
     nick = "foo"
     chan = "#bar"
-    uid = ":".join([conn.name, chan, nick]).lower()
+    uid = f"{conn.name}:{chan}:{nick}".lower()
     poll.polls[uid] = p = poll.Poll("foo?", "foo")
     event = MagicMock()
     notice = event.notice
@@ -137,7 +137,7 @@ def test_results():
     conn = MockConn()
     nick = "foo"
     chan = "#bar"
-    uid = ":".join([conn.name, chan, nick]).lower()
+    uid = f"{conn.name}:{chan}:{nick}".lower()
     poll.polls[uid] = p = poll.Poll("foo?", nick)
     event = MagicMock()
     message = event.message

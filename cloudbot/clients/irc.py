@@ -492,7 +492,7 @@ class _IrcProtocol(asyncio.Protocol):
 
         if not filtered:
             # No outgoing sieves loaded or one of the sieves errored, fall back to old behavior
-            line = old_line[:510] + "\r\n"
+            line = f"{old_line[:510]}\r\n"
             line = line.encode("utf-8", "replace")
 
         if not isinstance(line, bytes):
@@ -531,7 +531,7 @@ class _IrcProtocol(asyncio.Protocol):
 
         # Reply to pings immediately
         if command == "PING":
-            self.conn.send("PONG " + command_params[-1], log=False)
+            self.conn.send(f"PONG {command_params[-1]}", log=False)
 
         # Parse the command and params
         # Content

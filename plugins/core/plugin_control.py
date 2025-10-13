@@ -36,9 +36,7 @@ async def pluginload(bot, text, reply):
         reply("Plugin failed to load.")
         raise
     else:
-        return "Plugin {}loaded successfully.".format(
-            "re" if was_loaded else ""
-        )
+        return f"Plugin {'re' if was_loaded else ''}loaded successfully."
 
 
 @hook.command(permissions=["botcontrol"])

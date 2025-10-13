@@ -126,9 +126,7 @@ async def check_reminders(bot, async_call, db):
 
             remind_text = colors.parse(time_since(added_time, count=2))
             alert = colors.parse(
-                "{}, you have a reminder from $(b){}$(clear) ago!".format(
-                    user, remind_text
-                )
+                f"{user}, you have a reminder from $(b){remind_text}$(clear) ago!"
             )
 
             conn.message(user, alert)
@@ -218,8 +216,8 @@ async def remind(text, nick, chan, db, conn, event, async_call):
     await load_cache(async_call, db)
 
     remind_text = format_time(seconds, count=2)
-    output = 'Alright, I\'ll remind you "{}" in $(b){}$(clear)!'.format(
-        message, remind_text
+    output = (
+        f'Alright, I\'ll remind you "{message}" in $(b){remind_text}$(clear)!'
     )
 
     return colors.parse(output)

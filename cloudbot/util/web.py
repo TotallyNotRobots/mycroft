@@ -362,7 +362,7 @@ class Hastebin(Pastebin):
             encoded = data
 
         try:
-            r = requests.post(self.url + "/documents", data=encoded)
+            r = requests.post(f"{self.url}/documents", data=encoded)
             r.raise_for_status()
         except HTTPError as e:
             r = e.response
@@ -373,7 +373,7 @@ class Hastebin(Pastebin):
             j = r.json()
 
             if r.status_code is requests.codes.ok:
-                return "{}/{}.{}".format(self.url, j["key"], ext)
+                return f"{self.url}/{j['key']}.{ext}"
 
             raise ServiceHTTPError(j["message"], r)
 

@@ -105,9 +105,7 @@ def imgur(text):
     # if it's an imgur meme, add the meme name
     # if not, AttributeError will trigger and code will carry on
     with suppress(AttributeError):
-        title = "\x02{}\x02 - {}".format(
-            item.meme_metadata["meme_name"].lower(), title
-        )
+        title = f"\x02{item.meme_metadata['meme_name'].lower()}\x02 - {title}"
 
     # if the item has a tag, show that
     if item.section:
@@ -119,12 +117,13 @@ def imgur(text):
 
     # if the search was a subreddit search, add the reddit comment link
     if is_reddit:
-        reddit_url = web.try_shorten("http://reddit.com" + item.reddit_comments)
+        reddit_url = web.try_shorten(f"http://reddit.com{item.reddit_comments}")
         url = f"{item.link} ({reddit_url})"
     else:
         url = f"{item.link}"
 
-    tag_str = "[\x02" + ("\x02, \x02".join(tags)) + "\x02] " if tags else ""
+    tag_list = "\x02, \x02".join(tags)
+    tag_str = f"[\x02{tag_list}\x02] " if tags else ""
 
     return f'{tag_str}"{title}" - {url}'
 
@@ -153,7 +152,7 @@ def imguralbum(text, conn):
     nsfw = any(item.nsfw for item in items)
 
     params = {
-        "title": '{} presents: "{}"'.format(conn.nick, text or "random images"),
+        "title": f"{conn.nick} presents: \"{text or 'random images'}\"",
         "ids": ",".join([item.id for item in items]),
         "layout": "blog",
         "account_url": None,
@@ -161,6 +160,6 @@ def imguralbum(text, conn):
     album = container.api.create_album(params)
 
     if nsfw:
-        return "[\x02nsfw\x02] https://imgur.com/a/" + album["id"]
+        return f"[\x02nsfw\x02] https://imgur.com/a/{album['id']}"
 
-    return "https://imgur.com/a/" + album["id"]
+    return f"https://imgur.com/a/{album['id']}"

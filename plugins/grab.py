@@ -47,7 +47,7 @@ def load_cache(db):
 @hook.command("moregrab", autohelp=False)
 def moregrab(text, chan, conn):
     """[page] - if a grab search has lots of results the results are pagintated. If the most recent search is paginated
-    the pages are stored for retreival. If no argument is given the next page will be returned else a page number can
+    the pages are stored for retrieval. If no argument is given the next page will be returned else a page number can
     be specified."""
     pages = search_pages[conn.name].get(chan)
     if not pages:
@@ -98,14 +98,10 @@ def grab(text, nick, chan, db, conn):
     with grab_lock:
         name, timestamp, msg = get_latest_line(conn, chan, text)
         if not msg:
-            return "I couldn't find anything from {} in recent history.".format(
-                text
-            )
+            return f"I couldn't find anything from {text} in recent history."
 
         if check_grabs(text.casefold(), msg, chan):
-            return "I already have that quote from {} in the database".format(
-                text
-            )
+            return f"I already have that quote from {text} in the database"
 
         try:
             grab_add(name.casefold(), timestamp, msg, chan, db)
@@ -123,7 +119,7 @@ def grab(text, nick, chan, db, conn):
 
 def format_grab(name, quote):
     # add nonbreaking space to nicks to avoid highlighting people with printed grabs
-    name = "{}{}{}".format(name[0], "\u200b", name[1:])
+    name = f"{name[0]}\u200b{name[1:]}"
     if quote.startswith("\x01ACTION") or quote.startswith("*"):
         quote = quote.replace("\x01ACTION", "").replace("\x01", "")
         out = f"* {name}{quote}"

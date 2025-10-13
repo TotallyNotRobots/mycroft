@@ -127,15 +127,13 @@ def get_video_description(video_id: str) -> str:
     statistics = item["statistics"]
     content_details = item["contentDetails"]
 
-    out = "\x02{}\x02".format(snippet["title"])
+    out = f"\x02{snippet['title']}\x02"
 
     if not content_details.get("duration"):
         return out
 
     length = isodate.parse_duration(content_details["duration"])
-    out += " - length \x02{}\x02".format(
-        timeformat.format_time(int(length.total_seconds()), simple=True)
-    )
+    out += f" - length \x02{timeformat.format_time(int(length.total_seconds()), simple=True)}\x02"
 
     like_data = statistics.get("likeCount")
     dislike_data = statistics.get("dislikeCount")
@@ -143,24 +141,22 @@ def get_video_description(video_id: str) -> str:
     if like_data:
         # format
         likes = int(like_data)
-        out += " - {}".format(pluralize_suffix(likes, "like"))
+        out += f" - {pluralize_suffix(likes, 'like')}"
         if dislike_data:
             dislikes = int(dislike_data)
             total_votes = likes + dislikes
             percent = 100 * likes / total_votes
-            out += ", {} (\x02{:.1f}\x02%)".format(
-                pluralize_suffix(dislikes, "dislike"), percent
-            )
+            out += f", {pluralize_suffix(dislikes, 'dislike')} (\x02{percent:.1f}\x02%)"
 
     if "viewCount" in statistics:
         views = int(statistics["viewCount"])
-        out += " - \x02{:,}\x02 view{}".format(views, "s"[views == 1 :])
+        out += f" - \x02{views:,}\x02 view{'s'[views == 1:]}"
 
     uploader = snippet["channelTitle"]
 
     upload_time = isodate.parse_datetime(snippet["publishedAt"])
-    out += " - \x02{}\x02 on \x02{}\x02".format(
-        uploader, upload_time.strftime("%Y.%m.%d")
+    out += (
+        f" - \x02{uploader}\x02 on \x02{upload_time.strftime('%Y.%m.%d')}\x02"
     )
 
     try:
@@ -206,9 +202,7 @@ def youtube(text: str, reply) -> str:
     """
     try:
         video_id = get_video_id(text)
-        return (
-            get_video_description(video_id) + " - " + make_short_url(video_id)
-        )
+        return f"{get_video_description(video_id)} - {make_short_url(video_id)}"
     except NoResultsError as e:
         return e.message
     except APIError as e:
@@ -277,7 +271,5 @@ def ytplaylist_url(match: Match[str]) -> str | None:
     title = snippet["title"]
     author = snippet["channelTitle"]
     num_videos = int(content_details["itemCount"])
-    count_videos = " - \x02{:,}\x02 video{}".format(
-        num_videos, "s"[num_videos == 1 :]
-    )
+    count_videos = f" - \x02{num_videos:,}\x02 video{'s'[num_videos == 1:]}"
     return f"\x02{title}\x02 {count_videos} - \x02{author}\x02"

@@ -36,9 +36,9 @@ def test_info(xkcd_id, mock_requests):
         day=int(data["day"]),
     )
 
-    no_url = "xkcd: \x02{}\x02 ({:%d %B %Y})".format(data["title"], date)
+    no_url = f"xkcd: \x02{data['title']}\x02 ({date:%d %B %Y})"
 
-    with_url = no_url + f" | http://www.xkcd.com/{xkcd_id}"
+    with_url = f"{no_url} | http://www.xkcd.com/{xkcd_id}"
 
     assert xkcd.xkcd_info(str(xkcd_id)) == no_url
     assert xkcd.xkcd_info(str(xkcd_id), True) == with_url

@@ -17,14 +17,9 @@ except ImportError:
 def about(text, conn, bot):
     """- Gives information about CloudBot. Use .about license for licensing information"""
     if text.lower() in ("license", "gpl", "source"):
-        return (
-            "CloudBot Refresh is released under the GPL v3 license, get the source code "
-            "at {}".format(bot.repo_link)
-        )
+        return f"CloudBot Refresh is released under the GPL v3 license, get the source code at {bot.repo_link}"
 
-    return "{} is powered by CloudBot Refresh! ({}) - {}".format(
-        conn.nick, cloudbot.__version__, bot.repo_link
-    )
+    return f"{conn.nick} is powered by CloudBot Refresh! ({cloudbot.__version__}) - {bot.repo_link}"
 
 
 @hook.command(autohelp=False)

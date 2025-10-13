@@ -148,7 +148,7 @@ def test_tellcmd(mock_db):
     assert tell.count_unread(session, mock_conn.name, "OtherUser") == 10
 
     mock_event.is_nick_valid.return_value = True
-    _test(sender.nick + " some message", "Have you looked in a mirror lately?")
+    _test(f"{sender.nick} some message", "Have you looked in a mirror lately?")
 
     assert tell.count_unread(session, mock_conn.name, "OtherUser") == 10
 

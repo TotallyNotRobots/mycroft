@@ -90,7 +90,7 @@ def rate_limit(bot: CloudBot, event: Event, _hook: Hook) -> Event | None:
     conn = event.conn
     # check command spam tokens
     if _hook.type in ("command", "regex"):
-        uid = "!".join([conn.name, event.chan, event.nick]).lower()
+        uid = f"{conn.name}!{event.chan}!{event.nick}".lower()
 
         config = conn.config.get("ratelimit", {})
         tokens = config.get("tokens", 17.5)

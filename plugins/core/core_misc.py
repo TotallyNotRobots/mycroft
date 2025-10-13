@@ -77,11 +77,7 @@ async def onjoin(conn, bot):
             if nickserv_account_name:
                 conn.message(
                     nickserv_name,
-                    "{} {} {}".format(
-                        nickserv_command,
-                        nickserv_account_name,
-                        nickserv_password,
-                    ),
+                    f"{nickserv_command} {nickserv_account_name} {nickserv_password}",
                 )
             else:
                 conn.message(
@@ -162,7 +158,7 @@ async def do_joins(conn):
 
 @hook.irc_raw("433")
 def on_nick_in_use(conn, irc_paramlist):
-    conn.nick = irc_paramlist[1] + "_"
+    conn.nick = f"{irc_paramlist[1]}_"
     conn.cmd("NICK", conn.nick)
 
 

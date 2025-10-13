@@ -1,4 +1,5 @@
 import datetime
+import random
 from unittest.mock import MagicMock, call, patch
 
 import pytest
@@ -205,7 +206,7 @@ def test_start_hunt_opt_out(mock_db):
         conn = MockConn()
         event = MagicMock()
         chan = "#foo"
-        res = duckhunt.start_hunt(db, chan, event.mesage, conn)
+        res = duckhunt.start_hunt(db, chan, event.message, conn)
         assert res is None
         assert event.mock_calls == []
         assert mock_db.get_data(duckhunt.status_table) == []
@@ -217,10 +218,10 @@ def test_start_hunt(mock_db):
     conn = MockConn()
     event = MagicMock()
     chan = "#foo"
-    res = duckhunt.start_hunt(db, chan, event.mesage, conn)
+    res = duckhunt.start_hunt(db, chan, event.message, conn)
     assert res is None
     assert event.mock_calls == [
-        call.mesage(
+        call.message(
             "Ducks have been spotted nearby. See how many you can shoot or save. use .bang to shoot or .befriend to save them. NOTE: Ducks now appear as a function of time and channel activity.",
             "#foo",
         )
@@ -587,3 +588,34 @@ class TestAttack:
         assert mock_db.get_data(duckhunt.table) == [
             ("net", "nick", 0, 1, "#chan")
         ]
+
+
+@pytest.mark.parametrize(
+    ("seed", "expected_tail", "expected_body", "expected_noise"),
+    [
+        (
+            0,
+            "\u30fb\u309c\u309c\u30fb\u3002\u3002\u30fb \u200b \u309c\u309c",
+            "\\\u200b_\xf6< ",
+            "FLAP FLAP\u200b!",
+        ),
+        (
+            5,
+            "\u30fb\u309c\u309c\u30fb\u3002 \u200b \u3002\u30fb\u309c\u309c",
+            "\\_\xf3\u200b< ",
+            "quack\u200b!",
+        ),
+    ],
+)
+def test_generate_duck(
+    seed: int, expected_tail: str, expected_body: str, expected_noise: str
+) -> None:
+    """
+    Test the generate_duck function.
+    """
+    random.seed(seed)
+    assert duckhunt.generate_duck() == (
+        expected_tail,
+        expected_body,
+        expected_noise,
+    )

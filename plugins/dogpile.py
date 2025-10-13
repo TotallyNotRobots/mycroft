@@ -31,7 +31,7 @@ def check_certs(bot: CloudBot):
 def query(endpoint, text):
     params = {"q": " ".join(text.split())}
     with requests.get(
-        search_url + "/" + endpoint,
+        f"{search_url}/{endpoint}",
         params=params,
         headers=HEADERS,
         verify=session.verify,

@@ -189,7 +189,7 @@ class Event(Mapping[str, Any]):
 
         if self.db is not None:
             # logger.debug("Closing database session for {}:threaded=False".format(self.hook.description))
-            # be sure the close the database in the database executor, as it is only accessable in that one thread
+            # be sure the close the database in the database executor, as it is only accessible in that one thread
             await self.async_call(self.db.close)
             self.db = None
 
@@ -425,13 +425,9 @@ class CommandEvent(Event):
             raise ValueError("Triggered command not set on this event")
 
         if self.hook.doc is None:
-            message = "{}{} requires additional arguments.".format(
-                self.triggered_prefix, self.triggered_command
-            )
+            message = f"{self.triggered_prefix}{self.triggered_command} requires additional arguments."
         else:
-            message = "{}{} {}".format(
-                self.triggered_prefix, self.triggered_command, self.hook.doc
-            )
+            message = f"{self.triggered_prefix}{self.triggered_command} {self.hook.doc}"
 
         self.notice(message, target=target)
 

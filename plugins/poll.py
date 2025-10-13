@@ -28,7 +28,7 @@ class Poll:
     def vote(self, voted_option, voter):
         """
         Adds a vote to a specific poll option. Raises PollError if option is invalid or user has already voted.
-        Returns PollOption if sucessful.
+        Returns PollOption if successful.
 
         :param voted_option: The poll option to vote on
         :param voter: The user who is voting on the poll
@@ -68,7 +68,7 @@ def poll(text, conn, nick, chan, message, reply):
     """{<question>[: <option1>, <option2>[, <option3>]...|close} - Creates a poll for [question] with the provided
     options (default: Yes, No), or closes the poll if the argument is 'close'"""
     # get poll ID
-    uid = ":".join([conn.name, chan, nick]).lower()
+    uid = f"{conn.name}:{chan}:{nick}".lower()
 
     if text.lower() == "close":
         if uid not in polls.keys():
@@ -76,9 +76,7 @@ def poll(text, conn, nick, chan, message, reply):
 
         p = polls.get(uid)
         reply(
-            'Your poll has been closed. Final results for \x02"{}"\x02:'.format(
-                p.question
-            )
+            f'Your poll has been closed. Final results for \x02"{p.question}"\x02:'
         )
         message(p.format_results())
         del polls[uid]
@@ -109,9 +107,7 @@ def poll(text, conn, nick, chan, message, reply):
 
     option_str = get_text_list(_poll.option_list, "and")
     message(
-        'Created poll \x02"{}"\x02 with the following options: {}'.format(
-            _poll.question, option_str
-        )
+        f'Created poll \x02"{_poll.question}"\x02 with the following options: {option_str}'
     )
     message(f"Use .vote {nick.lower()} <option> to vote on this poll!")
     return None
@@ -127,7 +123,7 @@ def vote(text, nick, conn, chan, notice):
         )
 
     _user, option = split
-    uid = ":".join([conn.name, chan, _user]).lower()
+    uid = f"{conn.name}:{chan}:{_user}".lower()
 
     p = polls.get(uid)
 
@@ -147,11 +143,11 @@ def vote(text, nick, conn, chan, notice):
 def results(text, conn, chan, nick, message, reply):
     """[user] - Shows current results from [user]'s poll. If [user] is empty, it will show results for your poll."""
     if text:
-        uid = ":".join([conn.name, chan, text]).lower()
+        uid = f"{conn.name}:{chan}:{text}".lower()
         if uid not in polls.keys():
             return "Sorry, there is no active poll from that user."
     else:
-        uid = ":".join([conn.name, chan, nick]).lower()
+        uid = f"{conn.name}:{chan}:{nick}".lower()
         if uid not in polls.keys():
             return "You have no current poll. Use .vote <user> <option> to vote on another users poll."
 

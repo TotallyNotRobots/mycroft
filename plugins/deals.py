@@ -19,7 +19,7 @@ def meh():
 @hook.command("slickdeals", autohelp=False)
 def slickdeals():
     """- List the top 3 frontpage slickdeals.net deals."""
-    url = "https://slickdeals.net/newsearch.php?mode=frontpage&searcharea=deals&searchin=first&rss=1"
+    url = "https://slickdeals.net/newsearch.php?mode=frontpage&searcharea=deals&searchin=first&rss=1"  # codespell:ignore
 
     feed = feedparser.parse(url)
     items = (
@@ -27,6 +27,5 @@ def slickdeals():
         for item in feed.entries[:3]
     )
 
-    out = "slickdeals.net: " + " \u2022 ".join(items)
-
-    return out
+    deals = " \u2022 ".join(items)
+    return f"slickdeals.net: {deals}"

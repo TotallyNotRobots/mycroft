@@ -157,10 +157,7 @@ def base64_decode(text, notice):
         return None
 
     if repr(decoded)[1:-1] != decoded:
-        return (
-            "Non printable characters detected in output, "
-            "escaped output: {!r}".format(decoded)
-        )
+        return f"Non printable characters detected in output, escaped output: {decoded!r}"
 
     return decoded
 
@@ -215,7 +212,7 @@ def reverse(text):
 def hash_command(text):
     """<string> - Returns hashes of <string>."""
     return ", ".join(
-        x + ": " + getattr(hashlib, x)(text.encode("utf-8")).hexdigest()
+        f"{x}: {getattr(hashlib, x)(text.encode('utf-8')).hexdigest()}"
         for x in ["md5", "sha1", "sha256"]
     )
 
@@ -244,7 +241,7 @@ def leet(text):
 def derpify(text):
     """<text> - returns some amusing responses from your input."""
     string = text.upper()
-    pick_the = random.choice(["TEH", "DA"])
+    pick_the = random.choice(["TEH", "DA"])  # codespell:ignore teh
     pick_e = random.choice(["E", "3", "A"])
     pick_qt = random.choice(["?!?!??", "???!!!!??", "?!??!?", "?!?!?!???"])
     pick_ex = random.choice(
@@ -255,8 +252,8 @@ def derpify(text):
         "YOU'RE": "UR",
         "YOUR": "UR",
         "YOU": "U",
-        "WHAT THE HECK": "WTH",
-        "WHAT THE HELL": "WTH",
+        "WHAT THE HECK": "WTH",  # codespell:ignore wth
+        "WHAT THE HELL": "WTH",  # codespell:ignore wth
         "WHAT THE FUCK": "WTF",
         "WHAT THE": "WT",
         "WHAT": "WUT",
@@ -275,19 +272,19 @@ def derpify(text):
         "PLEASE": "PLS",
         "SEE YOU": "CYA",
         "SEE YA": "CYA",
-        "SCHOOL": "SKOOL",
+        "SCHOOL": "SKOOL",  # codespell:ignore skool
         "AM": "M",
         "AM GOING TO": "IAM GOING TO",
         "THAT": "DAT",
         "ICK": "IK",
-        "LIKE": "LIEK",
-        "HELP": "HALP",
+        "LIKE": "LIEK",  # codespell:ignore liek
+        "HELP": "HALP",  # codespell:ignore halp
         "KE": "EK",
         "E": pick_e,
         "!": pick_ex,
         "?": pick_qt,
     }
-    output = translate(string, rules) + " " + pick_end
+    output = f"{translate(string, rules)} {pick_end}"
 
     return output
 

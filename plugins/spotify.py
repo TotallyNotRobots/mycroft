@@ -56,7 +56,7 @@ class SpotifyAPI:
             with requests.get(
                 self.api_url / endpoint,
                 params=params,
-                headers={"Authorization": "Bearer " + self._access_token},
+                headers={"Authorization": f"Bearer {self._access_token}"},
             ) as r:
                 r.raise_for_status()
 
@@ -128,7 +128,7 @@ def _do_format(data, _type):
         fmt = FORMATS[_type]
         return f"Spotify {_type.title()}", fmt.format_map(data)
 
-    raise ValueError("Attempt to format unknown Spotify API type: " + _type)
+    raise ValueError(f"Attempt to format unknown Spotify API type: {_type}")
 
 
 def _format_response(
@@ -136,7 +136,7 @@ def _format_response(
 ):
     pre, text = _do_format(data, _type)
     if show_pre:
-        out = pre + ": "
+        out = f"{pre}: "
     else:
         out = ""
 
@@ -146,10 +146,10 @@ def _format_response(
         out += " -"
 
     if show_url:
-        out += " " + data["external_urls"]["spotify"]
+        out += f" {data['external_urls']['spotify']}"
 
     if show_uri:
-        out += " " + "[{}]".format(data["uri"])
+        out += f" [{data['uri']}]"
 
     return out
 

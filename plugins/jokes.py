@@ -94,11 +94,7 @@ def boobies(text):
     out = text.strip()
     out = out.replace("o", boob).replace("O", boob).replace("0", boob)
     if out == text.strip():
-        return (
-            "Sorry I couldn't turn anything in '{}' into boobs for you.".format(
-                out
-            )
-        )
+        return f"Sorry I couldn't turn anything in '{out}' into boobs for you."
     return out
 
 
@@ -118,9 +114,7 @@ def awesome(text, is_nick_valid):
     if not is_nick_valid(target):
         return f"Sorry I can't tell {target} how awesome they are."
     link = f"http://{target}.is-awesome.cool/"
-    return "{}: I am blown away by your recent awesome action(s). Please read \x02{}\x02".format(
-        target, link
-    )
+    return f"{target}: I am blown away by your recent awesome action(s). Please read \x02{link}\x02"
 
 
 @hook.command(autohelp=False)
@@ -137,9 +131,9 @@ def kero(text):
     """<text> - Returns the text input the way kerouac5 would say it."""
     keror = random.choice(joke_lines["kero"]).upper()
     if keror == "???? WTF IS":
-        out = keror + " " + text.upper()
+        out = f"{keror} {text.upper()}"
     else:
-        out = text.upper() + " " + keror
+        out = f"{text.upper()} {keror}"
     return out
 
 

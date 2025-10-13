@@ -9,8 +9,8 @@ from cloudbot.bot import bot
 
 # Define some constants
 base_url = "https://maps.googleapis.com/maps/api/"
-geocode_api = base_url + "geocode/json"
-timezone_api = base_url + "timezone/json"
+geocode_api = f"{base_url}geocode/json"
+timezone_api = f"{base_url}timezone/json"
 
 # Change this to a ccTLD code (eg. uk, nz) to make results more targeted towards that specific country.
 # <https://developers.google.com/maps/documentation/geocoding/#RegionCodes>
@@ -21,13 +21,13 @@ def check_status(status, api):
     """A little helper function that checks an API error code and returns a nice message.
     Returns None if no errors found"""
     if status == "REQUEST_DENIED":
-        return "The " + api + " API is off in the Google Developers Console."
+        return f"The {api} API is off in the Google Developers Console."
 
     if status == "ZERO_RESULTS":
         return "No results found."
 
     if status == "OVER_QUERY_LIMIT":
-        return "The " + api + " API quota has run out."
+        return f"The {api} API quota has run out."
 
     if status == "UNKNOWN_ERROR":
         return "Unknown Error."
@@ -77,7 +77,7 @@ def time_command(text, reply):
             )
             return f"\x02{formatted_time}\x02 ({timezone})"
 
-    # Use the Geocoding API to get co-ordinates from the input
+    # Use the Geocoding API to get coordinates from the input
     params = {"address": text, "key": dev_key}
     if bias:
         params["region"] = bias
@@ -93,7 +93,7 @@ def time_command(text, reply):
     location_name = result["formatted_address"]
     location = result["geometry"]["location"]
 
-    # Now we have the co-ordinates, we use the Timezone API to get the timezone
+    # Now we have the coordinates, we use the Timezone API to get the timezone
     formatted_location = "{lat},{lng}".format(**location)
 
     epoch = time.time()
@@ -120,9 +120,7 @@ def time_command(text, reply):
 
     timezone = json["timeZoneName"]
 
-    return "\x02{}\x02 - {} ({})".format(
-        formatted_time, location_name, timezone
-    )
+    return f"\x02{formatted_time}\x02 - {location_name} ({timezone})"
 
 
 @hook.command(autohelp=False)
@@ -153,4 +151,4 @@ def beats(text):
     if beat > 1000:
         beat -= 1000
 
-    return "Swatch Internet Time: @%06.2f" % beat
+    return f"Swatch Internet Time: @{beat:06.2f}"

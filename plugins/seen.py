@@ -92,8 +92,6 @@ def seen(text, nick, chan, db, event):
     msg = last_seen[2]
     if msg.startswith("\1ACTION"):
         stripped = msg.strip("\1 ")[6:].strip()
-        return "{} was last seen {} ago: * {} {}".format(
-            text, reltime, text, stripped
-        )
+        return f"{text} was last seen {reltime} ago: * {text} {stripped}"
 
     return f"{text} was last seen {reltime} ago saying: {msg}"

@@ -20,7 +20,7 @@ class MockConn:
     ],
 )
 def test_page_commands(plugin_name, hook_name, pages_name, page_type):
-    plugin = importlib.import_module("plugins." + plugin_name)
+    plugin = importlib.import_module(f"plugins.{plugin_name}")
 
     hook = getattr(plugin, hook_name)
 

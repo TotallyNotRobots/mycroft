@@ -63,8 +63,8 @@ def mcuser(text, bot, reply):
     # check for errors from fishbans and handle them
     if not results["success"]:
         if results["error"] == "User is not premium.":
-            return "The account \x02{}\x02 is not premium or does not exist.".format(
-                text
+            return (
+                f"The account \x02{text}\x02 is not premium or does not exist."
             )
 
         return results["error"]
@@ -72,7 +72,4 @@ def mcuser(text, bot, reply):
     username = results["data"]["username"]
     uid = uuid.UUID(results["data"]["uuid"])
 
-    return (
-        "The account \x02{}\x02 ({}) exists. It is a \x02paid\x02"
-        " account.".format(username, uid)
-    )
+    return f"The account \x02{username}\x02 ({uid}) exists. It is a \x02paid\x02 account."

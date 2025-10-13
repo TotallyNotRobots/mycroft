@@ -32,7 +32,7 @@ def goog_trans(text, source, target):
             parsed["data"]["translations"][0]
         )
 
-    return "%(translatedText)s" % parsed["data"]["translations"][0]
+    return f"{parsed['data']['translations'][0]['translatedText']}"
 
 
 def match_language(fragment):
@@ -70,7 +70,7 @@ def translate(text):
                 if not tl:
                     if sl == "en":
                         return "unable to determine desired target language"
-                    return goog_trans(args[1] + " " + args[2], sl, "en")
+                    return goog_trans(f"{args[1]} {args[2]}", sl, "en")
                 return goog_trans(args[2], sl, tl)
         return goog_trans(text, "", "en")
     except OSError as e:

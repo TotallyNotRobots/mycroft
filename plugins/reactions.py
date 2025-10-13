@@ -28,10 +28,7 @@ def deal_with_it(text, message):
     phrase = random.choice(deal_with_it_phrases)
     formated_phrase = phrase.format(person_needs_to_deal)
     message(
-        "{} {}".format(
-            formated_phrase,
-            random.choice(reaction_macros["deal_with_it_macros"]),
-        )
+        f"{formated_phrase} {random.choice(reaction_macros['deal_with_it_macros'])}"
     )
 
 
@@ -40,9 +37,7 @@ def face_palm(text, message):
     """<nick> - Expresses your frustration with <Nick>. Code located in reactions.py"""
     face_palmer = text.strip()
     message(
-        "Dammit {} {}".format(
-            face_palmer, random.choice(reaction_macros["facepalm_macros"])
-        )
+        f"Dammit {face_palmer} {random.choice(reaction_macros['facepalm_macros'])}"
     )
 
 
@@ -50,11 +45,7 @@ def face_palm(text, message):
 def head_desk(text, message):
     """<nick> - Hit your head against the desk becausae of <nick>. Code located in reactions.py"""
     idiot = text.strip()
-    message(
-        "{} {}".format(
-            idiot, random.choice(reaction_macros["head_desk_macros"])
-        )
-    )
+    message(f"{idiot} {random.choice(reaction_macros['head_desk_macros'])}")
 
 
 @hook.command("fetish", "tmf")
@@ -62,8 +53,5 @@ def my_fetish(text, message):
     """<nick> - Did some one just mention what your fetish was? Let <nick> know! Code located in reactions.py"""
     person_to_share_fetish_with = text.strip()
     message(
-        "{} {}".format(
-            person_to_share_fetish_with,
-            random.choice(reaction_macros["fetish_macros"]),
-        )
+        f"{person_to_share_fetish_with} {random.choice(reaction_macros['fetish_macros'])}"
     )

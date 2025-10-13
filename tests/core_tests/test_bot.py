@@ -56,7 +56,7 @@ def test_no_instance_config(unset_bot):
 
 @pytest.mark.asyncio()
 async def test_migrate_db(mock_db, mock_bot_factory, mock_requests, tmp_path):
-    old_db_url = "sqlite:///" + str(tmp_path / "database1.db")
+    old_db_url = f"sqlite:///{tmp_path / 'database1.db'!s}"
     old_db = MockDB(old_db_url, True)
     table = Table(
         "foobar",

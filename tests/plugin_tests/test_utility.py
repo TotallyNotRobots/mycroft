@@ -199,9 +199,7 @@ def test_base64_decode(text, out):
     if out is None:
         assert ret is None
         assert len(mock_notice.args) == 1
-        assert mock_notice.args[0][0][0] == "Invalid base64 string '{}'".format(
-            text
-        )
+        assert mock_notice.args[0][0][0] == f"Invalid base64 string '{text}'"
     else:
         assert ret == out
 

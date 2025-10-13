@@ -6,6 +6,7 @@ use_parentheses = true
 known_first_party = ["cloudbot", "plugins", "tests"]
 known_third_party = ["alembic"]
 float_to_top = true
+profile = "black"
 
 [tool.black]
 line-length = 80
@@ -32,68 +33,68 @@ exclude = '''
 [tool.pylint.main]
 analyse-fallback-blocks = true
 py-version = "3.10"
-extension-pkg-allow-list=["lxml"]
+extension-pkg-allow-list = ["lxml"]
 ignore = ["alembic"]
 
 [tool.pylint.messages_control]
 disable = [
-  "raw-checker-failed",
-  "no-else-return",
-  "nested-min-max",
-  "bad-mcs-classmethod-argument",
-  "bad-inline-option",
-  "locally-disabled",
-  "file-ignored",
-  "suppressed-message",
-  "useless-suppression",
-  "deprecated-pragma",
-  "use-symbolic-message-instead",
-  "invalid-name",
-  "duplicate-string-formatting-argument",
-  "missing-module-docstring",
-  "missing-class-docstring",
-  "missing-function-docstring",
-  "consider-using-f-string",
-  "consider-using-dict-items",
-  "consider-using-with",
-  "consider-using-min-builtin",
-  "arguments-renamed",
-  "use-maxsplit-arg",
-  "consider-iterating-dictionary",
-  "redefined-outer-name",
-  "unused-argument",
-  "broad-except",
-  "ungrouped-imports",
-  "wrong-import-position",
-  "arguments-differ",
-  "too-many-arguments",
-  "too-many-locals",
-  "too-many-statements",
-  "too-many-branches",
-  "too-many-positional-arguments",
-  "protected-access",
-  "duplicate-code",
-  "no-else-raise",
-  "arguments-out-of-order",
-  "redefined-builtin",
-  "no-else-continue",
-  "unnecessary-comprehension",
-  "no-value-for-parameter",
-  "too-few-public-methods",
-  "fixme",
-  "too-many-public-methods",
-  "missing-timeout",
-  "not-callable",
-  "unnecessary-lambda-assignment",
-  "abstract-method",
-  "consider-using-generator",
-  "too-many-return-statements",
-  "line-too-long",
-  "too-many-instance-attributes",
-  "broad-exception-raised",
-  "use-implicit-booleaness-not-comparison",
-  "comparison-with-callable",
-  "wrong-import-order", # isort handles this
+    "raw-checker-failed",
+    "no-else-return",
+    "nested-min-max",
+    "bad-mcs-classmethod-argument",
+    "bad-inline-option",
+    "locally-disabled",
+    "file-ignored",
+    "suppressed-message",
+    "useless-suppression",
+    "deprecated-pragma",
+    "use-symbolic-message-instead",
+    "invalid-name",
+    "duplicate-string-formatting-argument",
+    "missing-module-docstring",
+    "missing-class-docstring",
+    "missing-function-docstring",
+    "consider-using-f-string",
+    "consider-using-dict-items",
+    "consider-using-with",
+    "consider-using-min-builtin",
+    "arguments-renamed",
+    "use-maxsplit-arg",
+    "consider-iterating-dictionary",
+    "redefined-outer-name",
+    "unused-argument",
+    "broad-except",
+    "ungrouped-imports",
+    "wrong-import-position",
+    "arguments-differ",
+    "too-many-arguments",
+    "too-many-locals",
+    "too-many-statements",
+    "too-many-branches",
+    "too-many-positional-arguments",
+    "protected-access",
+    "duplicate-code",
+    "no-else-raise",
+    "arguments-out-of-order",
+    "redefined-builtin",
+    "no-else-continue",
+    "unnecessary-comprehension",
+    "no-value-for-parameter",
+    "too-few-public-methods",
+    "fixme",
+    "too-many-public-methods",
+    "missing-timeout",
+    "not-callable",
+    "unnecessary-lambda-assignment",
+    "abstract-method",
+    "consider-using-generator",
+    "too-many-return-statements",
+    "line-too-long",
+    "too-many-instance-attributes",
+    "broad-exception-raised",
+    "use-implicit-booleaness-not-comparison",
+    "comparison-with-callable",
+    "wrong-import-order",                     # isort handles this
 ]
 
 enable = ["c-extension-no-member"]
@@ -113,9 +114,7 @@ show_error_codes = true
 warn_unused_ignores = true
 warn_redundant_casts = true
 # strict_equality = true
-plugins = [
-  "pydantic.mypy"
-]
+plugins = ["pydantic.mypy"]
 
 follow_imports = "silent"
 # disallow_any_generics = true
@@ -149,33 +148,21 @@ warn_required_dynamic_aliases = true
 [tool.commitizen]
 name = "cz_conventional_commits"
 tag_format = "v$version"
-version_scheme = "semver"
+version_scheme = "semver2"
 update_changelog_on_bump = true
 version_files = ["cloudbot/__init__.py:__version__"]
 version = "1.5.0"
+version_provider = "scm"
+annotated_tag = true
 
 [tool.autoflake]
 remove-all-unused-imports = true
 in-place = true
 
 [tool.pytest.ini_options]
-addopts = [
-    "--ignore=venv",
-    "--ignore=.*",
-    "--ignore=tools",
-    "--ignore=alembic",
-    "--cov=.",
-    "--cov-report=xml",
-    "--cov-report=html",
-    "--doctest-modules",
-    "--random-order",
-    "--pythonhashseed=123",
-]
+addopts = ["--ignore=venv", "--ignore=.*", "--ignore=tools", "--ignore=alembic", "--cov=.", "--cov-report=xml", "--cov-report=html", "--doctest-modules", "--random-order", "--pythonhashseed=123"]
 testpaths = ["."]
-filterwarnings = [
-    "error",
-    "ignore:.*asyncio\\.iscoroutinefunction.*:DeprecationWarning:mcstatus.*",
-]
+filterwarnings = ["error", "ignore:.*asyncio\\.iscoroutinefunction.*:DeprecationWarning:mcstatus.*"]
 asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "function"
 
@@ -183,7 +170,7 @@ asyncio_default_fixture_loop_scope = "function"
 fail_under = 80
 exclude_lines = [
     "@overload",
-    "if TYPE_CHECKING:", # Type checking blocks are never accessible at test/runtime
+    "if TYPE_CHECKING:",                  # Type checking blocks are never accessible at test/runtime
     "pragma: no cover",
     "def __repr__",
     "raise AssertionError",
@@ -197,11 +184,26 @@ branch = true
 omit = [
     "tests/data/*",
     "tests/util/*",
-    ".*", # Ignore any .cache, .venv, etc directories
+    ".*",           # Ignore any .cache, .venv, etc directories
     "venv/*",
-    "tools/*", # Build/CI tools
+    "tools/*",      # Build/CI tools
     "alembic/*",
 ]
+
+[tool.nitpick]
+style = ["gh://TotallyNotRobots/nitpick/app-style-3.10.toml"]
+
+[tool.flynt]
+transform-concats = true
+transform-joins = true
+line-length = 120
+aggressive = true
+
+[tool.codespell]
+skip = './data'
+count = true
+quiet-level = 3
+ignore-words-list = ["cypher", "decypher", "AHD", "ahd"]
 
 [tool.alembic]
 
@@ -218,9 +220,7 @@ script_location = "%(here)s/alembic"
 # file_template = "%%(year)d_%%(month).2d_%%(day).2d_%%(hour).2d%%(minute).2d-%%(rev)s_%%(slug)s"
 
 # additional paths to be prepended to sys.path. defaults to the current working directory.
-prepend_sys_path = [
-    "."
-]
+prepend_sys_path = ["."]
 
 # timezone to use when rendering the date within the migration file
 # as well as the filename.
@@ -249,7 +249,6 @@ prepend_sys_path = [
 #    "%(here)s/alembic/versions",
 #    "%(here)s/foo/bar"
 # ]
-
 
 # set to 'true' to search source files recursively
 # in each "version_locations" directory

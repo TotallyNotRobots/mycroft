@@ -5,7 +5,7 @@ from cloudbot.bot import bot
 
 # Define some constants
 base_url = "https://maps.googleapis.com/maps/api/"
-geocode_api = base_url + "geocode/json"
+geocode_api = f"{base_url}geocode/json"
 
 # Change this to a ccTLD code (eg. uk, nz) to make results more targeted towards that specific country.
 # <https://developers.google.com/maps/documentation/geocoding/#RegionCodes>
@@ -43,7 +43,7 @@ def locate(text):
     if not dev_key:
         return "This command requires a Google Developers Console API key."
 
-    # Use the Geocoding API to get co-ordinates from the input
+    # Use the Geocoding API to get coordinates from the input
     params = {"address": text, "key": dev_key}
     if bias:
         params["region"] = bias
@@ -62,7 +62,7 @@ def locate(text):
     location = result["geometry"]["location"]
     formatted_location = "{lat},{lng},16z".format(**location)
 
-    url = "https://google.com/maps/@" + formatted_location + "/data=!3m1!1e3"
+    url = f"https://google.com/maps/@{formatted_location}/data=!3m1!1e3"
     tags = result["types"]
 
     # if 'political' is not the only tag, remove it.

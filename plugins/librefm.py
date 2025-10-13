@@ -76,9 +76,7 @@ def librefm(text, nick, db, event):
 
     if "error" in response:
         # return "libre.fm Error: {}.".format(response["message"])
-        return "libre.fm Error: {} Code: {}.".format(
-            response["error"]["#text"], response["error"]["code"]
-        )
+        return f"libre.fm Error: {response['error']['#text']} Code: {response['error']['code']}."
 
     if (
         "track" not in response["recenttracks"]
@@ -196,7 +194,7 @@ def displaybandinfo(text, bot):
 
     url = web.try_shorten(a["url"])
 
-    out = "{}: ".format(a["name"])
+    out = f"{a['name']}: "
     out += summary if summary else "No artist summary listed."
     out += f" {url}"
     out += f" ({tags})"
@@ -238,16 +236,14 @@ def toptrack(text, nick):
         return err
 
     if "error" in data:
-        return "Error: {}.".format(data["message"])
+        return f"Error: {data['message']}."
 
     out = f"{username}'s favorite songs: "
     for r in range(min(5, len(data["toptracks"]["track"]))):
         track_name = data["toptracks"]["track"][r]["name"]
         artist_name = data["toptracks"]["track"][r]["artist"]["name"]
         play_count = data["toptracks"]["track"][r]["playcount"]
-        out += "{} by {} listened to {:,} times. ".format(
-            track_name, artist_name, int(play_count)
-        )
+        out += f"{track_name} by {artist_name} listened to {int(play_count):,} times. "
     return out
 
 
@@ -270,15 +266,13 @@ def libretopartists(text, nick):
         return err
 
     if "error" in data:
-        return "Error: {}.".format(data["message"])
+        return f"Error: {data['message']}."
 
     out = f"{username}'s favorite artists: "
     for r in range(5):
         artist_name = data["topartists"]["artist"][r]["name"]
         play_count = data["topartists"]["artist"][r]["playcount"]
-        out += "{} listened to {:,} times. ".format(
-            artist_name, int(play_count)
-        )
+        out += f"{artist_name} listened to {int(play_count):,} times. "
     return out
 
 

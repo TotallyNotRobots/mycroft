@@ -27,11 +27,11 @@ def xkcd_info(xkcd_id, url=False):
     date_str = date.strftime("%d %B %Y")
 
     if url:
-        url = " | {}".format(XKCD_URL / xkcd_id.replace("/", ""))
+        url = f" | {XKCD_URL / xkcd_id.replace('/', '')}"
     else:
         url = ""
 
-    return "xkcd: \x02{}\x02 ({}){}".format(data["title"], date_str, url)
+    return f"xkcd: \x02{data['title']}\x02 ({date_str}){url}"
 
 
 def xkcd_search(term):

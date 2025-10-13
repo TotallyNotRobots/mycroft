@@ -80,7 +80,7 @@ PIP is suggested to make installation of CloudBot's dependencies easier, and is 
   Luke, you should really fill this bit.
   ```
 
-## CloudBot Depdendencies and APIs
+## CloudBot Dependencies and APIs
 
 Before running CloudBot, you'll need to get some of the required dependencies and APIs configured/installed.
 
