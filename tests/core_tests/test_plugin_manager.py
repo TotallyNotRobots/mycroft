@@ -11,7 +11,7 @@ import pytest_asyncio
 import sqlalchemy as sa
 from sqlalchemy import Column, String, Table, inspect
 
-from cloudbot import hook
+from cloudbot import hook, plugin
 from cloudbot.event import CommandEvent, EventType
 from cloudbot.plugin import Plugin
 from cloudbot.util import database
@@ -639,12 +639,26 @@ async def test_unload_event_hooks(
     ]
 
 
-def test_safe_resolve(mock_manager):
+def test_safe_resolve():
     base_path = Path("/some/path/that/doesn't/exist")
-    path = mock_manager.safe_resolve(base_path)
+    path = plugin.safe_resolve(base_path)
     assert str(path) == str(base_path.absolute())
     assert path.is_absolute()
     assert not path.exists()
+
+
+@pytest.mark.parametrize(
+    ("base_dir", "path", "expected"),
+    [
+        ("foo", "foo/plugins/bar.py", "plugins.bar"),
+        ("some.base", "some.base/plugins/bar.py", "plugins.bar"),
+    ],
+)
+def test_file_path_to_import(
+    base_dir: str, path: str, expected: str, mock_manager, mock_bot, tmp_path
+) -> None:
+    mock_bot.base_dir = tmp_path / base_dir
+    assert mock_manager.file_path_to_import(tmp_path / path) == expected
 
 
 @pytest.mark.asyncio
