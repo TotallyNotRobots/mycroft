@@ -161,7 +161,7 @@ class CloudBot(AbstractBot):
 
         # setup db
         db_path = self.config.get("database", "sqlite:///cloudbot.db")
-        self.db_engine = create_engine(db_path)
+        self.db_engine = create_engine(db_path, future=True)
         database.configure(self.db_engine)
 
         logger.debug("Database system initialised.")
@@ -478,7 +478,7 @@ class CloudBot(AbstractBot):
 
     def migrate_db(self) -> None:
         logger.info("Migrating database")
-        engine: Engine = create_engine(self.old_db)
+        engine: Engine = create_engine(self.old_db, future=True)
         old_session: Session = scoped_session(sessionmaker(bind=engine))()
         new_session: Session = database.Session()
         table: Table
