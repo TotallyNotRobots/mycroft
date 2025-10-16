@@ -23,7 +23,7 @@ async def async_main():
     logger.info("Starting CloudBot.")
 
     # create the bot
-    _bot = CloudBot()
+    _bot = CloudBot(loop=asyncio.get_running_loop())
 
     # whether we are killed while restarting
     stopped_while_restarting = False

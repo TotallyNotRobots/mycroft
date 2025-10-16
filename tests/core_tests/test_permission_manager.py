@@ -48,35 +48,32 @@ def test_manager_load(mock_db):
 
     permissions.backdoor = None
     perm = "testperm"
-    manager = PermissionManager(
-        MockConn(
-            "testconn",
-            {
-                "permissions": {
-                    "admins": {"users": [user_mask], "perms": [perm]}
-                }
-            },
-        )
+    conn = MockConn(
+        "testconn",
+        {"permissions": {"admins": {"users": [user_mask], "perms": [perm]}}},
     )
+    manager = PermissionManager(conn)
     assert manager.group_exists("admins")
     assert [model_to_dict(item) for item in manager.get_groups()] == [
-        {"name": "admins", "config": True}
+        {"name": "admins", "connection": conn.name, "config": True}
     ]
     assert [model_to_dict(item) for item in manager.get_user_groups(user)] == [
-        {"config": True, "name": "admins"}
+        {"config": True, "connection": conn.name, "name": "admins"}
     ]
     assert not manager.get_user_groups(other_user)
     assert manager.get_group_users("admins") == [user_mask]
     assert manager.get_group_permissions("admins") == [perm]
     assert manager.get_user_permissions(user) == {perm}
     assert not manager.get_user_permissions(other_user)
-    assert mock_db.get_data(group_table) == [("admins", True)]
+    assert mock_db.get_data(group_table) == [(conn.name, "admins", True)]
 
     assert mock_db.get_data(group_member_table) == [
-        ("admins", "user!*@host??om", True)
+        (conn.name, "admins", "user!*@host??om", True)
     ]
 
-    assert mock_db.get_data(permission_table) == [("admins", perm, True)]
+    assert mock_db.get_data(permission_table) == [
+        (conn.name, "admins", perm, True)
+    ]
     assert manager.get_perm_users(perm) == ["user!*@host??om"]
     assert manager.user_in_group(user, "admins")
     assert not manager.user_in_group(other_user, "admins")
@@ -112,15 +109,30 @@ def test_db(mock_db):
     group_member_table.create(mock_db.engine)
     permission_table.create(mock_db.engine)
 
+    conn = MockConn(
+        "testconn",
+        {
+            "permissions": {
+                "admins": {"users": ["a", "d"], "perms": ["foo"]},
+                "foo": {
+                    "users": ["b", "c", "thing"],
+                    "perms": ["bar", "baz"],
+                },
+            }
+        },
+    )
+
     perm = "bar"
     group = Group(
         name="foo",
+        connection=conn.name,
         perms=[GroupPermission(name=perm)],
         members=[GroupMember(mask="thing")],
     )
 
     group1 = Group(
         name="foo1",
+        connection=conn.name,
         perms=[GroupPermission(name=perm)],
         members=[GroupMember(mask="thing1")],
     )
@@ -130,16 +142,19 @@ def test_db(mock_db):
 
     session.commit()
 
-    assert mock_db.get_data(group_table) == [("foo", False), ("foo1", False)]
+    assert mock_db.get_data(group_table) == [
+        (conn.name, "foo", False),
+        (conn.name, "foo1", False),
+    ]
 
     assert mock_db.get_data(group_member_table) == [
-        ("foo", "thing", False),
-        ("foo1", "thing1", False),
+        (conn.name, "foo", "thing", False),
+        (conn.name, "foo1", "thing1", False),
     ]
 
     assert mock_db.get_data(permission_table) == [
-        ("foo", "bar", False),
-        ("foo1", "bar", False),
+        (conn.name, "foo", "bar", False),
+        (conn.name, "foo1", "bar", False),
     ]
 
     res = (
@@ -156,41 +171,28 @@ def test_db(mock_db):
 
     assert res == [("thing",), ("thing1",)]
 
-    manager = PermissionManager(
-        MockConn(
-            "testconn",
-            {
-                "permissions": {
-                    "admins": {"users": ["a", "d"], "perms": ["foo"]},
-                    "foo": {
-                        "users": ["b", "c", "thing"],
-                        "perms": ["bar", "baz"],
-                    },
-                }
-            },
-        )
-    )
+    manager = PermissionManager(conn)
 
     assert mock_db.get_data(group_table) == [
-        ("foo", True),
-        ("foo1", False),
-        ("admins", True),
+        (conn.name, "foo", True),
+        (conn.name, "foo1", False),
+        (conn.name, "admins", True),
     ]
 
     assert mock_db.get_data(group_member_table) == [
-        ("foo", "thing", True),
-        ("foo1", "thing1", False),
-        ("admins", "a", True),
-        ("admins", "d", True),
-        ("foo", "b", True),
-        ("foo", "c", True),
+        (conn.name, "foo", "thing", True),
+        (conn.name, "foo1", "thing1", False),
+        (conn.name, "admins", "a", True),
+        (conn.name, "admins", "d", True),
+        (conn.name, "foo", "b", True),
+        (conn.name, "foo", "c", True),
     ]
 
     assert mock_db.get_data(permission_table) == [
-        ("foo", "bar", True),
-        ("foo1", "bar", False),
-        ("admins", "foo", True),
-        ("foo", "baz", True),
+        (conn.name, "foo", "bar", True),
+        (conn.name, "foo1", "bar", False),
+        (conn.name, "admins", "foo", True),
+        (conn.name, "foo", "baz", True),
     ]
 
     assert manager.has_perm_mask("a", "foo", notice=False)
@@ -209,36 +211,6 @@ def test_db_config_merge(mock_db):
     group_member_table.create(mock_db.engine)
     permission_table.create(mock_db.engine)
 
-    perm = "bar"
-    group = Group(
-        name="foo",
-        perms=[GroupPermission(name=perm)],
-        members=[GroupMember(mask="thing")],
-    )
-
-    group1 = Group(
-        name="foo1",
-        perms=[GroupPermission(name=perm)],
-        members=[GroupMember(mask="thing1")],
-    )
-
-    session.add(group)
-    session.add(group1)
-
-    session.commit()
-
-    assert mock_db.get_data(group_table) == [("foo", False), ("foo1", False)]
-
-    assert mock_db.get_data(group_member_table) == [
-        ("foo", "thing", False),
-        ("foo1", "thing1", False),
-    ]
-
-    assert mock_db.get_data(permission_table) == [
-        ("foo", "bar", False),
-        ("foo1", "bar", False),
-    ]
-
     conn = MockConn(
         "testconn",
         {
@@ -249,28 +221,63 @@ def test_db_config_merge(mock_db):
         },
     )
 
-    manager = PermissionManager(conn)
+    perm = "bar"
+    group = Group(
+        name="foo",
+        connection=conn.name,
+        perms=[GroupPermission(name=perm)],
+        members=[GroupMember(mask="thing")],
+    )
+
+    group1 = Group(
+        name="foo1",
+        connection=conn.name,
+        perms=[GroupPermission(name=perm)],
+        members=[GroupMember(mask="thing1")],
+    )
+
+    session.add(group)
+    session.add(group1)
+
+    session.commit()
 
     assert mock_db.get_data(group_table) == [
-        ("foo", True),
-        ("foo1", False),
-        ("admins", True),
+        (conn.name, "foo", False),
+        (conn.name, "foo1", False),
     ]
 
     assert mock_db.get_data(group_member_table) == [
-        ("foo", "thing", True),
-        ("foo1", "thing1", False),
-        ("admins", "a", True),
-        ("admins", "d", True),
-        ("foo", "b", True),
-        ("foo", "c", True),
+        (conn.name, "foo", "thing", False),
+        (conn.name, "foo1", "thing1", False),
     ]
 
     assert mock_db.get_data(permission_table) == [
-        ("foo", "bar", True),
-        ("foo1", "bar", False),
-        ("admins", "foo", True),
-        ("foo", "baz", True),
+        (conn.name, "foo", "bar", False),
+        (conn.name, "foo1", "bar", False),
+    ]
+
+    manager = PermissionManager(conn)
+
+    assert mock_db.get_data(group_table) == [
+        (conn.name, "foo", True),
+        (conn.name, "foo1", False),
+        (conn.name, "admins", True),
+    ]
+
+    assert mock_db.get_data(group_member_table) == [
+        (conn.name, "foo", "thing", True),
+        (conn.name, "foo1", "thing1", False),
+        (conn.name, "admins", "a", True),
+        (conn.name, "admins", "d", True),
+        (conn.name, "foo", "b", True),
+        (conn.name, "foo", "c", True),
+    ]
+
+    assert mock_db.get_data(permission_table) == [
+        (conn.name, "foo", "bar", True),
+        (conn.name, "foo1", "bar", False),
+        (conn.name, "admins", "foo", True),
+        (conn.name, "foo", "baz", True),
     ]
 
     perm_config = conn.config["permissions"]
@@ -281,18 +288,21 @@ def test_db_config_merge(mock_db):
 
     manager.reload()
 
-    assert mock_db.get_data(group_table) == [("foo", True), ("foo1", False)]
+    assert mock_db.get_data(group_table) == [
+        (conn.name, "foo", True),
+        (conn.name, "foo1", False),
+    ]
 
     assert mock_db.get_data(group_member_table) == [
-        ("foo1", "thing1", False),
-        ("foo", "b", True),
-        ("foo", "c", True),
+        (conn.name, "foo1", "thing1", False),
+        (conn.name, "foo", "b", True),
+        (conn.name, "foo", "c", True),
     ]
 
     assert mock_db.get_data(permission_table) == [
-        ("foo", "bar", True),
-        ("foo1", "bar", False),
-        ("foo", "test", True),
+        (conn.name, "foo", "bar", True),
+        (conn.name, "foo1", "bar", False),
+        (conn.name, "foo", "test", True),
     ]
 
     assert manager.remove_group_user("other", "test") == []

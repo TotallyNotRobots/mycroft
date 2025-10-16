@@ -200,6 +200,7 @@ omit = [
     ".*", # Ignore any .cache, .venv, etc directories
     "venv/*",
     "tools/*", # Build/CI tools
+    "alembic/*",
 ]
 
 [tool.alembic]

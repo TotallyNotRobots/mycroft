@@ -33,6 +33,22 @@ class AbstractBot:
     def __init__(self, *, config: Config) -> None:
         self.config = config
 
+    def get_connection_configs(self) -> KeyFoldDict:
+        out = KeyFoldDict()
+        for config in self.config["connections"]:
+            # strip all spaces and capitalization from the connection name
+            original_name = config["name"]
+            name = clean_name(original_name)
+            if name in out:
+                other_name = out[name]["name"]
+                raise ValueError(
+                    f"Duplicate connection names found after sanitize: {original_name!r} and {other_name!r}"
+                )
+
+            out[name] = config
+
+        return out
+
 
 class BotInstanceHolder:
     def __init__(self) -> None:
@@ -219,9 +235,7 @@ class CloudBot(AbstractBot):
 
     def create_connections(self):
         """Create a BotConnection for all the networks defined in the config"""
-        for config in self.config["connections"]:
-            # strip all spaces and capitalization from the connection name
-            name = clean_name(config["name"])
+        for name, config in self.get_connection_configs().items():
             nick = config["nick"]
             _type = config.get("type", "irc")
 
