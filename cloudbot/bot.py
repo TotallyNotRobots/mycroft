@@ -97,6 +97,7 @@ class CloudBot(AbstractBot):
         *,
         loop: asyncio.AbstractEventLoop = None,
         base_dir: Path | None = None,
+        create_connections: bool = True,
     ) -> None:
         if loop is None:
             loop = asyncio.get_running_loop()
@@ -172,7 +173,8 @@ class CloudBot(AbstractBot):
         self.load_clients()
 
         # create bot connections
-        self.create_connections()
+        if create_connections:
+            self.create_connections()
 
         self.observer = Observer()
 

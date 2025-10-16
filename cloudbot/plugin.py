@@ -1,6 +1,7 @@
 import asyncio
 import importlib
 import logging
+import os
 import sys
 import typing
 from collections import defaultdict
@@ -92,6 +93,26 @@ def find_tables(code):
     return tables
 
 
+def safe_resolve(path_obj: Path) -> Path:
+    """Resolve the parts of a path that exist, allowing a non-existant path
+    to be resolved to allow resolution of its parents
+
+    :param path_obj: The `Path` object to resolve
+    :return: The safely resolved `Path`
+    """
+    unresolved = []
+    while not path_obj.exists():
+        unresolved.append(path_obj.name)
+        path_obj = path_obj.parent
+
+    path_obj = path_obj.resolve()
+
+    for part in reversed(unresolved):
+        path_obj /= part
+
+    return path_obj
+
+
 class PluginManager:
     """
     PluginManager is the core of CloudBot plugin loading.
@@ -151,24 +172,18 @@ class PluginManager:
         """
         return self._plugin_name_map.get(title)
 
-    def safe_resolve(self, path_obj: Path) -> Path:
-        """Resolve the parts of a path that exist, allowing a non-existant path
-        to be resolved to allow resolution of its parents
-
-        :param path_obj: The `Path` object to resolve
-        :return: The safely resolved `Path`
+    def file_path_to_import(self, file_path: str | os.PathLike) -> str:
         """
-        unresolved = []
-        while not path_obj.exists():
-            unresolved.append(path_obj.name)
-            path_obj = path_obj.parent
+        Convert a path to a python file to the import path
 
-        path_obj = path_obj.resolve()
-
-        for part in reversed(unresolved):
-            path_obj /= part
-
-        return path_obj
+        :param file_path: Path to the file
+        :return: The import path for the module
+        """
+        path = Path(file_path)
+        file_path = safe_resolve(path)
+        # Resolve the path relative to the current directory
+        plugin_path = file_path.relative_to(self.bot.base_dir)
+        return ".".join(plugin_path.parts).rsplit(".", 1)[0]
 
     def get_plugin(self, path) -> Optional["Plugin"]:
         """
@@ -179,7 +194,7 @@ class PluginManager:
         """
         path_obj = Path(path)
 
-        return self.plugins.get(str(self.safe_resolve(path_obj)))
+        return self.plugins.get(str(safe_resolve(path_obj)))
 
     def can_load(self, plugin_title, noisy=True):
         pl = self.bot.config.get("plugin_loading")
@@ -210,6 +225,14 @@ class PluginManager:
 
         return True
 
+    def get_plugin_tables(self, plugin_dir: Path) -> None:
+        """Load all plugins but don't execute any hooks
+
+        Used by alembic/env.py
+        """
+        for path in plugin_dir.rglob("[!_]*.py"):
+            self._load_mod(self.file_path_to_import(path.resolve()))
+
     async def load_all(self, plugin_dir):
         """
         Load a plugin from each *.py file in the given directory.
@@ -228,7 +251,7 @@ class PluginManager:
             *[self.unload_plugin(path) for path in self.plugins],
         )
 
-    def _load_mod(self, name):
+    def _load_mod(self, name: str):
         plugin_module = importlib.import_module(name)
         # if this plugin was loaded before, reload it
         if hasattr(plugin_module, LOADED_ATTR):
@@ -244,7 +267,7 @@ class PluginManager:
         """
 
         path = Path(path)
-        file_path = self.safe_resolve(path)
+        file_path = safe_resolve(path)
         file_name = file_path.name
         # Resolve the path relative to the current directory
         plugin_path = file_path.relative_to(self.bot.base_dir)
@@ -411,7 +434,7 @@ class PluginManager:
         Returns True if the plugin was unloaded, False if the plugin wasn't loaded in the first place.
         """
         path = Path(path)
-        file_path = self.safe_resolve(path)
+        file_path = safe_resolve(path)
 
         # make sure this plugin is actually loaded
         plugin = self.get_plugin(file_path)

@@ -69,6 +69,7 @@ repos:
     args:
     - '-s'
     - 'no'
+    exclude: alembic/.*
     language: system
     types: [python]
 - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt

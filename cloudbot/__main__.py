@@ -6,7 +6,17 @@ import sys
 import time
 from pathlib import Path
 
+import alembic.command
+import alembic.config
+
 from cloudbot.bot import CloudBot
+from cloudbot.bot import bot as bot_instance
+
+
+def upgrade_db_schema() -> None:
+    cfg = alembic.config.Config("alembic.ini", "pyproject.toml")
+    alembic.command.upgrade(cfg, "heads")
+    bot_instance.set(None)
 
 
 async def async_main():
@@ -20,6 +30,8 @@ async def async_main():
 
     logger = logging.getLogger("cloudbot")
     logger.info("Starting CloudBot.")
+
+    upgrade_db_schema()
 
     # create the bot
     _bot = CloudBot()

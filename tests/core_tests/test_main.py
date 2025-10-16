@@ -11,9 +11,15 @@ async def test_main():
     async def run():
         return False
 
-    with patch("cloudbot.__main__.CloudBot") as mocked:
-        mocked().run = run
+    with (
+        patch("cloudbot.__main__.CloudBot") as mocked_bot,
+        patch(
+            "cloudbot.__main__.upgrade_db_schema"
+        ) as mocked_upgrade_db_schema,
+    ):
+        mocked_bot().run = run
         await async_main()
         assert logging._srcfile is None
         assert not logging.logThreads
         assert not logging.logProcesses
+        mocked_upgrade_db_schema.assert_called_once()
