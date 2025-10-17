@@ -13,7 +13,6 @@ from cloudbot.hook import Action, Priority
 from cloudbot.plugin_hooks import CommandHook, ConfigHook, EventHook, RawHook
 from cloudbot.util import database
 from tests.util.async_mock import AsyncMock
-from tests.util.mock_config import MockConfig
 from tests.util.mock_db import MockDB
 
 
@@ -474,13 +473,15 @@ def test_get_cmd_regex():
     )
 
 
-def config_mock(config):
-    def _make_config(bot):
-        conf = MockConfig(bot)
-        conf.update(config)
-        return conf
+def patch_config(config):
+    return patch("cloudbot.config.Config.load_config", new=config_mock(config))
 
-    return _make_config
+
+def config_mock(config):
+    def _load_config(self):
+        self.update(config)
+
+    return _load_config
 
 
 @pytest.mark.asyncio
@@ -488,17 +489,14 @@ def config_mock(config):
     "config_enabled,plugin_enabled", list(product([True, False], [True, False]))
 )
 async def test_reloaders(tmp_path, config_enabled, plugin_enabled, unset_bot):
-    with patch(
-        "cloudbot.bot.Config",
-        new=config_mock(
-            {
-                "connections": [],
-                "reloading": {
-                    "plugin_reloading": plugin_enabled,
-                    "config_reloading": config_enabled,
-                },
-            }
-        ),
+    with patch_config(
+        {
+            "connections": [],
+            "reloading": {
+                "plugin_reloading": plugin_enabled,
+                "config_reloading": config_enabled,
+            },
+        }
     ):
         bot = CloudBot(loop=asyncio.get_running_loop(), base_dir=tmp_path)
         assert bot.config_reloading_enabled is config_enabled
@@ -508,13 +506,10 @@ async def test_reloaders(tmp_path, config_enabled, plugin_enabled, unset_bot):
 
 @pytest.mark.asyncio
 async def test_set_error(tmp_path, unset_bot):
-    with patch(
-        "cloudbot.bot.Config",
-        new=config_mock(
-            {
-                "connections": [],
-            }
-        ),
+    with patch_config(
+        {
+            "connections": [],
+        }
     ):
         bot = CloudBot(loop=asyncio.get_running_loop(), base_dir=tmp_path)
         with pytest.raises(ValueError):
@@ -525,21 +520,18 @@ async def test_set_error(tmp_path, unset_bot):
 
 @pytest.mark.asyncio
 async def test_load_clients(tmp_path, unset_bot):
-    with patch(
-        "cloudbot.bot.Config",
-        new=config_mock(
-            {
-                "connections": [
-                    {
-                        "type": "irc",
-                        "name": "foobar",
-                        "nick": "TestBot",
-                        "channels": [],
-                        "connection": {"server": "irc.example.com"},
-                    }
-                ]
-            }
-        ),
+    with patch_config(
+        {
+            "connections": [
+                {
+                    "type": "irc",
+                    "name": "foobar",
+                    "nick": "TestBot",
+                    "channels": [],
+                    "connection": {"server": "irc.example.com"},
+                }
+            ]
+        }
     ):
         (tmp_path / "data").mkdir(exist_ok=True, parents=True)
         bot = CloudBot(loop=asyncio.get_running_loop(), base_dir=tmp_path)

@@ -38,7 +38,7 @@ class MockBot(AbstractBot):
 
         self.running = True
         self.logger = logging.getLogger("cloudbot")
-        super().__init__(config=MockConfig(self))
+        super().__init__(config=MockConfig())
 
         if config is not None:
             self.config.update(config)

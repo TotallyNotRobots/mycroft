@@ -4,22 +4,16 @@ import sys
 import time
 from collections import OrderedDict
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, cast
-
-if TYPE_CHECKING:
-    from cloudbot.bot import AbstractBot
+from typing import Optional, cast
 
 logger = logging.getLogger("cloudbot")
 
 
 class Config(OrderedDict):
-    def __init__(
-        self, bot: "AbstractBot", *, filename: str = "config.json"
-    ) -> None:
+    def __init__(self, *, filename: str = "config.json") -> None:
         super().__init__()
         self.filename = filename
         self.path = Path(self.filename).resolve()
-        self.bot = bot
 
         self._api_keys: dict[str, str | None] = {}
 

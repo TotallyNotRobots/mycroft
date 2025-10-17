@@ -125,6 +125,7 @@
         "giphy": ""
     },
     "database": "sqlite:///cloudbot.db",
+    "schema_migration": false,
     "location_bias_cc": null,
     "plugin_loading": {
         "use_whitelist": false,

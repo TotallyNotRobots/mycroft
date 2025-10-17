@@ -15,12 +15,10 @@ def test_missing_config(
     tmp_path,
     capsys,
     mock_sleep,
-    mock_bot,
 ):
     config_file = tmp_path / "config.json"
-    bot = mock_bot
     with pytest.raises(SystemExit):
-        Config(bot, filename=str(config_file))
+        Config(filename=str(config_file))
 
     data = capsys.readouterr()
     assert data.out == (
@@ -35,9 +33,8 @@ def test_missing_config(
     )
 
 
-def test_loads(tmp_path, mock_sleep, mock_bot):
+def test_loads(tmp_path, mock_sleep):
     config_file = tmp_path / "config.json"
     config_file.write_text('{"a":1}')
-    bot = mock_bot
-    conf = Config(bot, filename=str(config_file))
+    conf = Config(filename=str(config_file))
     assert dict(conf) == {"a": 1}

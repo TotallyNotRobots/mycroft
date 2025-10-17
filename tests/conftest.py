@@ -2,12 +2,14 @@ import asyncio
 import datetime
 import importlib
 import logging
+from collections.abc import Generator
 from unittest.mock import MagicMock, patch
 
 import freezegun
 import pytest
 import pytest_asyncio
 from responses import RequestsMock
+from sqlalchemy import orm as sa_orm
 from sqlalchemy.orm import close_all_sessions
 
 import cloudbot
@@ -18,11 +20,15 @@ from tests.util.mock_bot import MockBot
 from tests.util.mock_db import MockDB
 
 
-@pytest.fixture(autouse=True)
-def clear_metadata():
-    database.metadata.clear()
-    yield
-    database.metadata.clear()
+@pytest.fixture()
+def temp_metadata():
+    new_base = sa_orm.declarative_base()
+    with (
+        patch("cloudbot.util.database.Base", new=new_base),
+        patch("cloudbot.util.database.base", new=new_base),
+        patch("cloudbot.util.database.metadata", new=new_base.metadata),
+    ):
+        yield
 
 
 @pytest.fixture()
@@ -31,8 +37,11 @@ def tmp_logs(tmp_path):
 
 
 @pytest.fixture()
-def caplog_bot(caplog):
+def caplog_bot(
+    caplog: pytest.LogCaptureFixture,
+) -> Generator[pytest.LogCaptureFixture, None, None]:
     caplog.set_level(logging.WARNING, "asyncio")
+    caplog.set_level(logging.WARNING, "alembic")
     caplog.set_level(0)
     yield caplog
 
@@ -63,14 +72,14 @@ def mock_db(tmp_path):
 def mock_bot_factory(tmp_path, unset_bot):
     instances: list[MockBot] = []
 
-    def _factory(*args, **kwargs):
+    def _factory(**kwargs):
         loop = kwargs.get("loop")
         if loop is None:
             loop = asyncio.get_running_loop()
 
         kwargs["loop"] = loop
         kwargs.setdefault("base_dir", tmp_path)
-        _bot = MockBot(*args, **kwargs)
+        _bot = MockBot(**kwargs)
         bot.set(_bot)
         instances.append(_bot)
         return _bot

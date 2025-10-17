@@ -6,17 +6,8 @@ import sys
 import time
 from pathlib import Path
 
-import alembic.command
-import alembic.config
-
 from cloudbot.bot import CloudBot
-from cloudbot.bot import bot as bot_instance
-
-
-def upgrade_db_schema() -> None:
-    cfg = alembic.config.Config("alembic.ini", "pyproject.toml")
-    alembic.command.upgrade(cfg, "heads")
-    bot_instance.set(None)
+from cloudbot.db import db_init
 
 
 async def async_main():
@@ -30,8 +21,6 @@ async def async_main():
 
     logger = logging.getLogger("cloudbot")
     logger.info("Starting CloudBot.")
-
-    upgrade_db_schema()
 
     # create the bot
     _bot = CloudBot()
@@ -95,11 +84,15 @@ async def async_main():
     logging.shutdown()
 
 
-def main():
+def main() -> int:
+    if not db_init():
+        return 1
+
     asyncio.run(async_main())
+    return 0
 
 
 # This is a simple call to main, so test coverage doesn't matter. We will
 # track coverage of `main`.
 if __name__ == "__main__":  # pragma: no cover
-    main()
+    sys.exit(main())
