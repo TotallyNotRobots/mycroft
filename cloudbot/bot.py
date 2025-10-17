@@ -95,13 +95,10 @@ class CloudBot(AbstractBot):
     def __init__(
         self,
         *,
-        loop: asyncio.AbstractEventLoop = None,
+        loop: asyncio.AbstractEventLoop | None = None,
         base_dir: Path | None = None,
         create_connections: bool = True,
     ) -> None:
-        if loop is None:
-            loop = asyncio.get_running_loop()
-
         if bot.get():
             raise ValueError("There seems to already be a bot running!")
 
@@ -114,7 +111,7 @@ class CloudBot(AbstractBot):
         self.running = True
         self.clients: dict[str, type[Client]] = {}
         # future which will be called when the bot stopsIf you
-        self.stopped_future = self.loop.create_future()
+        self.stopped_future: asyncio.Future[bool] | None = None
 
         # stores each bot server connection
         self.connections = KeyFoldDict()
@@ -133,7 +130,7 @@ class CloudBot(AbstractBot):
             self.data_path.mkdir(parents=True)
 
         # set up config
-        super().__init__(config=Config(self))
+        super().__init__(config=Config())
         logger.debug("Config system initialised.")
 
         self.executor = ThreadPoolExecutor(
@@ -193,12 +190,16 @@ class CloudBot(AbstractBot):
         )
         return str(self.data_path)
 
-    async def run(self):
+    async def run(self) -> bool:
         """
         Starts CloudBot.
         This will load plugins, connect to IRC, and process input.
         :return: True if CloudBot should be restarted, False otherwise
         """
+        if self.loop is None:
+            self.loop = asyncio.get_running_loop()
+
+        self.stopped_future = asyncio.Future[bool]()
         self.loop.set_default_executor(self.executor)
         # Initializes the bot, plugins and connections
         await self._init_routine()
@@ -276,7 +277,8 @@ class CloudBot(AbstractBot):
         self.running = False
         # Give the stopped_future a result, so that run() will exit
         logger.debug("Setting future result for shutdown")
-        self.stopped_future.set_result(restart)
+        if self.stopped_future:
+            self.stopped_future.set_result(restart)
 
     async def restart(self, reason=None):
         """shuts the bot down and restarts it"""
@@ -288,7 +290,9 @@ class CloudBot(AbstractBot):
 
         if self.old_db and self.do_db_migrate:
             self.migrate_db()
-            self.stopped_future.set_result(False)
+            if self.stopped_future:
+                self.stopped_future.set_result(False)
+
             return
 
         # If we we're stopped while loading plugins, cancel that and just stop

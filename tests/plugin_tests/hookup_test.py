@@ -18,13 +18,13 @@ async def test_load_data(mock_bot_factory):
     assert hookup.hookups
 
 
-def test_hookup_no_seen(mock_db: MockDB):
+def test_hookup_no_seen(mock_db: MockDB, temp_metadata):
     db = mock_db.session()
     res = hookup.hookup(db, "#chan")
     assert res is None
 
 
-def test_hookup_no_data(mock_db: MockDB):
+def test_hookup_no_data(mock_db: MockDB, temp_metadata):
     database.metadata._add_table(seen.table.name, seen.table.schema, seen.table)
     seen.table.create(mock_db.engine)
     db = mock_db.session()

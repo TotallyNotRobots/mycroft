@@ -20,7 +20,7 @@ def init_tables(mock_db):
     tell.load_ignores(session)
 
 
-def test_migrate_db(mock_db, freeze_time):
+def test_migrate_db(temp_metadata, mock_db, freeze_time):
     init_tables(mock_db)
     session = mock_db.session()
 

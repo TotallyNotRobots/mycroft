@@ -1,4 +1,4 @@
-import asyncio
+import logging
 
 from alembic import context
 
@@ -18,9 +18,6 @@ config = context.config
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-bot = CloudBot(loop=asyncio.get_event_loop(), create_connections=False)
-bot.plugin_manager.get_plugin_tables(bot.plugin_dir)
-target_metadata = database.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -35,6 +32,15 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
+    bot: CloudBot | None = config.attributes.get("bot")
+    if bot is None:
+        bot = CloudBot(create_connections=False)
+        # Only load tables if we create the bot, otherwise assume they were loaded
+        # by whoever called us
+        bot.plugin_manager.get_plugin_tables(bot.plugin_dir)
+
+    target_metadata = database.metadata
+
     connectable = bot.db_engine
 
     with connectable.connect() as connection:
@@ -46,4 +52,13 @@ def run_migrations_online() -> None:
             context.run_migrations()
 
 
-run_migrations_online()
+def setup_logging() -> None:
+    cb_logger = logging.getLogger("cloudbot")
+    for handler in cb_logger.handlers:
+        if handler.name == "console":
+            handler.setLevel(logging.WARNING)
+
+
+if __name__ == "env_py":
+    setup_logging()
+    run_migrations_online()

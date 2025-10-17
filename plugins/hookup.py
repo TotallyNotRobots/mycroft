@@ -6,7 +6,7 @@ from typing import Any
 from sqlalchemy import Float, String, and_, column, select, table
 
 from cloudbot import hook
-from cloudbot.util.database import metadata
+from cloudbot.util import database
 from cloudbot.util.textgen import TextGenerator
 
 hookups: dict[str, Any] = {}
@@ -31,7 +31,7 @@ def load_data(bot):
 @hook.command(autohelp=False)
 def hookup(db, chan):
     """- matches two users from the channel in a sultry scene."""
-    if seen_table.name not in metadata.tables:
+    if seen_table.name not in database.metadata.tables:
         return None
 
     times = time.time() - 86400

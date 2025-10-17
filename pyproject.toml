@@ -93,6 +93,7 @@ disable = [
   "broad-exception-raised",
   "use-implicit-booleaness-not-comparison",
   "comparison-with-callable",
+  "wrong-import-order", # isort handles this
 ]
 
 enable = ["c-extension-no-member"]

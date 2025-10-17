@@ -225,13 +225,18 @@ class PluginManager:
 
         return True
 
-    def get_plugin_tables(self, plugin_dir: Path) -> None:
+    def get_plugin_tables(
+        self, plugin_dir: Path, *, reload: bool = False
+    ) -> None:
         """Load all plugins but don't execute any hooks
 
         Used by alembic/env.py
         """
         for path in plugin_dir.rglob("[!_]*.py"):
-            self._load_mod(self.file_path_to_import(path.resolve()))
+            self._load_mod(
+                self.file_path_to_import(path.resolve()),
+                reload=reload,
+            )
 
     async def load_all(self, plugin_dir):
         """
@@ -251,10 +256,10 @@ class PluginManager:
             *[self.unload_plugin(path) for path in self.plugins],
         )
 
-    def _load_mod(self, name: str):
+    def _load_mod(self, name: str, *, reload: bool = True):
         plugin_module = importlib.import_module(name)
         # if this plugin was loaded before, reload it
-        if hasattr(plugin_module, LOADED_ATTR):
+        if hasattr(plugin_module, LOADED_ATTR) and reload:
             plugin_module = importlib.reload(plugin_module)
 
         setattr(plugin_module, LOADED_ATTR, True)
