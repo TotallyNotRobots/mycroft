@@ -14,13 +14,13 @@ from cloudbot.util import formatting
     permissions=["permissions_users"],
     autohelp=False,
 )
-async def get_permission_groups(conn):
+def get_permission_groups(conn):
     """- lists all valid groups"""
-    return f"Valid groups: {conn.permissions.get_groups()}"
+    return f"Valid groups: {[group.name for group in conn.permissions.get_groups()]}"
 
 
 @hook.command("gperms", permissions=["permissions_users"])
-async def get_group_permissions(text, conn, notice):
+def get_group_permissions(text, conn, notice):
     """<group> - lists permissions given to <group>"""
     group = text.strip()
     permission_manager = conn.permissions
@@ -28,7 +28,7 @@ async def get_group_permissions(text, conn, notice):
         notice(f"Unknown group '{group}'")
         return None
 
-    group_permissions = permission_manager.get_group_permissions(group.lower())
+    group_permissions = permission_manager.get_group_permissions(group)
     if group_permissions:
         return f"Group {group} has permissions {group_permissions}"
 
@@ -36,7 +36,7 @@ async def get_group_permissions(text, conn, notice):
 
 
 @hook.command("gusers", permissions=["permissions_users"])
-async def get_group_users(text, conn, notice):
+def get_group_users(text, conn, notice):
     """<group> - lists users in <group>"""
     group = text.strip()
     permission_manager = conn.permissions
@@ -44,7 +44,7 @@ async def get_group_users(text, conn, notice):
         notice(f"Unknown group '{group}'")
         return None
 
-    group_users = permission_manager.get_group_users(group.lower())
+    group_users = permission_manager.get_group_users(group)
     if group_users:
         return f"Group {group} has members: {group_users}"
 
@@ -65,7 +65,7 @@ def parse_self(event):
 
 
 @hook.command("uperms", autohelp=False)
-async def get_user_permissions(event):
+def get_user_permissions(event):
     """[user] - lists all permissions given to [user], or the caller if no user is specified"""
     user = parse_self(event)
     if not user:
@@ -73,7 +73,7 @@ async def get_user_permissions(event):
 
     permission_manager = event.conn.permissions
 
-    user_permissions = permission_manager.get_user_permissions(user.lower())
+    user_permissions = permission_manager.get_user_permissions(user)
     if user_permissions:
         return f"User {user} has permissions: {user_permissions}"
 
@@ -81,7 +81,7 @@ async def get_user_permissions(event):
 
 
 @hook.command("ugroups", autohelp=False)
-async def get_user_groups(event):
+def get_user_groups(event):
     """[user] - lists all permissions given to [user], or the caller if no user is specified"""
     user = parse_self(event)
     if not user:
@@ -89,18 +89,18 @@ async def get_user_groups(event):
 
     permission_manager = event.conn.permissions
 
-    user_groups = permission_manager.get_user_groups(user.lower())
+    user_groups = permission_manager.get_user_groups(user)
     if user_groups:
-        return f"User {user} is in groups: {user_groups}"
+        return (
+            f"User {user} is in groups: {[group.name for group in user_groups]}"
+        )
 
     return f"User {user} is in no permission groups"
 
 
 def remove_user_from_group(user, group: str, event):
     permission_manager = event.conn.permissions
-    changed_masks = permission_manager.remove_group_user(
-        group.lower(), user.lower()
-    )
+    changed_masks = permission_manager.remove_group_user(group, user)
 
     mask_list = formatting.get_text_list(changed_masks, "and")
     event.reply(f"Removed {mask_list} from {group}")
@@ -114,7 +114,7 @@ def remove_user_from_group(user, group: str, event):
 
 
 @hook.command("deluser", permissions=["permissions_users"])
-async def remove_permission_user(text, event, conn):
+def remove_permission_user(text: str, event, conn):
     """<user> [group] - removes <user> from [group], or from all groups if no group is specified"""
     split = text.split()
     if len(split) > 2:
@@ -130,13 +130,13 @@ async def remove_permission_user(text, event, conn):
     if len(split) > 1:
         group = split[1]
 
-        if group and not perm_manager.group_exists(group.lower()):
+        if group and not perm_manager.group_exists(group):
             event.notice(f"Unknown group '{group}'")
             return
 
         groups = [group] if perm_manager.user_in_group(user, group) else []
     else:
-        groups = [g.name for g in perm_manager.get_user_groups(user.lower())]
+        groups = [g.name for g in perm_manager.get_user_groups(user)]
 
     if not groups:
         event.reply(f"No masks with elevated permissions matched {user}")
@@ -147,7 +147,9 @@ async def remove_permission_user(text, event, conn):
 
 
 @hook.command("adduser", permissions=["permissions_users"])
-async def add_permissions_user(text, nick, conn, bot, notice, reply, admin_log):
+def add_permissions_user(
+    text: str, nick, conn, notice, reply, admin_log
+) -> None:
     """<user> <group> - adds <user> to <group>"""
     split = text.split()
     if len(split) > 2:
@@ -170,9 +172,9 @@ async def add_permissions_user(text, nick, conn, bot, notice, reply, admin_log):
 
     group_exists = permission_manager.group_exists(group)
 
-    if not permission_manager.add_user_to_group(user.lower(), group.lower()):
+    if not permission_manager.add_user_to_group(user, group):
         reply(f"User {user} is already matched in group {group}")
-        return None
+        return
 
     if group_exists:
         reply(f"User {user} added to group {group}")
@@ -212,7 +214,7 @@ async def rehash_config(bot: CloudBot) -> str:
 
 
 @hook.command(permissions=["botcontrol", "snoonetstaff"])
-async def join(text, conn, nick, notice, admin_log):
+def join(text, conn, nick, notice, admin_log):
     """<channel> [key] - joins <channel> with the optional [key]"""
     parts = text.split(None, 1)
     target = parts.pop(0)
@@ -240,7 +242,7 @@ def parse_targets(text, chan):
 
 
 @hook.command(permissions=["botcontrol", "snoonetstaff"], autohelp=False)
-async def part(text, conn, nick, chan, notice, admin_log):
+def part(text, conn, nick, chan, notice, admin_log):
     """[#channel] - parts [#channel], or the caller's channel if no channel is specified"""
     for target in parse_targets(text, chan):
         admin_log(f"{nick} used PART to make me leave {target}.")
@@ -249,7 +251,7 @@ async def part(text, conn, nick, chan, notice, admin_log):
 
 
 @hook.command(autohelp=False, permissions=["botcontrol"])
-async def cycle(text, conn, chan, notice):
+def cycle(text, conn, chan, notice):
     """[#channel] - cycles [#channel], or the caller's channel if no channel is specified"""
     for target in parse_targets(text, chan):
         notice(f"Attempting to cycle {target}...")
@@ -258,7 +260,7 @@ async def cycle(text, conn, chan, notice):
 
 
 @hook.command("nick", permissions=["botcontrol"])
-async def change_nick(text, conn, notice, is_nick_valid):
+def change_nick(text, conn, notice, is_nick_valid):
     """<nick> - changes my nickname to <nick>"""
     if not is_nick_valid(text):
         notice(f"Invalid username '{text}'")
@@ -270,7 +272,7 @@ async def change_nick(text, conn, notice, is_nick_valid):
 
 
 @hook.command(permissions=["botcontrol"])
-async def raw(text, conn, notice):
+def raw(text, conn, notice):
     """<command> - sends <command> as a raw IRC command"""
     notice("Raw command sent.")
     conn.send(text)
@@ -285,7 +287,7 @@ def get_chan(chan, text):
 
 
 @hook.command(permissions=["botcontrol", "snoonetstaff"])
-async def say(text, conn, chan, nick, admin_log):
+def say(text, conn, chan, nick, admin_log):
     """[#channel] <message> - says <message> to [#channel], or to the caller's channel if no channel is specified"""
     channel, text = get_chan(chan, text)
     admin_log(f'{nick} used SAY to make me SAY "{text}" in {channel}.')
@@ -293,7 +295,7 @@ async def say(text, conn, chan, nick, admin_log):
 
 
 @hook.command("message", "sayto", permissions=["botcontrol", "snoonetstaff"])
-async def send_message(text, conn, nick, admin_log):
+def send_message(text, conn, nick, admin_log):
     """<name> <message> - says <message> to <name>"""
     split = text.split(None, 1)
     channel = split[0]
@@ -303,7 +305,7 @@ async def send_message(text, conn, nick, admin_log):
 
 
 @hook.command("me", "act", permissions=["botcontrol", "snoonetstaff"])
-async def me(
+def me(
     text: str, conn: IrcClient, chan: str, nick: str, event: CommandEvent
 ) -> None:
     """
@@ -315,7 +317,7 @@ async def me(
 
 
 @hook.command(autohelp=False, permissions=["botcontrol"])
-async def listchans(conn, chan, message, notice):
+def listchans(conn, chan, message, notice):
     """- Lists the current channels the bot is in"""
     chans = ", ".join(sorted(conn.channels, key=lambda x: x.strip("#").lower()))
     lines = formatting.chunk_str(f"I am currently in: {chans}")

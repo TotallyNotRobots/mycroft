@@ -25,6 +25,8 @@ if TYPE_CHECKING:
 
         def __setitem__(self, item: K_contra, value: V) -> None: ...
 
+        def __contains__(self, item: K_contra) -> bool: ...
+
         def get(self, item: K_contra, default: V = None) -> V | None: ...
 
         def setdefault(self, key: K_contra, default: V | T = None) -> V | T: ...
@@ -41,6 +43,9 @@ class KeyFoldMixin(MapBase[K_contra, V]):
     """
     A mixin for Mapping to allow for case-insensitive keys
     """
+
+    def __contains__(self, item: K_contra) -> bool:
+        return super().__contains__(cast(K_contra, item.casefold()))  # type: ignore[safe-super]
 
     def __getitem__(self, item: K_contra) -> V:
         return super().__getitem__(cast(K_contra, item.casefold()))  # type: ignore[safe-super]

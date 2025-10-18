@@ -1,4 +1,5 @@
 import asyncio
+from collections.abc import Callable
 from itertools import product
 from unittest.mock import MagicMock, call, patch
 
@@ -13,7 +14,38 @@ from cloudbot.hook import Action, Priority
 from cloudbot.plugin_hooks import CommandHook, ConfigHook, EventHook, RawHook
 from cloudbot.util import database
 from tests.util.async_mock import AsyncMock
+from tests.util.mock_bot import MockBot
 from tests.util.mock_db import MockDB
+
+
+@pytest.mark.asyncio
+async def test_get_connection_configs(
+    mock_bot_factory: Callable[..., MockBot],
+) -> None:
+    mock_bot = mock_bot_factory(config={"connections": [{"name": "foo"}]})
+    assert mock_bot.get_connection_configs() == {
+        "foo": {
+            "name": "foo",
+        },
+    }
+
+
+@pytest.mark.asyncio
+async def test_get_connection_configs_with_dupes(
+    mock_bot_factory: Callable[..., MockBot],
+) -> None:
+    mock_bot = mock_bot_factory(
+        config={"connections": [{"name": "foo"}, {"name": "FOO"}]}
+    )
+    with pytest.raises(
+        ValueError,
+        match="Duplicate connection names found after sanitize: 'FOO' and 'foo'",
+    ):
+        assert mock_bot.get_connection_configs() == {
+            "foo": {
+                "name": "FOO",
+            },
+        }
 
 
 def test_no_instance_config(unset_bot):
@@ -519,20 +551,24 @@ async def test_set_error(tmp_path, unset_bot):
 
 
 @pytest.mark.asyncio
-async def test_load_clients(tmp_path, unset_bot):
-    with patch_config(
-        {
-            "connections": [
-                {
-                    "type": "irc",
-                    "name": "foobar",
-                    "nick": "TestBot",
-                    "channels": [],
-                    "connection": {"server": "irc.example.com"},
-                }
-            ]
-        }
+async def test_load_clients(tmp_path, unset_bot, mock_db):
+    with (
+        patch_config(
+            {
+                "connections": [
+                    {
+                        "type": "irc",
+                        "name": "foobar",
+                        "nick": "TestBot",
+                        "channels": [],
+                        "connection": {"server": "irc.example.com"},
+                    }
+                ]
+            }
+        ),
+        patch("cloudbot.bot.create_engine") as mock_create_engine,
     ):
+        mock_create_engine.return_value = mock_db.engine
         (tmp_path / "data").mkdir(exist_ok=True, parents=True)
         bot = CloudBot(loop=asyncio.get_running_loop(), base_dir=tmp_path)
         conn = bot.connections["foobar"]
