@@ -72,6 +72,11 @@ repos:
     exclude: alembic/.*
     language: system
     types: [python]
+  - id: replace-non-ascii
+    name: replace non ascii characters
+    entry: python3 tools/escape_non_ascii.py
+    language: python
+    types: [python]
 - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
   rev: 8d1b9cadaf854cb25bb0b0f5870e1cc66a083d6b   # frozen: 0.2.3
   hooks:

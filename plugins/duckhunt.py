@@ -26,7 +26,7 @@ from cloudbot.util import database
 from cloudbot.util.formatting import pluralize_auto, truncate
 from cloudbot.util.func_utils import call_with_args
 
-duck_tail = "・゜゜・。。・゜゜"
+duck_tail = "\u30fb\u309c\u309c\u30fb\u3002\u3002\u30fb\u309c\u309c"
 duck = [
     "\\_o< ",
     "\\_O< ",
@@ -526,11 +526,11 @@ def no_ping_nick(nick: str) -> str:
     return f"{nick[:1]}\u200b{nick[1:]}"
 
 
-def top_list(prefix, data, join_char=" • "):
+def top_list(prefix, data, join_char=" \u2022 "):
     r"""
     >>> foods = [('Spam', 1), ('Eggs', 4)]
     >>> top_list("Top Foods: ", foods)
-    'Top Foods: \x02E\u200bggs\x02: 4 • \x02S\u200bpam\x02: 1'
+    'Top Foods: \x02E\u200bggs\x02: 4 \u2022 \x02S\u200bpam\x02: 1'
     """
     sorted_data = sorted(data, key=operator.itemgetter(1), reverse=True)
     return truncate(

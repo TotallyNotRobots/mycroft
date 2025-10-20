@@ -370,7 +370,10 @@ def test_usa(text, out):
 @pytest.mark.parametrize(
     "text,out",
     [
-        ("foo bar baz!", "ᶠᵒᵒ ᵇᵃʳ ᵇᵃᶻ!"),
+        (
+            "foo bar baz!",
+            "\u1da0\u1d52\u1d52 \u1d47\u1d43\u02b3 \u1d47\u1d43\u1dbb!",
+        ),
     ],
 )
 def test_superscript(text, out):

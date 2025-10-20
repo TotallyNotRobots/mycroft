@@ -99,7 +99,7 @@ def test_bookpun():
             "test",
             "Sorry I couldn't turn anything in 'test' into boobs for you.",
         ),
-        ("foobar", "f⊙⊙bar"),
+        ("foobar", "f\u2299\u2299bar"),
         ("", "Sorry I couldn't turn anything in '' into boobs for you."),
     ],
 )
@@ -125,7 +125,10 @@ def test_triforce():
     event = MagicMock()
     res = jokes.triforce(event.message)
     assert res is None
-    assert event.mock_calls == [call.message("\xa0▲"), call.message("▲ ▲")]
+    assert event.mock_calls == [
+        call.message("\xa0\u25b2"),
+        call.message("\u25b2 \u25b2"),
+    ]
 
 
 def test_kero():

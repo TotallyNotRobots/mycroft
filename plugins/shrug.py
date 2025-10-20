@@ -6,6 +6,6 @@ def shrug():
     r"""- shrugs
 
     >>> shrug()
-    '¯\\_(ツ)_/¯'
+    '\xaf\\_(\u30c4)_/\xaf'
     """
-    return r"¯\_(ツ)_/¯"
+    return "\xaf\\_(\u30c4)_/\xaf"

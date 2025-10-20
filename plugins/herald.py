@@ -141,10 +141,12 @@ def should_send(conn, chan, nick, join_time) -> bool:
 
 @hook.irc_raw("JOIN", singlethread=True)
 def welcome(nick, message, bot, chan, conn):
-    decoy = re.compile("[Òo○O0öøóȯôőŏᴏōο][<>＜]")
+    decoy = re.compile(
+        "[\xd2o\u25cbO0\xf6\xf8\xf3\u022f\xf4\u0151\u014f\u1d0f\u014d\u03bf][<>\uff1c]"
+    )
     colors_re = re.compile(r"\x02|\x03(?:\d{1,2}(?:,\d{1,2})?)?", re.UNICODE)
     bino_re = re.compile("b+i+n+o+", re.IGNORECASE)
-    offensive_re = re.compile("卐")
+    offensive_re = re.compile("\u5350")
 
     grab = bot.plugin_manager.find_plugin("grab")
 

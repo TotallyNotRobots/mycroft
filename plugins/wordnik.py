@@ -301,7 +301,7 @@ def pronounce(text, event):
         raise
 
     out = colors.parse("$(b){}$(b): ").format(text)
-    out += " • ".join([i["raw"] for i in pronounce_response])
+    out += " \u2022 ".join([i["raw"] for i in pronounce_response])
 
     audio_lookup = AudioLookupRequest(text)
     try:
@@ -333,7 +333,7 @@ def synonym(text, event):
         raise
 
     out = colors.parse("$(b){}$(b): ").format(text)
-    out += " • ".join(data["words"])
+    out += " \u2022 ".join(data["words"])
 
     return out
 
@@ -354,7 +354,7 @@ def antonym(text, event):
         raise
 
     out = colors.parse("$(b){}$(b): ").format(text)
-    out += " • ".join(data["words"])
+    out += " \u2022 ".join(data["words"])
 
     return out
 

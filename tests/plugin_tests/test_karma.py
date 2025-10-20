@@ -187,7 +187,7 @@ def test_pointstop_global_multi(mock_db):
     karma.update_score("foo", f"{chan}1", "thing1", 1, db)
     res = karma.pointstop("global", chan, db)
     assert res == (
-        "The 2 most loved things in all channels are: thing with 2 points • thing1 "
+        "The 2 most loved things in all channels are: thing with 2 points \u2022 thing1 "
         "with 1 points"
     )
 
@@ -250,7 +250,7 @@ def test_pointsbottom_global_multi(mock_db):
     karma.update_score("foo", f"{chan}1", "thing1", 1, db)
     res = karma.pointsbottom("global", chan, db)
     assert res == (
-        "The 2 most hated things in all channels are: thing1 with 1 points • thing with 2 points"
+        "The 2 most hated things in all channels are: thing1 with 1 points \u2022 thing with 2 points"
     )
 
 

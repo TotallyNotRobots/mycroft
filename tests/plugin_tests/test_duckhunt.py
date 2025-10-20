@@ -18,7 +18,7 @@ from tests.util.mock_conn import MockConn
                 "testuser1": 1,
             },
             "Duck friend scores in #TestChannel: "
-            "\x02t\u200bestuser\x02: 5 • \x02t\u200bestuser1\x02: 1",
+            "\x02t\u200bestuser\x02: 5 \u2022 \x02t\u200bestuser1\x02: 1",
         ],
     ],
 )
@@ -69,40 +69,40 @@ def test_display_scores(mock_db):
 
     chan_friends = (
         "Duck friend scores in #TestChannel: "
-        "\x02t\u200bestuser1\x02: 7 • \x02t\u200bestuser\x02: 4"
+        "\x02t\u200bestuser1\x02: 7 \u2022 \x02t\u200bestuser\x02: 4"
     )
 
     chan_kills = (
         "Duck killer scores in #TestChannel: "
-        "\x02t\u200bestuser\x02: 5 • \x02t\u200bestuser1\x02: 1"
+        "\x02t\u200bestuser\x02: 5 \u2022 \x02t\u200bestuser1\x02: 1"
     )
 
     global_friends = (
         "Duck friend scores across the network: "
         "\x02t\u200bestuser1\x02: 7"
-        " • \x02t\u200bestuser\x02: 4"
-        " • \x02o\u200btheruser\x02: 2"
+        " \u2022 \x02t\u200bestuser\x02: 4"
+        " \u2022 \x02o\u200btheruser\x02: 2"
     )
 
     global_kills = (
         "Duck killer scores across the network: "
         "\x02o\u200btheruser\x02: 9"
-        " • \x02t\u200bestuser\x02: 5"
-        " • \x02t\u200bestuser1\x02: 1"
+        " \u2022 \x02t\u200bestuser\x02: 5"
+        " \u2022 \x02t\u200bestuser1\x02: 1"
     )
 
     average_friends = (
         "Duck friend scores across the network: "
         "\x02t\u200bestuser1\x02: 7"
-        " • \x02t\u200bestuser\x02: 4"
-        " • \x02o\u200btheruser\x02: 2"
+        " \u2022 \x02t\u200bestuser\x02: 4"
+        " \u2022 \x02o\u200btheruser\x02: 2"
     )
 
     average_kills = (
         "Duck killer scores across the network: "
         "\x02o\u200btheruser\x02: 9"
-        " • \x02t\u200bestuser\x02: 5"
-        " • \x02t\u200bestuser1\x02: 1"
+        " \u2022 \x02t\u200bestuser\x02: 5"
+        " \u2022 \x02t\u200bestuser1\x02: 1"
     )
 
     event = MagicMock()
