@@ -179,9 +179,9 @@ def getuserartistplaycount():
 
 
 @hook.command("libreband", "librela")
-def displaybandinfo(text, bot):
-    """[artist] - displays information about [artist]."""
-    artist, err = getartistinfo(text, bot)
+def displaybandinfo(text: str):
+    """<artist> - displays information about <artist>."""
+    artist, err = getartistinfo(text)
     if err:
         return err
 
@@ -190,7 +190,7 @@ def displaybandinfo(text, bot):
 
     a = artist["artist"]
     summary = a["bio"]["summary"]
-    tags = getartisttags(a)
+    tags = getartisttags(a["name"])
 
     url = web.try_shorten(a["url"])
 
