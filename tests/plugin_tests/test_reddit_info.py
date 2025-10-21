@@ -1,10 +1,12 @@
 from unittest.mock import MagicMock
 
 import pytest
+from requests import HTTPError
+from responses import RequestsMock
 
 from cloudbot.event import CommandEvent, Event
 from plugins import reddit_info
-from tests.util import wrap_hook_response
+from tests.util import HookResult, wrap_hook_response
 
 
 @pytest.mark.parametrize(
@@ -240,6 +242,42 @@ def test_reddit_random_post(mock_requests):
         (
             "return",
             "\x02Need foobar : foobar\x02 - 3 comments, 1 point - \x02HEROFIGHTERy\x02 4y ago - https://redd.it/pmmq8h \x02\x0304NSFW\x0f",
+        ),
+    ]
+
+
+def test_reddit_random_post_sub_not_found(mock_requests: RequestsMock):
+    mock_requests.add(
+        "GET",
+        "https://reddit.com/r/foobar/.json",
+        status=404,
+    )
+
+    conn = MagicMock()
+    event = CommandEvent(
+        base_event=Event(
+            conn=conn,
+            bot=conn.bot,
+            channel="#foo",
+            nick="foo",
+        ),
+        text="/r/foobar",
+        triggered_command="reddit",
+        cmd_prefix=".",
+        hook=MagicMock(),
+    )
+
+    responses = list[HookResult]()
+    with pytest.raises(HTTPError):
+        wrap_hook_response(reddit_info.reddit, event, responses)
+
+    assert responses == [
+        (
+            "message",
+            (
+                "#foo",
+                "(foo) Error: 404 Client Error: Not Found for url: https://reddit.com/r/foobar/.json",
+            ),
         ),
     ]
 
