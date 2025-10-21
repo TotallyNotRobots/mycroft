@@ -1,11 +1,13 @@
 import datetime
 import random
+import time
 from unittest.mock import MagicMock, call, patch
 
 import pytest
 
 from plugins import duckhunt
 from tests.util.mock_conn import MockConn
+from tests.util.mock_db import MockDB
 
 
 @pytest.mark.parametrize(
@@ -588,6 +590,81 @@ class TestAttack:
         assert mock_db.get_data(duckhunt.table) == [
             ("net", "nick", 0, 1, "#chan")
         ]
+
+    def test_miss(self, mock_db: MockDB, freeze_time):
+        random.seed(0)
+        duckhunt.table.create(mock_db.engine)
+        duckhunt.optout.create(mock_db.engine)
+        duckhunt.status_table.create(mock_db.engine)
+
+        mock_db.add_row(
+            duckhunt.status_table, network="net", chan="#chan", active=True
+        )
+
+        duckhunt.load_optout(mock_db.session())
+        duckhunt.load_status(mock_db.session())
+
+        state = duckhunt.get_state_table("net", "#chan")
+        state.duck_status = 1
+        state.duck_time = datetime.datetime.now().timestamp() - 3600.0
+
+        conn = MockConn(name="net")
+        event = MagicMock()
+        with patch.object(duckhunt, "hit_or_miss") as p:
+            p.return_value = 0.06
+            res = duckhunt.befriend(
+                "nick",
+                "#chan",
+                mock_db.session(),
+                conn,
+                event,
+            )
+
+        assert (
+            res
+            == "Who knew ducks could be so picky? You can try again in 7 seconds."
+        )
+        assert event.mock_calls == []
+        assert mock_db.get_data(duckhunt.table) == []
+        duckhunt.scripters.clear()
+
+    def test_miss_scripter(self, mock_db: MockDB, freeze_time):
+        random.seed(0)
+        duckhunt.table.create(mock_db.engine)
+        duckhunt.optout.create(mock_db.engine)
+        duckhunt.status_table.create(mock_db.engine)
+
+        mock_db.add_row(
+            duckhunt.status_table, network="net", chan="#chan", active=True
+        )
+
+        duckhunt.load_optout(mock_db.session())
+        duckhunt.load_status(mock_db.session())
+
+        state = duckhunt.get_state_table("net", "#chan")
+        state.duck_status = 1
+        state.duck_time = datetime.datetime.now().timestamp() - 0.5
+
+        conn = MockConn(name="net")
+        event = MagicMock()
+        res = duckhunt.befriend(
+            "nick",
+            "#chan",
+            mock_db.session(),
+            conn,
+            event,
+        )
+
+        assert (
+            res
+            == "Who knew ducks could be so picky? You tried friending that duck in 0.500 seconds, that's mighty fast. Are you sure you aren't a script? Take a 2 hour cool down."
+        )
+        assert event.mock_calls == []
+        assert mock_db.get_data(duckhunt.table) == []
+        assert duckhunt.scripters == {
+            "nick": time.time() + 7200,
+        }
+        duckhunt.scripters.clear()
 
 
 @pytest.mark.parametrize(
