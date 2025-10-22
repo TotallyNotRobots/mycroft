@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING, cast
+
 from cloudbot import permissions
 from cloudbot.permissions import (
     Group,
@@ -5,6 +7,9 @@ from cloudbot.permissions import (
     GroupPermission,
     PermissionManager,
 )
+
+if TYPE_CHECKING:
+    import sqlalchemy as sa
 
 
 class MockConn:
@@ -101,9 +106,9 @@ def test_add_user_to_group(mock_db) -> None:
 def test_db(mock_db) -> None:
     session = mock_db.session()
 
-    group_table = Group.__table__
-    group_member_table = GroupMember.__table__
-    permission_table = GroupPermission.__table__
+    group_table = cast("sa.Table", Group.__table__)
+    group_member_table = cast("sa.Table", GroupMember.__table__)
+    permission_table = cast("sa.Table", GroupPermission.__table__)
 
     group_table.create(mock_db.engine)
     group_member_table.create(mock_db.engine)
@@ -203,9 +208,9 @@ def test_db(mock_db) -> None:
 def test_db_config_merge(mock_db) -> None:
     session = mock_db.session()
 
-    group_table = Group.__table__
-    group_member_table = GroupMember.__table__
-    permission_table = GroupPermission.__table__
+    group_table = cast("sa.Table", Group.__table__)
+    group_member_table = cast("sa.Table", GroupMember.__table__)
+    permission_table = cast("sa.Table", GroupPermission.__table__)
 
     group_table.create(mock_db.engine)
     group_member_table.create(mock_db.engine)

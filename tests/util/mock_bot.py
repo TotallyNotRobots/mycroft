@@ -13,6 +13,8 @@ if TYPE_CHECKING:
     from collections.abc import Awaitable
     from pathlib import Path
 
+    from sqlalchemy.engine.base import Engine
+
     from cloudbot.client import Client
     from tests.util.mock_db import MockDB
 
@@ -38,7 +40,7 @@ class MockBot(AbstractBot):
             self.stopped_future = None
 
         if db:
-            self.db_engine = db.engine
+            self.db_engine: Engine | None = db.engine
         else:
             self.db_engine = None
 
@@ -63,5 +65,5 @@ class MockBot(AbstractBot):
     def close(self) -> None:
         self.observer.stop()
 
-    def migrate_db(self) -> None:
-        return CloudBot.migrate_db(self)  # type: ignore[arg-type]
+    def migrate_db(self, *, old_db_url: str) -> None:
+        return CloudBot.migrate_db(self, old_db_url=old_db_url)  # type: ignore[arg-type]

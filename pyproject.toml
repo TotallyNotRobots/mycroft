@@ -267,6 +267,9 @@ extend-safe-fixes = ["TC", "UP", "RUF046"]
 future-annotations = true
 fixable = ["ALL"]
 
+[tool.ruff.lint.flake8-type-checking]
+runtime-evaluated-base-classes = ["pydantic.BaseModel", "sqlalchemy.orm.DeclarativeBase", "cloudbot.util.database.Base"]
+
 [tool.alembic]
 # path to migration scripts.
 # this is typically a path given in POSIX (e.g. forward slashes)

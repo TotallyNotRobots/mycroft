@@ -20,7 +20,6 @@ from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
 import requests
 from pydantic import BaseModel, Field, computed_field
-from typing_extensions import Self
 from yarl import URL
 
 from cloudbot import hook
@@ -32,6 +31,7 @@ if TYPE_CHECKING:
     from contextlib import AbstractContextManager
 
     from requests import Response
+    from typing_extensions import Self
 
     from cloudbot.bot import AbstractBot
     from cloudbot.event import CommandEvent

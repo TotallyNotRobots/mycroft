@@ -70,56 +70,56 @@ async def test_migrate_db(
     mock_db, mock_bot_factory, mock_requests, tmp_path
 ) -> None:
     old_db_url = f"sqlite:///{tmp_path / 'database1.db'!s}"
-    old_db = MockDB(old_db_url, True)
-    table = Table(
-        "foobar",
-        database.metadata,
-        Column("a", String, primary_key=True),
-        Column("b", String, default="bar"),
-    )
+    with MockDB(old_db_url, True) as old_db:
+        table = Table(
+            "foobar",
+            database.metadata,
+            Column("a", String, primary_key=True),
+            Column("b", String, default="bar"),
+        )
 
-    other_table = Table(
-        "foobar1",
-        database.metadata,
-        Column("a", String, primary_key=True),
-        Column("b", String, default="bar"),
-    )
+        other_table = Table(
+            "foobar1",
+            database.metadata,
+            Column("a", String, primary_key=True),
+            Column("b", String, default="bar"),
+        )
 
-    _ = Table(
-        "foobar2",
-        database.metadata,
-        Column("a", String, primary_key=True),
-        Column("b", String, default="bar"),
-    )
+        _ = Table(
+            "foobar2",
+            database.metadata,
+            Column("a", String, primary_key=True),
+            Column("b", String, default="bar"),
+        )
 
-    table.create(old_db.engine)
-    other_table.create(old_db.engine)
-    mock_bot = mock_bot_factory(
-        db=mock_db,
-        config={"old_database": old_db_url, "migrate_db": True},
-    )
+        table.create(old_db.engine)
+        other_table.create(old_db.engine)
+        mock_bot = mock_bot_factory(
+            db=mock_db,
+            config={"old_database": old_db_url, "migrate_db": True},
+        )
 
-    mock_bot.do_db_migrate = True
-    mock_bot.old_db = old_db_url
+        mock_bot.do_db_migrate = True
+        mock_bot.old_db = old_db_url
 
-    old_db.add_row(table, a="blah")
+        old_db.add_row(table, a="blah")
 
-    old_db.add_row(table, a="blah1", b="thing")
+        old_db.add_row(table, a="blah1", b="thing")
 
-    old_db.add_row(table, a="blah2", b="thing2")
+        old_db.add_row(table, a="blah2", b="thing2")
 
-    assert old_db.get_data(table) == [
-        ("blah", "bar"),
-        ("blah1", "thing"),
-        ("blah2", "thing2"),
-    ]
-    await CloudBot._init_routine(mock_bot)
-    assert mock_db.get_data(table) == [
-        ("blah", "bar"),
-        ("blah1", "thing"),
-        ("blah2", "thing2"),
-    ]
-    assert old_db.get_data(table) == []
+        assert old_db.get_data(table) == [
+            ("blah", "bar"),
+            ("blah1", "thing"),
+            ("blah2", "thing2"),
+        ]
+        await CloudBot._init_routine(mock_bot)
+        assert mock_db.get_data(table) == [
+            ("blah", "bar"),
+            ("blah1", "thing"),
+            ("blah2", "thing2"),
+        ]
+        assert old_db.get_data(table) == []
 
 
 @pytest.mark.asyncio()
@@ -345,8 +345,8 @@ class TestProcessing:
         )
 
     @pytest.mark.asyncio()
-    async def test_event_block(self, mock_bot_factory) -> None:
-        bot = mock_bot_factory()
+    async def test_event_block(self, mock_bot_factory, mock_db) -> None:
+        bot = mock_bot_factory(db=mock_db)
         conn = MockConn(nick="bot")
         event = Event(
             irc_command="PRIVMSG",
