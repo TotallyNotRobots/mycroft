@@ -32,7 +32,7 @@ def format_game(app_id, show_url=True):
     game = data[app_id]["data"]
 
     # basic info
-    out = ["\x02{}\x02".format(game["name"])]
+    out = [f"\x02{game['name']}\x02"]
 
     desc = " ".join(formatting.strip_html(game["about_the_game"]).split())
     out.append(formatting.truncate(desc, 75))
@@ -47,9 +47,9 @@ def format_game(app_id, show_url=True):
 
     # release date
     if game["release_date"]["coming_soon"]:
-        out.append("coming \x02{}\x02".format(game["release_date"]["date"]))
+        out.append(f"coming \x02{game['release_date']['date']}\x02")
     else:
-        out.append("released \x02{}\x02".format(game["release_date"]["date"]))
+        out.append(f"released \x02{game['release_date']['date']}\x02")
 
     # pricing
     if game["is_free"]:

@@ -13,11 +13,14 @@ from cloudbot.util.formatting import pluralize_auto
 from cloudbot.util.pager import CommandPager, paginated_list
 
 search_pages: dict[str, dict[str, CommandPager]] = defaultdict(dict)
-user_re = re.compile(r"^(?:/?(?:u(?:ser)?/)?)?(?P<name>.+?)/?$", re.IGNORECASE)
+user_re = re.compile(
+    r"^(?:/?(?:u(?:ser)?/)?)?(?P<name>.+?)/?$",  # codespell:ignore
+    re.IGNORECASE,
+)
 sub_re = re.compile(r"^(?:/?(?:r/)?)?(?P<name>.+?)/?$", re.IGNORECASE)
 
-user_url = "http://reddit.com/user/{}/"
-subreddit_url = "http://reddit.com/r/{}/"
+user_url = "https://reddit.com/user/{}/"
+subreddit_url = "https://reddit.com/r/{}/"
 short_url = "https://redd.it/{}"
 post_url = "https://reddit.com/comments/{}.json"
 # This agent should be unique for your cloudbot instance
@@ -86,7 +89,7 @@ def format_output(item, show_url=False):
         item["warning"] = ""
 
     if show_url:
-        item["url"] = " - " + item["link"]
+        item["url"] = f" - {item['link']}"
     else:
         item["url"] = ""
 
@@ -114,7 +117,7 @@ def statuscheck(status, item):
 @hook.command("moremod", autohelp=False)
 def moremod(text, chan, conn):
     """[page] - if a sub or mod list has lots of results the results are pagintated. If the most recent search is
-    paginated the pages are stored for retreival. If no argument is given the next page will be returned else a page
+    paginated the pages are stored for retrieval. If no argument is given the next page will be returned else a page
     number can be specified."""
     chan_cf = chan.casefold()
     pages = search_pages[conn.name].get(chan_cf)
@@ -163,7 +166,7 @@ def reddit(text, reply):
     try:
         data = api_request(URL(url))
     except Exception as e:
-        reply("Error: " + str(e))
+        reply(f"Error: {e!s}")
         raise
 
     data = data["data"]["children"]
@@ -178,9 +181,7 @@ def reddit(text, reply):
         except IndexError:
             length = len(data)
             return (
-                "Invalid post number. Number must be between 1 and {}.".format(
-                    length
-                )
+                f"Invalid post number. Number must be between 1 and {length}."
             )
     else:
         item = random.choice(data)
@@ -194,7 +195,7 @@ def moderates(text, chan, conn, reply):
     Private subreddits will not be listed."""
     user = get_user(text)
     r = requests.get(
-        user_url.format(user) + "moderated_subreddits.json", headers=agent
+        f"{user_url.format(user)}moderated_subreddits.json", headers=agent
     )
     try:
         r.raise_for_status()
@@ -237,9 +238,7 @@ def karma(text, reply):
     out = f"$(b){user}$(b) "
 
     parts = [
-        "$(b){:,}$(b) link karma and $(b){:,}$(b) comment karma".format(
-            data["link_karma"], data["comment_karma"]
-        )
+        f"$(b){data['link_karma']:,}$(b) link karma and $(b){data['comment_karma']:,}$(b) comment karma"
     ]
 
     if data["is_gold"]:
@@ -252,9 +251,7 @@ def karma(text, reply):
         parts.append("email has been verified")
 
     parts.append(
-        "cake day is {}".format(
-            datetime.fromtimestamp(data["created_utc"]).strftime("%B %d")
-        )
+        f"cake day is {datetime.fromtimestamp(data['created_utc']).strftime('%B %d')}"
     )
 
     account_age = datetime.now() - datetime.fromtimestamp(data["created"])
@@ -274,9 +271,7 @@ def cake_day(text, reply):
     user = get_user(text)
     data = get_user_data("about.json", user, reply)
     out = colors.parse(f"$(b){user}'s$(b) ")
-    out += "cake day is {}, ".format(
-        datetime.fromtimestamp(data["data"]["created_utc"]).strftime("%B %d")
-    )
+    out += f"cake day is {datetime.fromtimestamp(data['data']['created_utc']).strftime('%B %d')}, "
     account_age = datetime.now() - datetime.fromtimestamp(
         data["data"]["created"]
     )
@@ -285,9 +280,7 @@ def cake_day(text, reply):
     if age > 365:
         age //= 365
         age_unit = "year"
-    out += "they have been a redditor for {}.".format(
-        pluralize_auto(age, age_unit)
-    )
+    out += f"they have been a redditor for {pluralize_auto(age, age_unit)}."
     return out
 
 
@@ -308,7 +301,7 @@ def get_sub_data(url, sub, reply):
         r.raise_for_status()
     except HTTPError as e:
         code = e.response.status_code
-        reply(statuscheck(code, "r/" + sub))
+        reply(statuscheck(code, f"r/{sub}"))
         if code not in (404, 403):
             raise
 
@@ -321,7 +314,7 @@ def get_sub_data(url, sub, reply):
 def submods(text, chan, conn, reply):
     """<subreddit> - prints the moderators of the specified subreddit."""
     sub = get_sub(text)
-    url = subreddit_url + "about/moderators.json"
+    url = f"{subreddit_url}about/moderators.json"
     data = get_sub_data(url, sub, reply)
     if data is None:
         return None
@@ -351,7 +344,7 @@ def submods(text, chan, conn, reply):
 def subinfo(text, reply):
     """<subreddit> - fetches information about the specified subreddit."""
     sub = get_sub(text)
-    url = subreddit_url + "about.json"
+    url = f"{subreddit_url}about.json"
     data = get_sub_data(url, sub, reply)
     if data is None:
         return None

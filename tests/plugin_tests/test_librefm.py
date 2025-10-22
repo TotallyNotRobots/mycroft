@@ -1,11 +1,14 @@
+from collections.abc import Callable
 from unittest.mock import MagicMock
 
+import pytest
 from responses import RequestsMock
 from responses.matchers import query_param_matcher
 
 from cloudbot.event import CommandEvent
 from plugins import librefm
 from tests.util import wrap_hook_response
+from tests.util.mock_bot import MockBot
 from tests.util.mock_db import MockDB
 
 
@@ -149,6 +152,89 @@ class TestTopArtists:
 
         assert out == "bar's favorite artists: foo [5] bar [2] "
 
+    def test_self(self, mock_requests, mock_db):
+        librefm.table.create(mock_db.engine)
+        mock_db.add_row(librefm.table, nick="foo", acc="bar")
+        librefm.load_cache(mock_db.session())
+
+        mock_requests.add(
+            "GET",
+            "https://libre.fm/2.0/",
+            match=[
+                query_param_matcher(
+                    {
+                        "format": "json",
+                        "user": "bar",
+                        "limit": "5",
+                        "method": "user.gettopartists",
+                    }
+                )
+            ],
+            json={
+                "topartists": {
+                    "artist": [
+                        {
+                            "name": "artist1",
+                            "playcount": 10,
+                        },
+                        {
+                            "name": "artist2",
+                            "playcount": 7,
+                        },
+                        {
+                            "name": "artist3",
+                            "playcount": 5,
+                        },
+                        {
+                            "name": "artist4",
+                            "playcount": 5,
+                        },
+                        {
+                            "name": "artist5",
+                            "playcount": 4,
+                        },
+                    ]
+                }
+            },
+        )
+
+        out = librefm.libretopartists("", "foo")
+
+        expected = (
+            "bar's favorite artists: artist1 listened to 10 times. "
+            "artist2 listened to 7 times. artist3 listened to 5 times. "
+            "artist4 listened to 5 times. artist5 listened to 4 times. "
+        )
+
+        assert out == expected
+
+    def test_error(self, mock_requests, mock_db):
+        librefm.table.create(mock_db.engine)
+        mock_db.add_row(librefm.table, nick="foo", acc="bar")
+        librefm.load_cache(mock_db.session())
+
+        mock_requests.add(
+            "GET",
+            "https://libre.fm/2.0/",
+            match=[
+                query_param_matcher(
+                    {
+                        "format": "json",
+                        "user": "bar",
+                        "limit": "5",
+                        "method": "user.gettopartists",
+                    }
+                )
+            ],
+            json={"error": 2, "message": "Missing top tracks"},
+        )
+
+        out = librefm.libretopartists("", "foo")
+
+        expected = "Error: Missing top tracks."
+
+        assert out == expected
+
 
 class TestTopTrack:
     def test_toptrack_self(self, mock_requests, mock_db):
@@ -187,6 +273,77 @@ class TestTopTrack:
         expected = "bar's favorite songs: some song by some artist listened to 10 times. "
 
         assert out == expected
+
+    def test_toptrack_error(self, mock_requests, mock_db):
+        librefm.table.create(mock_db.engine)
+        mock_db.add_row(librefm.table, nick="foo", acc="bar")
+        librefm.load_cache(mock_db.session())
+
+        mock_requests.add(
+            "GET",
+            "https://libre.fm/2.0/",
+            match=[
+                query_param_matcher(
+                    {
+                        "format": "json",
+                        "user": "bar",
+                        "limit": "5",
+                        "method": "user.gettoptracks",
+                    }
+                )
+            ],
+            json={"error": 2, "message": "Missing top tracks"},
+        )
+
+        out = librefm.toptrack("", "foo")
+
+        expected = "Error: Missing top tracks."
+
+        assert out == expected
+
+
+def test_now_playing_no_plays(
+    mock_db: MockDB,
+    mock_bot,
+    mock_requests: RequestsMock,
+    freeze_time,
+) -> None:
+    librefm.table.create(mock_db.engine)
+    librefm.load_cache(mock_db.session())
+    hook = MagicMock()
+    event = CommandEvent(
+        bot=mock_bot,
+        hook=hook,
+        text="myaccount",
+        triggered_command="np",
+        cmd_prefix=".",
+        nick="foo",
+        conn=MagicMock(),
+    )
+
+    event.db = mock_db.session()
+
+    mock_requests.add(
+        "GET",
+        "https://libre.fm/2.0/",
+        match=[
+            query_param_matcher(
+                {
+                    "format": "json",
+                    "user": "myaccount",
+                    "limit": "1",
+                    "method": "user.getrecenttracks",
+                }
+            )
+        ],
+        json={"error": {"#text": "Invalid resource specified", "code": "7"}},
+    )
+
+    results = wrap_hook_response(librefm.librefm, event)
+    assert results == [
+        ("return", "libre.fm Error: Invalid resource specified Code: 7."),
+    ]
+    assert mock_db.get_data(librefm.table) == []
 
 
 def test_save_account(
@@ -343,3 +500,74 @@ def test_update_account(
     assert mock_db.get_data(librefm.table) == [
         ("foo", "myaccount"),
     ]
+
+
+@pytest.mark.asyncio
+async def test_displaybandinfo_no_tags(
+    mock_db: MockDB,
+    mock_requests: RequestsMock,
+    mock_bot_factory: Callable[..., MockBot],
+    freeze_time,
+    patch_try_shorten,
+) -> None:
+    mock_bot = mock_bot_factory(db=mock_db)
+
+    librefm.table.create(mock_db.engine)
+    librefm.load_cache(mock_db.session())
+    hook = MagicMock()
+    event = CommandEvent(
+        bot=mock_bot,
+        hook=hook,
+        text="foobar",
+        triggered_command="libreband",
+        cmd_prefix=".",
+        nick="foo",
+        conn=MagicMock(),
+    )
+
+    event.db = mock_db.session()
+
+    mock_requests.add(
+        "GET",
+        "https://libre.fm/2.0/",
+        match=[
+            query_param_matcher(
+                {
+                    "format": "json",
+                    "artist": "foobar",
+                    "autocorrect": "1",
+                    "method": "artist.getInfo",
+                }
+            )
+        ],
+        json={
+            "artist": {
+                "bio": {
+                    "summary": "my summary",
+                },
+                "name": "foo BAR!",
+                "url": "https://foo.invalid",
+            },
+        },
+    )
+
+    mock_requests.add(
+        "GET",
+        "https://libre.fm/2.0/",
+        match=[
+            query_param_matcher(
+                {
+                    "format": "json",
+                    "artist": "foo BAR!",
+                    "method": "artist.getTopTags",
+                }
+            )
+        ],
+        json={},
+    )
+
+    results = wrap_hook_response(librefm.displaybandinfo, event)
+    assert results == [
+        ("return", "foo BAR!: my summary https://foo.invalid (no tags)"),
+    ]
+    assert mock_db.get_data(librefm.table) == []

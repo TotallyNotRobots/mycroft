@@ -33,7 +33,7 @@ def strip_newlines(line, conn):
 @hook.irc_out(priority=Priority.HIGH)
 def truncate_line(line, conn):
     line_len = conn.config.get("max_line_length", 510)
-    return line[:line_len] + "\r\n"
+    return f"{line[:line_len]}\r\n"
 
 
 @hook.irc_out(priority=Priority.LOWEST)

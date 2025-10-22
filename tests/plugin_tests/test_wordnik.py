@@ -51,7 +51,7 @@ class WordTestBase:
     @classmethod
     def build_url(cls, word, op=None):
         base = "http://api.wordnik.com/v4/word.json"
-        url = base + "/" + word + "/" + (op or cls.get_op())
+        url = f"{base}/{word}/{op or cls.get_op()}"
         return url
 
     @classmethod
@@ -178,7 +178,7 @@ class TestDefine(WordTestBase):
                     "id": "W5229000-1",
                     "partOfSpeech": "noun",
                     "attributionText": (
-                        "from The American Heritage® Dictionary of the "
+                        "from The American Heritage\xae Dictionary of the "
                         "English Language, 5th Edition."
                     ),
                     "sourceDictionary": "ahd-5",
@@ -230,9 +230,7 @@ class TestUsage(WordTestBase):
 
     @classmethod
     def get_not_found_msg(cls, word):
-        return "I could not find any usage examples for \x02{}\x02.".format(
-            word
-        )
+        return f"I could not find any usage examples for \x02{word}\x02."
 
     def test_search(self, mock_requests, mock_api_keys):
         mock_requests.add(
@@ -252,7 +250,7 @@ class TestUsage(WordTestBase):
                         "word": "word",
                         "text": (
                             "There is an important and very common use of "
-                            "the word ˜word™ that lexicographers and the "
+                            "the word \u02dcword\u2122 that lexicographers and the "
                             "rest of us use frequently."
                         ),
                         "documentId": 22333003,
@@ -266,7 +264,7 @@ class TestUsage(WordTestBase):
 
         expected = (
             "\x02word\x02: There is an important and very common "
-            "use of the word ˜word™ that lexicographers and the rest "
+            "use of the word \u02dcword\u2122 that lexicographers and the rest "
             "of us use frequently."
         )
 
@@ -295,11 +293,11 @@ class TestPronounce(WordTestBase):
             json=[
                 {
                     "seq": 0,
-                    "raw": "wûrd",
+                    "raw": "w\xfbrd",
                     "rawType": "ahd-5",
                     "id": "W5229000",
                     "attributionText": (
-                        "from The American Heritage® Dictionary of the English "
+                        "from The American Heritage\xae Dictionary of the English "
                         "Language, 5th Edition."
                     ),
                     "attributionUrl": "https://ahdictionary.com/",
@@ -315,7 +313,7 @@ class TestPronounce(WordTestBase):
                 },
                 {
                     "seq": 0,
-                    "raw": "/wɜː(ɹ)d/",
+                    "raw": "/w\u025c\u02d0(\u0279)d/",
                     "rawType": "IPA",
                     "attributionText": (
                         "from Wiktionary, Creative Commons "
@@ -327,7 +325,7 @@ class TestPronounce(WordTestBase):
                 },
                 {
                     "seq": 0,
-                    "raw": "/wɝd/",
+                    "raw": "/w\u025dd/",
                     "rawType": "IPA",
                     "attributionText": "from Wiktionary, Creative Commons "
                     "Attribution/Share-Alike License.",
@@ -348,7 +346,7 @@ class TestPronounce(WordTestBase):
         )
 
         expected = (
-            "\x02word\x02: wûrd • W ER1 D • /wɜː(ɹ)d/ • /wɝd/ - "
+            "\x02word\x02: w\xfbrd \u2022 W ER1 D \u2022 /w\u025c\u02d0(\u0279)d/ \u2022 /w\u025dd/ - "
             "https://example.com/word.ogg"
         )
 
@@ -366,7 +364,7 @@ class TestPronounce(WordTestBase):
             json={"error": "Not Found"},
         )
 
-        expected = "\x02word\x02: wûrd • W ER1 D • /wɜː(ɹ)d/ • /wɝd/"
+        expected = "\x02word\x02: w\xfbrd \u2022 W ER1 D \u2022 /w\u025c\u02d0(\u0279)d/ \u2022 /w\u025dd/"
 
         out, _ = self.call("word")
         assert out == expected
@@ -410,9 +408,7 @@ class TestSynonym(WordTestBase):
 
     @classmethod
     def get_not_found_msg(cls, word):
-        return "Sorry, I couldn't find any synonyms for \x02{}\x02.".format(
-            word
-        )
+        return f"Sorry, I couldn't find any synonyms for \x02{word}\x02."
 
     def test_search(self, mock_requests, mock_api_keys):
         mock_requests.add(
@@ -433,9 +429,7 @@ class TestSynonym(WordTestBase):
             ],
         )
 
-        expected = (
-            "\x02word\x02: Bible • Bible oath • God • Logos • Parthian shot"
-        )
+        expected = "\x02word\x02: Bible \u2022 Bible oath \u2022 God \u2022 Logos \u2022 Parthian shot"
 
         out, _ = self.call("word")
         assert out == expected
@@ -464,9 +458,7 @@ class TestAntonym(WordTestBase):
 
     @classmethod
     def get_not_found_msg(cls, word):
-        return "Sorry, I couldn't find any antonyms for \x02{}\x02.".format(
-            word
-        )
+        return f"Sorry, I couldn't find any antonyms for \x02{word}\x02."
 
     def test_search(self, mock_requests, mock_api_keys):
         mock_requests.add(
@@ -481,7 +473,7 @@ class TestAntonym(WordTestBase):
             ],
         )
 
-        expected = "\x02clear\x02: cloudy • obscure • thick"
+        expected = "\x02clear\x02: cloudy \u2022 obscure \u2022 thick"
 
         out, _ = self.call("clear")
         assert out == expected
@@ -503,7 +495,7 @@ class WordsTestBase(WordTestBase):
     @classmethod
     def build_url(cls, word=None, op=None):
         base = "http://api.wordnik.com/v4/words.json"
-        url = base + "/" + (op or cls.get_op())
+        url = f"{base}/{op or cls.get_op()}"
         return url
 
 
@@ -541,7 +533,7 @@ class TestWOTD(WordsTestBase):
                 "url": "http://www.superheronation.com/2009/08/25/foxs-review-forum/",
                 "title": (
                     "Superhero Nation: how to write superhero novels and comic "
-                    "books &raquo; Fox’s Review Forum"
+                    "books &raquo; Fox\u2019s Review Forum"
                 ),
                 "text": (
                     "Powers I have in mind for other main characters are "
@@ -613,9 +605,9 @@ class TestWOTD(WordsTestBase):
                     "7767857a6a9b9e4f378ab2fdf73d93ca6fffc02a3e50cd92be465d0e2276df30"
                 ),
                 "text": (
-                    "But, when we became better acquainted — which was while "
+                    "But, when we became better acquainted \u2014 which was while "
                     "Charker and I were drinking sugar-cane sangaree, which "
-                    "she made in a most excellent manner — I found that her "
+                    "she made in a most excellent manner \u2014 I found that her "
                     "Christian name was Isabella, which they shortened into "
                     "Bell, and that the name of the deceased non-commissioned "
                     "officer was Tott."

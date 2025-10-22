@@ -62,9 +62,7 @@ class OptOut:
         return NotImplemented
 
     def __repr__(self):
-        return "{}({}, {}, {})".format(
-            self.__class__.__name__, self.channel, self.hook, self.allow
-        )
+        return f"{self.__class__.__name__}({self.channel}, {self.hook}, {self.allow})"
 
     def match(self, channel, hook_name):
         return self.match_chan(channel) and match_mask(
@@ -193,7 +191,7 @@ def optout_sieve(bot, event, _hook):
     if _hook.plugin.title.startswith("core."):
         return event
 
-    hook_name = _hook.plugin.title + "." + _hook.function_name
+    hook_name = f"{_hook.plugin.title}.{_hook.function_name}"
     _optout = get_first_matching_optout(event.conn.name, event.chan, hook_name)
     if _optout and not _optout.allow:
         if _hook.type == "command":
@@ -235,11 +233,7 @@ async def optout(text, event, chan, db, conn):
 
     await event.async_call(set_optout, db, conn.name, chan, pattern, allowed)
 
-    return "{action} hooks matching {pattern} in {channel}.".format(
-        action="Enabled" if allowed else "Disabled",
-        pattern=pattern,
-        channel=chan,
-    )
+    return f"{'Enabled' if allowed else 'Disabled'} hooks matching {pattern} in {chan}."
 
 
 @hook.command()

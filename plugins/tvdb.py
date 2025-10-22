@@ -496,8 +496,8 @@ def tv_next(text: str) -> str:
     if len(next_eps) == 1:
         return f"The next episode of {series.name} airs {next_eps[0]}"
 
-    return "The next episodes of {}: {}".format(
-        series.name, ", ".join(reversed(next_eps))
+    return (
+        f"The next episodes of {series.name}: {', '.join(reversed(next_eps))}"
     )
 
 
@@ -521,13 +521,9 @@ def tv_last(text: str) -> str:
             break
 
     if not prev_ep:
-        return "There are no previously aired episodes for {}.".format(
-            series.name
-        )
+        return f"There are no previously aired episodes for {series.name}."
 
     if series.ended:
-        return "{} ended. The last episode aired {}.".format(
-            series.name, prev_ep
-        )
+        return f"{series.name} ended. The last episode aired {prev_ep}."
 
     return f"The last episode of {series.name} aired {prev_ep}."

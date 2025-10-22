@@ -28,9 +28,7 @@ def save(i):
     if data is None:
         return False
 
-    with (SCRIPT_DIR / "{}.json".format(data["num"])).open(
-        "w", encoding="utf-8"
-    ) as f:
+    with (SCRIPT_DIR / f"{data['num']}.json").open("w", encoding="utf-8") as f:
         json.dump(data, f, indent=4)
         f.write("\n")
 

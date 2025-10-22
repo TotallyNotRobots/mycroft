@@ -48,6 +48,6 @@ def etymology(text, reply):
 
     etym = formatting.truncate(etym, 200)
 
-    etym += " Source: " + web.try_shorten(response.url)
+    etym += f" Source: {web.try_shorten(response.url)}"
 
     return etym

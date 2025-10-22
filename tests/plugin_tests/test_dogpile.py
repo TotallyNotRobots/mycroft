@@ -20,7 +20,7 @@ def add_page(mock_requests, endpoint, test_data):
     data = test_data[endpoint]
     mock_requests.add(
         "GET",
-        "https://www.dogpile.com/search/" + endpoint,
+        f"https://www.dogpile.com/search/{endpoint}",
         body=data,
     )
 

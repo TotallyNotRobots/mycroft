@@ -46,9 +46,7 @@ def issue_cmd(text, event):
 
     if issue:
         r = requests.get(
-            "https://api.github.com/repos/{}/{}/issues/{}".format(
-                owner, repo, issue
-            )
+            f"https://api.github.com/repos/{owner}/{repo}/issues/{issue}"
         )
 
         try:
@@ -67,15 +65,11 @@ def issue_cmd(text, event):
         title = j["title"]
         summary = formatting.truncate(j["body"].split("\n")[0], 25)
         if j["state"] == "open":
-            state = "\x033\x02Opened\x02\x0f by {}".format(j["user"]["login"])
+            state = f"\x033\x02Opened\x02\x0f by {j['user']['login']}"
         else:
-            state = "\x034\x02Closed\x02\x0f by {}".format(
-                j["closed_by"]["login"]
-            )
+            state = f"\x034\x02Closed\x02\x0f by {j['closed_by']['login']}"
 
-        return "Issue #{} ({}): {} | {}: {}".format(
-            number, state, url, title, summary
-        )
+        return f"Issue #{number} ({state}): {url} | {title}: {summary}"
 
     r = requests.get(f"https://api.github.com/repos/{owner}/{repo}/issues")
 

@@ -70,6 +70,6 @@ def namegen(text, bot, notice):
     name_list = generator.generate_strings(10)
 
     # and finally return the final message :D
-    return "Some names to ponder: {}.".format(
-        formatting.get_text_list(name_list, "and")
+    return (
+        f"Some names to ponder: {formatting.get_text_list(name_list, 'and')}."
     )

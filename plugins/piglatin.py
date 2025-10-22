@@ -41,7 +41,7 @@ def translate(word: str):
             assert 0
 
         if i == 0:  # starts with a vowel
-            return word + "way"
+            return f"{word}way"
 
         if "y" in word:  # allow 'y' as a vowel for known words
             return translate_basic(word, vowels="aeiouy", start=i)

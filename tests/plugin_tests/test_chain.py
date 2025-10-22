@@ -400,7 +400,9 @@ async def test_chainallow_add_partial_cmd(mock_db, mock_bot_factory):
     chain.commands.create(mock_db.engine)
     db = mock_db.session()
     notice_doc = MagicMock(return_value=None)
-    res = chain.chainallow("add fo allow", db, notice_doc, mock_bot)
+    res = chain.chainallow(
+        "add fo allow", db, notice_doc, mock_bot  # codespell:ignore fo
+    )
     assert res == "Added 'foo.hook_func' as an allowed command"
     assert notice_doc.mock_calls == []
 

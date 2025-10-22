@@ -94,7 +94,7 @@ def time_since(d, now=None, count=2, accuracy=6, simple=False):
 
     if since <= 0:
         # d is in the future compared to now, stop processing.
-        return "0 " + "minutes"
+        return "0 minutes"
 
     # pass the number in seconds on to format_time to make the output string
     return format_time(since, count, accuracy, simple)
@@ -135,9 +135,7 @@ class TimeUnit:
 
     def __repr__(self):
         fields = ("seconds", "short_name", "long_name", "long_name_plural")
-        return "TimeUnit({})".format(
-            ", ".join(f"{k}={getattr(self, k)!r}" for k in fields)
-        )
+        return f"TimeUnit({', '.join(f'{k}={getattr(self, k)!r}' for k in fields)})"
 
     def __mul__(self, other):
         return self.seconds * other

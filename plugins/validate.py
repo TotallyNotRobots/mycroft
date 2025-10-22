@@ -17,9 +17,9 @@ def validate(text):
     text = text.strip()
 
     if not urllib.parse.urlparse(text).scheme:
-        text = "http://" + text
+        text = f"http://{text}"
 
-    url = api_url + "?uri=" + text
+    url = f"{api_url}?uri={text}"
     url = web.try_shorten(url)
 
     params = {"uri": text, "output": "json"}
@@ -41,8 +41,6 @@ def validate(text):
     out_warning = "warnings" if warning_count > 1 else "warning"
     out_error = "errors" if error_count > 1 else "error"
 
-    out = "{} has {} {} and {} {} ({})".format(
-        text, warning_count, out_warning, error_count, out_error, url
-    )
+    out = f"{text} has {warning_count} {out_warning} and {error_count} {out_error} ({url})"
 
     return out

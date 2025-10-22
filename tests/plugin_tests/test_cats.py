@@ -27,6 +27,6 @@ def test_catgifs(mock_requests):
     )
     bot = MagicMock(user_agent="user agent")
     reply = MagicMock()
-    assert cats.catgifs(reply, bot) == ("OMG A CAT GIF: " + url)
+    assert cats.catgifs(reply, bot) == f"OMG A CAT GIF: {url}"
     assert bot.mock_calls == []
     assert reply.mock_calls == []

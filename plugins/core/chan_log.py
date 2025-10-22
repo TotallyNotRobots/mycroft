@@ -180,9 +180,7 @@ def on_hook_end(error, launched_hook, launched_event, admin_log):
 
     should_broadcast = True
     messages = [
-        "Error occurred in {}.{}".format(
-            launched_hook.plugin.title, launched_hook.function_name
-        )
+        f"Error occurred in {launched_hook.plugin.title}.{launched_hook.function_name}"
     ]
 
     try:
@@ -195,7 +193,7 @@ def on_hook_end(error, launched_hook, launched_event, admin_log):
     else:
         try:
             url = web.paste("\n".join(lines))
-            messages.append("Traceback: " + url)
+            messages.append(f"Traceback: {url}")
         except Exception:
             msg = traceback.format_exc()[-1]
             messages.append(f"Error occurred while gathering traceback {msg}")
@@ -210,7 +208,7 @@ def on_hook_end(error, launched_hook, launched_event, admin_log):
         lines.extend(indent(format_error_chain(exc)))
 
         url = web.paste("\n".join(lines))
-        messages.append("Event: " + url)
+        messages.append(f"Event: {url}")
     except Exception:
         msg = traceback.format_exc()[-1]
         messages.append(f"Error occurred while gathering error data {msg}")

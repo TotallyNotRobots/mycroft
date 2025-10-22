@@ -22,11 +22,11 @@ def format_domain(domain):
 def domainr(text):
     """<domain> - uses domain.nr's API to search for a domain, and similar domains"""
     try:
-        data = http.get_json("http://domai.nr/api/json/search?q=" + text)
+        data = http.get_json(f"http://domai.nr/api/json/search?q={text}")
     except (URLError, HTTPError):
         return "Unable to get data for some reason. Try again later."
     if data["query"] == "":
         return "An error occurred: {status} - {message}".format(**data["error"])
 
     domains = [format_domain(domain) for domain in data["results"]]
-    return "Domains: {}".format(", ".join(domains))
+    return f"Domains: {', '.join(domains)}"

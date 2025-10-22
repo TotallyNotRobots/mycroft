@@ -63,10 +63,18 @@ jobs:
         pip install -U pip wheel
         pip install -Ur requirements-dev.txt
 
+    - name: cache pre-commit
+      uses: actions/cache@v4.3.0
+      with:
+        path: ~/.cache/pre-commit
+        key: pre-commit-${{runner.os}}-${{matrix.python-ver}}
+        restore-keys: |
+          pre-commit-${{runner.os}}-
+
     - name: Run pre-commit
       run: pre-commit run --all
       env:
-        SKIP: yamlfmt
+        SKIP: yamlfmt,nitpick
 
     - name: Run yamlfmt
       if: runner.os != 'Windows'

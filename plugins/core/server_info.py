@@ -1,5 +1,5 @@
 """
-Tracks verious server info like ISUPPORT tokens
+Tracks various server info like ISUPPORT tokens
 """
 
 from collections.abc import Callable, MutableMapping

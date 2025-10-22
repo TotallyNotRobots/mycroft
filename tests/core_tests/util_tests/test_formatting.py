@@ -23,8 +23,8 @@ from cloudbot.util.formatting import (
 
 test_munge_input = "The quick brown fox jumps over the lazy dog"
 test_munge_count = 3
-test_munge_result_a = "Ţħë ʠüíċķ Бŗöωñ ƒöχ ĵüṁρš övëŗ ţħë ĺäźÿ đöġ"
-test_munge_result_b = "Ţħë quick brown fox jumps over the lazy dog"
+test_munge_result_a = "\u0162\u0127\xeb \u02a0\xfc\xed\u010b\u0137 \u0411\u0157\xf6\u03c9\xf1 \u0192\xf6\u03c7 \u0135\xfc\u1e41\u03c1\u0161 \xf6v\xeb\u0157 \u0163\u0127\xeb \u013a\xe4\u017a\xff \u0111\xf6\u0121"
+test_munge_result_b = "\u0162\u0127\xeb quick brown fox jumps over the lazy dog"
 
 test_format_formats = ["{a} {b} {c}", "{a} {b}", "{a}"]
 test_format_data = {"a": "First Thing", "b": "Second Thing"}
@@ -52,7 +52,7 @@ test_truncate_words_result_a = "I am the example string..."
 test_truncate_words_result_b = "I am the example string for a unit test"
 
 test_strip_html_input = "<strong>Cats &amp; Dogs: &#181;</strong>"
-test_strip_html_result = "Cats & Dogs: µ"
+test_strip_html_result = "Cats & Dogs: \xb5"
 
 test_multiword_replace_dict = {"<bit1>": "<replace1>", "[bit2]": "[replace2]"}
 test_multiword_replace_text = "<bit1> likes [bit2]"

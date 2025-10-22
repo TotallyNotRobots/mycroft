@@ -29,7 +29,7 @@ def load_cache(db):
 
 
 def format_hook_name(_hook):
-    return _hook.plugin.title + "." + _hook.function.__name__
+    return f"{_hook.plugin.title}.{_hook.function.__name__}"
 
 
 def get_hook_from_command(bot, hook_name):
@@ -80,9 +80,7 @@ def handle_chainallow_add(args, notice_doc, hook_name, db):
     db.commit()
     load_cache(db)
     if updated:
-        return "Updated state of '{}' in chainallow to allowed={}".format(
-            hook_name, allow_cache.get(hook_name)
-        )
+        return f"Updated state of '{hook_name}' in chainallow to allowed={allow_cache.get(hook_name)}"
 
     if allow_cache.get(hook_name):
         return f"Added '{hook_name}' as an allowed command"
@@ -94,7 +92,7 @@ def handle_chainallow_del(args, notice_doc, hook_name, db):
     res = db.execute(commands.delete().where(commands.c.hook == hook_name))
     db.commit()
     load_cache(db)
-    return "Deleted {}.".format(pluralize_auto(res.rowcount, "row"))
+    return f"Deleted {pluralize_auto(res.rowcount, 'row')}."
 
 
 chainallow_subcmds = {
@@ -105,7 +103,7 @@ chainallow_subcmds = {
 
 @hook.command(permissions=["botcontrol", "snoonetstaff"])
 def chainallow(text, db, notice_doc, bot):
-    """{add [hook] [{allow|deny}]|del [hook]} - Manage the allowed list fo comands for the chain command"""
+    """{add [hook] [{allow|deny}]|del [hook]} - Manage the allowed list of commands for the chain command"""
     args = text.split()
     subcmd = args.pop(0).lower()
 
@@ -153,7 +151,7 @@ def wrap_event(_hook, event, cmd, args):
 @hook.command()
 async def chain(text, bot, event):
     """<cmd1> [args...] | <cmd2> [args...] | ... - Runs commands in a chain, piping the output from previous commands
-    to tne next"""
+    to the next"""
     cmds = parse_chain(text, bot)
 
     for name, _hook, _ in cmds:
@@ -162,9 +160,7 @@ async def chain(text, bot, event):
 
         if not is_hook_allowed(_hook):
             event.notice(
-                "'{}' may not be used in command piping".format(
-                    format_hook_name(_hook)
-                )
+                f"'{format_hook_name(_hook)}' may not be used in command piping"
             )
             return
 
@@ -172,9 +168,7 @@ async def chain(text, bot, event):
             allowed = await event.check_permissions(_hook.permissions)
             if not allowed:
                 event.notice(
-                    "Sorry, you are not allowed to use '{}'.".format(
-                        format_hook_name(_hook)
-                    )
+                    f"Sorry, you are not allowed to use '{format_hook_name(_hook)}'."
                 )
                 return
 

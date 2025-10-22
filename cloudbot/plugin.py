@@ -62,7 +62,7 @@ class HookDict(TypedDict):
 def find_hooks(parent, module) -> HookDict:
     hooks = defaultdict(list)
     for func in module.__dict__.values():
-        if hasattr(func, HOOK_ATTR) and not hasattr(func, "_not_" + HOOK_ATTR):
+        if hasattr(func, HOOK_ATTR) and not hasattr(func, f"_not_{HOOK_ATTR}"):
             # if it has cloudbot hook
             func_hooks = getattr(func, HOOK_ATTR)
 
@@ -94,7 +94,7 @@ def find_tables(code):
 
 
 def safe_resolve(path_obj: Path) -> Path:
-    """Resolve the parts of a path that exist, allowing a non-existant path
+    """Resolve the parts of a path that exist, allowing a non-existent path
     to be resolved to allow resolution of its parents
 
     :param path_obj: The `Path` object to resolve

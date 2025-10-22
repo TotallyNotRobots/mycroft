@@ -15,7 +15,5 @@ def kernel(reply):
     contents = re.sub(r"version of the Linux kernel is:(\s*)", "- ", contents)
     lines = contents.split("\n")
 
-    message = "Linux kernel versions: {}".format(
-        ", ".join(line for line in lines[:-1])
-    )
+    message = f"Linux kernel versions: {', '.join(line for line in lines[:-1])}"
     reply(message)

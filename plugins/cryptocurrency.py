@@ -332,11 +332,11 @@ class Alias:
 
 def alias_wrapper(alias: Alias) -> Callable[[str, CommandEvent], str]:
     def func(text: str, event: CommandEvent) -> str:
-        event.text = alias.name + " " + text
+        event.text = f"{alias.name} {text}"
         return call_with_args(crypto_command, event)
 
     func.__doc__ = f"""- Returns the current {alias.name} value"""
-    func.__name__ = alias.name + "_alias"
+    func.__name__ = f"{alias.name}_alias"
 
     return func
 
@@ -383,13 +383,14 @@ def crypto_command(text: str, event: CommandEvent) -> str:
     num_format = format_price(quote.price)
 
     return colors.parse(
-        "{} ({}) // $(orange){}{}$(clear) {} " + btc + "// {} change"
+        "{} ({}) // $(orange){}{}$(clear) {} {}// {} change"
     ).format(
         data.symbol,
         data.slug,
         currency_sign,
         num_format,
         currency,
+        btc,
         change_str,
     )
 
@@ -397,8 +398,8 @@ def crypto_command(text: str, event: CommandEvent) -> str:
 def format_price(price: int | float) -> str:
     price = float(price)
     if price < 1:
-        precision = max(2, min(10, len(str(Decimal(str(price)))) - 2))
-        num_format = "{:01,.{}f}".format(price, precision)
+        prec = max(2, min(10, len(str(Decimal(str(price)))) - 2))
+        num_format = f"{price:01,.{prec}f}"
     else:
         num_format = f"{price:,.2f}"
 
@@ -416,7 +417,8 @@ def currency_list() -> str:
     lst = [f"{symbol: <10} {name}" for symbol, name in currencies]
     lst.insert(0, "Symbol     Name")
 
-    return "Available currencies: " + web.paste("\n".join(lst))
+    url = web.paste("\n".join(lst))
+    return f"Available currencies: {url}"
 
 
 def make_alias(alias: Alias) -> Callable[[str, CommandEvent], str]:

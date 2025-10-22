@@ -26,7 +26,7 @@ MATCHES = (
     "http://142.42.1.1:8080/",
     "http://foo.com/blah_(wikipedia)#cite-1",
     "http://foo.com/blah_(wikipedia)_blah#cite-1",
-    "http://foo.com/unicode_(✪)_in_parens",
+    "http://foo.com/unicode_(\u272a)_in_parens",
     "http://foo.com/(something)?after=parens",
     "http://code.google.com/events/#&product=browser",
     "http://j.mp",
@@ -136,7 +136,7 @@ TESTS = {
     ),
     "http://completely.invalid": ("\x01\x01\x02\x03\x05\x08\x13", False),
     "http://large.amounts.of.text": (
-        STD_HTML + ("42" * 512 * 4096) + "</body>",
+        f"{STD_HTML}{'42' * 512 * 4096}</body>",
         "here have a couple megs of text",
     ),
     "http://star.trek.the.next.title": (STD_HTML, "47" * 512 * 4096),
@@ -160,9 +160,9 @@ def test_link_announce(match, test_str, res, mock_requests):
     link_announcer.print_url_title(match=match, message=mck, logger=logger)
     if res:
         if len(res) > link_announcer.MAX_TITLE:
-            res = res[: link_announcer.MAX_TITLE] + " ... [trunc]"
+            res = f"{res[:link_announcer.MAX_TITLE]} ... [trunc]"
 
-        mck.assert_called_with("Title: \x02" + res + "\x02")
+        mck.assert_called_with(f"Title: \x02{res}\x02")
     else:
         mck.assert_not_called()
 

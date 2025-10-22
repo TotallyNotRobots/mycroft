@@ -1,10 +1,13 @@
 import datetime
+import random
+import time
 from unittest.mock import MagicMock, call, patch
 
 import pytest
 
 from plugins import duckhunt
 from tests.util.mock_conn import MockConn
+from tests.util.mock_db import MockDB
 
 
 @pytest.mark.parametrize(
@@ -17,7 +20,7 @@ from tests.util.mock_conn import MockConn
                 "testuser1": 1,
             },
             "Duck friend scores in #TestChannel: "
-            "\x02t\u200bestuser\x02: 5 • \x02t\u200bestuser1\x02: 1",
+            "\x02t\u200bestuser\x02: 5 \u2022 \x02t\u200bestuser1\x02: 1",
         ],
     ],
 )
@@ -68,40 +71,40 @@ def test_display_scores(mock_db):
 
     chan_friends = (
         "Duck friend scores in #TestChannel: "
-        "\x02t\u200bestuser1\x02: 7 • \x02t\u200bestuser\x02: 4"
+        "\x02t\u200bestuser1\x02: 7 \u2022 \x02t\u200bestuser\x02: 4"
     )
 
     chan_kills = (
         "Duck killer scores in #TestChannel: "
-        "\x02t\u200bestuser\x02: 5 • \x02t\u200bestuser1\x02: 1"
+        "\x02t\u200bestuser\x02: 5 \u2022 \x02t\u200bestuser1\x02: 1"
     )
 
     global_friends = (
         "Duck friend scores across the network: "
         "\x02t\u200bestuser1\x02: 7"
-        " • \x02t\u200bestuser\x02: 4"
-        " • \x02o\u200btheruser\x02: 2"
+        " \u2022 \x02t\u200bestuser\x02: 4"
+        " \u2022 \x02o\u200btheruser\x02: 2"
     )
 
     global_kills = (
         "Duck killer scores across the network: "
         "\x02o\u200btheruser\x02: 9"
-        " • \x02t\u200bestuser\x02: 5"
-        " • \x02t\u200bestuser1\x02: 1"
+        " \u2022 \x02t\u200bestuser\x02: 5"
+        " \u2022 \x02t\u200bestuser1\x02: 1"
     )
 
     average_friends = (
         "Duck friend scores across the network: "
         "\x02t\u200bestuser1\x02: 7"
-        " • \x02t\u200bestuser\x02: 4"
-        " • \x02o\u200btheruser\x02: 2"
+        " \u2022 \x02t\u200bestuser\x02: 4"
+        " \u2022 \x02o\u200btheruser\x02: 2"
     )
 
     average_kills = (
         "Duck killer scores across the network: "
         "\x02o\u200btheruser\x02: 9"
-        " • \x02t\u200bestuser\x02: 5"
-        " • \x02t\u200bestuser1\x02: 1"
+        " \u2022 \x02t\u200bestuser\x02: 5"
+        " \u2022 \x02t\u200bestuser1\x02: 1"
     )
 
     event = MagicMock()
@@ -205,7 +208,7 @@ def test_start_hunt_opt_out(mock_db):
         conn = MockConn()
         event = MagicMock()
         chan = "#foo"
-        res = duckhunt.start_hunt(db, chan, event.mesage, conn)
+        res = duckhunt.start_hunt(db, chan, event.message, conn)
         assert res is None
         assert event.mock_calls == []
         assert mock_db.get_data(duckhunt.status_table) == []
@@ -217,10 +220,10 @@ def test_start_hunt(mock_db):
     conn = MockConn()
     event = MagicMock()
     chan = "#foo"
-    res = duckhunt.start_hunt(db, chan, event.mesage, conn)
+    res = duckhunt.start_hunt(db, chan, event.message, conn)
     assert res is None
     assert event.mock_calls == [
-        call.mesage(
+        call.message(
             "Ducks have been spotted nearby. See how many you can shoot or save. use .bang to shoot or .befriend to save them. NOTE: Ducks now appear as a function of time and channel activity.",
             "#foo",
         )
@@ -587,3 +590,109 @@ class TestAttack:
         assert mock_db.get_data(duckhunt.table) == [
             ("net", "nick", 0, 1, "#chan")
         ]
+
+    def test_miss(self, mock_db: MockDB, freeze_time):
+        random.seed(0)
+        duckhunt.table.create(mock_db.engine)
+        duckhunt.optout.create(mock_db.engine)
+        duckhunt.status_table.create(mock_db.engine)
+
+        mock_db.add_row(
+            duckhunt.status_table, network="net", chan="#chan", active=True
+        )
+
+        duckhunt.load_optout(mock_db.session())
+        duckhunt.load_status(mock_db.session())
+
+        state = duckhunt.get_state_table("net", "#chan")
+        state.duck_status = 1
+        state.duck_time = datetime.datetime.now().timestamp() - 3600.0
+
+        conn = MockConn(name="net")
+        event = MagicMock()
+        with patch.object(duckhunt, "hit_or_miss") as p:
+            p.return_value = 0.06
+            res = duckhunt.befriend(
+                "nick",
+                "#chan",
+                mock_db.session(),
+                conn,
+                event,
+            )
+
+        assert (
+            res
+            == "Who knew ducks could be so picky? You can try again in 7 seconds."
+        )
+        assert event.mock_calls == []
+        assert mock_db.get_data(duckhunt.table) == []
+        duckhunt.scripters.clear()
+
+    def test_miss_scripter(self, mock_db: MockDB, freeze_time):
+        random.seed(0)
+        duckhunt.table.create(mock_db.engine)
+        duckhunt.optout.create(mock_db.engine)
+        duckhunt.status_table.create(mock_db.engine)
+
+        mock_db.add_row(
+            duckhunt.status_table, network="net", chan="#chan", active=True
+        )
+
+        duckhunt.load_optout(mock_db.session())
+        duckhunt.load_status(mock_db.session())
+
+        state = duckhunt.get_state_table("net", "#chan")
+        state.duck_status = 1
+        state.duck_time = datetime.datetime.now().timestamp() - 0.5
+
+        conn = MockConn(name="net")
+        event = MagicMock()
+        res = duckhunt.befriend(
+            "nick",
+            "#chan",
+            mock_db.session(),
+            conn,
+            event,
+        )
+
+        assert (
+            res
+            == "Who knew ducks could be so picky? You tried friending that duck in 0.500 seconds, that's mighty fast. Are you sure you aren't a script? Take a 2 hour cool down."
+        )
+        assert event.mock_calls == []
+        assert mock_db.get_data(duckhunt.table) == []
+        assert duckhunt.scripters == {
+            "nick": time.time() + 7200,
+        }
+        duckhunt.scripters.clear()
+
+
+@pytest.mark.parametrize(
+    ("seed", "expected_tail", "expected_body", "expected_noise"),
+    [
+        (
+            0,
+            "\u30fb\u309c\u309c\u30fb\u3002\u3002\u30fb \u200b \u309c\u309c",
+            "\\\u200b_\xf6< ",
+            "FLAP FLAP\u200b!",
+        ),
+        (
+            5,
+            "\u30fb\u309c\u309c\u30fb\u3002 \u200b \u3002\u30fb\u309c\u309c",
+            "\\_\xf3\u200b< ",
+            "quack\u200b!",
+        ),
+    ],
+)
+def test_generate_duck(
+    seed: int, expected_tail: str, expected_body: str, expected_noise: str
+) -> None:
+    """
+    Test the generate_duck function.
+    """
+    random.seed(seed)
+    assert duckhunt.generate_duck() == (
+        expected_tail,
+        expected_body,
+        expected_noise,
+    )

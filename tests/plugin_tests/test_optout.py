@@ -117,13 +117,21 @@ def test_optout_sort():
         optout.OptOut(channel="#aaa", hook_pattern="test", allow=True),
         optout.OptOut(channel="#aaa", hook_pattern="test*", allow=True),
         optout.OptOut(channel="#aaa", hook_pattern="tes*", allow=True),
-        optout.OptOut(channel="#aaa", hook_pattern="te*", allow=True),
+        optout.OptOut(
+            channel="#aaa",
+            hook_pattern="te*",  # codespell:ignore te
+            allow=True,
+        ),
         optout.OptOut(channel="#aa", hook_pattern="test", allow=True),
     ]
 
     assert sorted(optouts) == [
         optout.OptOut(channel="#aa", hook_pattern="test", allow=True),
-        optout.OptOut(channel="#aaa", hook_pattern="te*", allow=True),
+        optout.OptOut(
+            channel="#aaa",
+            hook_pattern="te*",  # codespell:ignore te
+            allow=True,
+        ),
         optout.OptOut(channel="#aaa", hook_pattern="tes*", allow=True),
         optout.OptOut(channel="#aaa", hook_pattern="test", allow=True),
         optout.OptOut(channel="#aaa", hook_pattern="test*", allow=True),

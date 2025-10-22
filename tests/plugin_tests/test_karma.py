@@ -183,11 +183,11 @@ def test_pointstop_global_multi(mock_db):
     db = mock_db.session()
     chan = "#bar"
     karma.update_score("foo", chan, "thing", 1, db)
-    karma.update_score("foo", chan + "1", "thing", 1, db)
-    karma.update_score("foo", chan + "1", "thing1", 1, db)
+    karma.update_score("foo", f"{chan}1", "thing", 1, db)
+    karma.update_score("foo", f"{chan}1", "thing1", 1, db)
     res = karma.pointstop("global", chan, db)
     assert res == (
-        "The 2 most loved things in all channels are: thing with 2 points • thing1 "
+        "The 2 most loved things in all channels are: thing with 2 points \u2022 thing1 "
         "with 1 points"
     )
 
@@ -209,7 +209,7 @@ def test_pointstop_global_other_chan(mock_db):
     db = mock_db.session()
     chan = "#bar"
     karma.update_score("foo", chan, "thing", 1, db)
-    res = karma.pointstop("global", chan + "1", db)
+    res = karma.pointstop("global", f"{chan}1", db)
     assert (
         res
         == "The 1 most loved things in all channels are: thing with 1 points"
@@ -246,11 +246,11 @@ def test_pointsbottom_global_multi(mock_db):
     db = mock_db.session()
     chan = "#bar"
     karma.update_score("foo", chan, "thing", 1, db)
-    karma.update_score("foo", chan + "1", "thing", 1, db)
-    karma.update_score("foo", chan + "1", "thing1", 1, db)
+    karma.update_score("foo", f"{chan}1", "thing", 1, db)
+    karma.update_score("foo", f"{chan}1", "thing1", 1, db)
     res = karma.pointsbottom("global", chan, db)
     assert res == (
-        "The 2 most hated things in all channels are: thing1 with 1 points • thing with 2 points"
+        "The 2 most hated things in all channels are: thing1 with 1 points \u2022 thing with 2 points"
     )
 
 
@@ -271,7 +271,7 @@ def test_pointsbottom_global_other_chan(mock_db):
     db = mock_db.session()
     chan = "#bar"
     karma.update_score("foo", chan, "thing", 1, db)
-    res = karma.pointsbottom("global", chan + "1", db)
+    res = karma.pointsbottom("global", f"{chan}1", db)
     assert (
         res
         == "The 1 most hated things in all channels are: thing with 1 points"

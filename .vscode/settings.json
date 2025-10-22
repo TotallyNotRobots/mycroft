@@ -12,10 +12,14 @@
         "editor.defaultFormatter": "ms-python.black-formatter"
     },
     "evenBetterToml.formatter.allowedBlankLines": 1,
-    "evenBetterToml.formatter.arrayAutoCollapse": true,
-    "evenBetterToml.formatter.arrayAutoExpand": false,
+    "evenBetterToml.formatter.arrayAutoCollapse": false,
+    "evenBetterToml.formatter.arrayAutoExpand": true,
     "evenBetterToml.formatter.arrayTrailingComma": true,
     "python-envs.defaultEnvManager": "ms-python.python:system",
     "python-envs.pythonProjects": [],
-    "python.analysis.diagnosticMode": "workspace"
+    "python.analysis.diagnosticMode": "workspace",
+    "evenBetterToml.formatter.columnWidth": 60,
+    "[toml]": {
+      "editor.defaultFormatter": "tamasfe.even-better-toml"
+    }
 }

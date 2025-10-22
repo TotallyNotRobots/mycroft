@@ -165,6 +165,6 @@ def paginated_list(
     lines = [line for line in lines if line]
     while lines:
         line = lines.pop(0)
-        formatted_lines.append("{}{}".format(line, suffix if lines else ""))
+        formatted_lines.append(f"{line}{suffix if lines else ''}")
 
     return pager_cls(formatted_lines, chunk_size=page_size)

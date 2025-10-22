@@ -26,7 +26,7 @@ def format_user(user):
     >>> format_user('someuser')
     's\u200bomeuser'
     """
-    return "\u200b".join((user[:1], user[1:]))
+    return f"{user[:1]}\u200b{user[1:]}"
 
 
 def filter_tags(tags, artist, limit=4):
@@ -102,7 +102,7 @@ def api_request(method, **params):
         raise
 
     if "error" in data:
-        return data, "Error: {}.".format(data["message"])
+        return data, f"Error: {data['message']}."
 
     return data, None
 
@@ -110,7 +110,7 @@ def api_request(method, **params):
 def get_tags(method, artist, **params):
     tag_list = []
     tags, _ = api_request(
-        method + ".getTopTags", artist=artist, autocorrect=1, **params
+        f"{method}.getTopTags", artist=artist, autocorrect=1, **params
     )
 
     # if artist doesn't exist return no tags
@@ -346,9 +346,7 @@ def getuserartistplaycount(event, text, nick):
 
     playcount = artist_info["artist"]["stats"]["userplaycount"]
 
-    out = '"{}" has {:,} {} plays.'.format(
-        format_user(user), int(playcount), text
-    )
+    out = f'"{format_user(user)}" has {int(playcount):,} {text} plays.'
 
     return out
 
@@ -369,9 +367,7 @@ def displaybandinfo(text):
     similar = getsimilarartists(text)
     tags = getartisttags(text)
 
-    out = "{} has {:,} plays and {:,} listeners.".format(
-        text, int(a["stats"]["playcount"]), int(a["stats"]["listeners"])
-    )
+    out = f"{text} has {int(a['stats']['playcount']):,} plays and {int(a['stats']['listeners']):,} listeners."
     out += f" Similar artists include {similar}. Tags: ({tags})."
 
     return out
@@ -417,9 +413,7 @@ def lastfmcompare(text, nick):
     score = float(data["comparison"]["result"]["score"])
     score = float(f"{score * 100:.3f}")
     if score == 0:
-        return "{} and {} have no common listening history.".format(
-            format_user(user2), format_user(user1)
-        )
+        return f"{format_user(user2)} and {format_user(user1)} have no common listening history."
     levels = (
         ("Super", 95),
         ("Very High", 80),
@@ -447,7 +441,7 @@ def lastfmcompare(text, nick):
     artists = [artist["name"] for artist in artists]
 
     artist_string = (
-        "\x02In Common:\x02 " + ", ".join(artists) if artists else ""
+        f"\x02In Common:\x02 {', '.join(artists)}" if artists else ""
     )
 
     return "Musical compatibility between \x02{}\x02 and \x02{}\x02: {} (\x02{}%\x02) {}".format(
@@ -472,9 +466,7 @@ def toptrack(text, nick):
         track_name = song["name"]
         artist_name = song["artist"]["name"]
         play_count = song["playcount"]
-        out += "{} by {} listened to {:,} times. ".format(
-            track_name, artist_name, int(play_count)
-        )
+        out += f"{track_name} by {artist_name} listened to {int(play_count):,} times. "
     return out
 
 

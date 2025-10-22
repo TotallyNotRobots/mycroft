@@ -10,12 +10,12 @@ MAX_TITLE = 100
 
 ENCODED_CHAR = r"%[A-F0-9]{2}"
 PATH_SEG_CHARS = r"[A-Za-z0-9!$&'*-.:;=@_~\u00A0-\U0010FFFD]|" + ENCODED_CHAR
-QUERY_CHARS = PATH_SEG_CHARS + r"|/"
+QUERY_CHARS = f"{PATH_SEG_CHARS}|/"
 FRAG_CHARS = QUERY_CHARS
 
 
 def no_parens(pattern):
-    return r"{0}|\(({0}|[\(\)])*\)".format(pattern)
+    return rf"{pattern}|\(({pattern}|[\(\)])*\)"
 
 
 # This will match any URL, blacklist removed and abstracted to a priority/halting system
@@ -127,7 +127,7 @@ def print_url_title(message, match, logger):
         title = html.title.text.strip()
 
         if len(title) > MAX_TITLE:
-            title = title[:MAX_TITLE] + " ... [trunc]"
+            title = f"{title[:MAX_TITLE]} ... [trunc]"
 
         out = f"Title: \x02{title}\x02"
         message(out)

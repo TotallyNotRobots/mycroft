@@ -4,7 +4,7 @@ import pytest
 from irclib.parser import Message
 
 from cloudbot import hook
-from cloudbot.event import Event, IrcOutEvent
+from cloudbot.event import CommandEvent, Event, IrcOutEvent
 from tests.util.mock_module import MockModule
 
 
@@ -233,3 +233,22 @@ async def test_irc_out_prepare_error():
         await event.prepare()
 
     assert event.parsed_line is None
+
+
+def test_notice_doc():
+    conn = MagicMock(config={})
+    event = CommandEvent(
+        hook=MagicMock(doc=None),
+        text="",
+        triggered_command="foo",
+        cmd_prefix=".",
+        conn=conn,
+        bot=conn.bot,
+        nick="bar",
+        channel="#foo",
+    )
+
+    event.notice_doc()
+    assert conn.mock_calls == [
+        call.notice("bar", ".foo requires additional arguments.")
+    ]

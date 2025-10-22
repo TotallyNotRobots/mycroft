@@ -27,9 +27,7 @@ async def sasl_ack(conn):
             num_fut = conn.loop.create_future()
             conn.memory["sasl_numeric_future"] = num_fut
             if sasl_mech == "PLAIN":
-                auth_str = "{user}\0{user}\0{passwd}".format(
-                    user=sasl_auth["user"], passwd=sasl_auth["pass"]
-                ).encode()
+                auth_str = f"{sasl_auth['user']}\x00{sasl_auth['user']}\x00{sasl_auth['pass']}".encode()
                 conn.cmd("AUTHENTICATE", base64.b64encode(auth_str).decode())
             else:
                 conn.cmd("AUTHENTICATE", "+")

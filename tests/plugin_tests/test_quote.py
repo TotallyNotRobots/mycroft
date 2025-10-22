@@ -129,7 +129,7 @@ def test_quote_cmd_add(mock_db, freeze_time):
     target = "bar"
     sender = "baz"
     msg = "Some test quote"
-    text = "add " + target + " " + msg
+    text = f"add {target} {msg}"
     event = MagicMock()
     res = quote.quote(text, sender, chan, db, event)
     assert res is None
@@ -178,7 +178,7 @@ def test_quote_cmd_get_nick_chan_random(mock_db, freeze_time):
     sender = "baz"
     msg = "Some test quote"
     quote.add_quote(db, chan, target, sender, msg)
-    text = chan + " " + target
+    text = f"{chan} {target}"
     event = MagicMock()
     res = quote.quote(text, sender, chan, db, event)
     assert res == "[1/1] <b\u200bar> Some test quote"

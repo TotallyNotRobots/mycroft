@@ -27,16 +27,16 @@ ALIASES: dict[str, FeedAlias] = {
         "https://pypi.python.org/pypi?%3Aaction=packages_rss", 5
     ),
     "world": FeedAlias(
-        "https://news.google.com/news?cf=all&ned=us&hl=en&topic=w&output=rss"
+        "https://news.google.com/news?cf=all&ned=us&hl=en&topic=w&output=rss"  # codespell:ignore
     ),
     "us": FeedAlias(
-        "https://news.google.com/news?cf=all&ned=us&hl=en&topic=n&output=rss"
+        "https://news.google.com/news?cf=all&ned=us&hl=en&topic=n&output=rss"  # codespell:ignore
     ),
     "usa": FeedAlias(
-        "https://news.google.com/news?cf=all&ned=us&hl=en&topic=n&output=rss"
+        "https://news.google.com/news?cf=all&ned=us&hl=en&topic=n&output=rss"  # codespell:ignore
     ),
     "nz": FeedAlias(
-        "https://news.google.com/news?pz=1&cf=all&ned=nz&hl=en&topic=n&output=rss"
+        "https://news.google.com/news?pz=1&cf=all&ned=nz&hl=en&topic=n&output=rss"  # codespell:ignore
     ),
     "anand": FeedAlias("http://www.anandtech.com/rss/"),
     "anandtech": FeedAlias("http://www.anandtech.com/rss/"),

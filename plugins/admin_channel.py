@@ -201,7 +201,7 @@ def remove(text, chan, conn, nick, event):
     split = text.split(" ")
     user = split[0]
     if len(split) > 1:
-        reason = " ".join(split[1:]) + f" requested by {nick}"
+        reason = f"{' '.join(split[1:])} requested by {nick}"
     else:
         reason = f"requested by {nick}."
     out = f"REMOVE {user} {chan} :{reason}"

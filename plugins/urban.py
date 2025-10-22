@@ -6,8 +6,8 @@ from cloudbot import hook
 from cloudbot.util import formatting
 
 base_url = "http://api.urbandictionary.com/v0"
-define_url = base_url + "/define"
-random_url = base_url + "/random"
+define_url = f"{base_url}/define"
+random_url = f"{base_url}/random"
 
 
 @hook.command("urban", "u", "ud", autohelp=False)
@@ -77,9 +77,7 @@ def urban(text, reply):
 
         url = definition["permalink"]
 
-        output = "[{}/{}] {} - {}".format(
-            id_num, len(definitions), def_text, url
-        )
+        output = f"[{id_num}/{len(definitions)}] {def_text} - {url}"
 
     else:
         definition = random.choice(definitions)

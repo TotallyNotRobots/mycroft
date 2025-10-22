@@ -5,7 +5,7 @@ from cloudbot import hook
 from cloudbot.util import formatting, web
 
 base_url = "https://www.googleapis.com/books/v1/"
-book_search_api = base_url + "volumes?"
+book_search_api = f"{base_url}volumes?"
 
 
 @hook.command("books", "gbooks")
@@ -57,12 +57,10 @@ def books(text, reply, bot):
 
     try:
         page_count = book["pageCount"]
-        pages = " - " + formatting.pluralize_suffix(page_count, "page")
+        pages = f" - {formatting.pluralize_suffix(page_count, 'page')}"
     except KeyError:
         pages = ""
 
     link = web.try_shorten(book["infoLink"])
 
-    return "\x02{}\x02 by \x02{}\x02 ({}){} - {} - {}".format(
-        title, author, year, pages, description, link
-    )
+    return f"\x02{title}\x02 by \x02{author}\x02 ({year}){pages} - {description} - {link}"

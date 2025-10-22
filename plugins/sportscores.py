@@ -33,7 +33,7 @@ GAMES = (
 @hook.command("morescore", autohelp=False)
 def morescore(text, chan, conn):
     """[pagenum] - if a score list has lots of results the results are pagintated. If the most recent search is
-    paginated the pages are stored for retreival. If no argument is given the next page will be returned else a page
+    paginated the pages are stored for retrieval. If no argument is given the next page will be returned else a page
     number can be specified."""
     chan_cf = chan.casefold()
     pages = search_pages[conn.name].get(chan_cf)

@@ -162,9 +162,7 @@ def test_doc_re_no_match(text):
 def test_hook_kwargs(hook):
     assert (
         not hook.func_hook.kwargs
-    ), "Unknown arguments '{}' passed during registration of hook '{}'".format(
-        hook.func_hook.kwargs, hook.function_name
-    )
+    ), f"Unknown arguments '{hook.func_hook.kwargs}' passed during registration of hook '{hook.function_name}'"
 
     for name, types in HOOK_ATTR_TYPES.items():
         try:
@@ -174,9 +172,7 @@ def test_hook_kwargs(hook):
         else:
             assert isinstance(
                 attr, types
-            ), "Unexpected type '{}' for hook attribute '{}'".format(
-                type(attr).__name__, name
-            )
+            ), f"Unexpected type '{type(attr).__name__}' for hook attribute '{name}'"
 
 
 def test_hook_doc(hook):
@@ -234,7 +230,7 @@ def test_hook_args(hook, mock_bot):
 def test_coroutine_hooks(hook):
     if inspect.isgeneratorfunction(hook.function):  # pragma: no cover
         assert inspect.iscoroutinefunction(hook.function), (
-            "Non-coroutine generator function used for a hook. This is most liekly due to incorrect ordering of the "
+            "Non-coroutine generator function used for a hook. This is most likely due to incorrect ordering of the "
             "hook/coroutine decorators."
         )
 

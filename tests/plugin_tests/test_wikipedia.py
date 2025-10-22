@@ -29,10 +29,7 @@ def do_search(query, results=None):
 
 def make_search_url(query):
     query = query.replace(" ", "+")
-    return (
-        "http://en.wikipedia.org/w/api.php?action=query&format=json&list=search"
-        "&redirect=1&srsearch=" + query
-    )
+    return f"http://en.wikipedia.org/w/api.php?action=query&format=json&list=search&redirect=1&srsearch={query}"
 
 
 def test_search(mock_requests):

@@ -26,7 +26,7 @@ from cloudbot.util import database
 from cloudbot.util.formatting import pluralize_auto, truncate
 from cloudbot.util.func_utils import call_with_args
 
-duck_tail = "・゜゜・。。・゜゜"
+duck_tail = "\u30fb\u309c\u309c\u30fb\u3002\u3002\u30fb\u309c\u309c"
 duck = [
     "\\_o< ",
     "\\_O< ",
@@ -315,15 +315,15 @@ def no_duck_kick(db, text, chan, conn, notice_doc):
 def generate_duck():
     """Try and randomize the duck message so people can't highlight on it/script against it."""
     rt = random.randint(1, len(duck_tail) - 1)
-    dtail = duck_tail[:rt] + " \u200b " + duck_tail[rt:]
+    dtail = f"{duck_tail[:rt]} \u200b {duck_tail[rt:]}"
 
     dbody = random.choice(duck)
     rb = random.randint(1, len(dbody) - 1)
-    dbody = dbody[:rb] + "\u200b" + dbody[rb:]
+    dbody = f"{dbody[:rb]}\u200b{dbody[rb:]}"
 
     dnoise = random.choice(duck_noise)
     rn = random.randint(1, len(dnoise) - 1)
-    dnoise = dnoise[:rn] + "\u200b" + dnoise[rn:]
+    dnoise = f"{dnoise[:rn]}\u200b{dnoise[rn:]}"
 
     return dtail, dbody, dnoise
 
@@ -475,22 +475,20 @@ def attack(event, nick, chan, db, conn, attack_type):
     if nick.lower() in scripters:
         if scripters[nick.lower()] > shoot:
             event.notice(
-                "You are in a cool down period, you can try again in {:.3f} seconds.".format(
-                    scripters[nick.lower()] - shoot
-                )
+                f"You are in a cool down period, you can try again in {scripters[nick.lower()] - shoot:.3f} seconds."
             )
             return None
 
     chance = hit_or_miss(deploy, shoot)
     if not random.random() <= chance and chance > 0.05:
-        out = random.choice(miss) + " You can try again in 7 seconds."
+        out = f"{random.choice(miss)} You can try again in 7 seconds."
         scripters[nick.lower()] = shoot + 7
         return out
 
     if chance == 0.05:
         out += scripter_msg.format(shoot - deploy)
         scripters[nick.lower()] = shoot + 7200
-        return random.choice(miss) + " " + out
+        return f"{random.choice(miss)} {out}"
 
     status.duck_status = 2
     try:
@@ -523,18 +521,22 @@ def befriend(nick, chan, db, conn, event):
         return attack(event, nick, chan, db, conn, "befriend")
 
 
-def top_list(prefix, data, join_char=" • "):
+def no_ping_nick(nick: str) -> str:
+    """Format an IRC nickname in a way to avoid highlighting the user by accident"""
+    return f"{nick[:1]}\u200b{nick[1:]}"
+
+
+def top_list(prefix, data, join_char=" \u2022 "):
     r"""
     >>> foods = [('Spam', 1), ('Eggs', 4)]
     >>> top_list("Top Foods: ", foods)
-    'Top Foods: \x02E\u200bggs\x02: 4 • \x02S\u200bpam\x02: 1'
+    'Top Foods: \x02E\u200bggs\x02: 4 \u2022 \x02S\u200bpam\x02: 1'
     """
     sorted_data = sorted(data, key=operator.itemgetter(1), reverse=True)
     return truncate(
         prefix
         + join_char.join(
-            "\x02{}\x02: {:,}".format(k[:1] + "\u200b" + k[1:], v)
-            for k, v in sorted_data
+            f"\x02{no_ping_nick(k)}\x02: {v:,}" for k, v in sorted_data
         ),
         sep=join_char,
         length=320,
@@ -629,15 +631,9 @@ def display_scores(
     if is_opt_out(conn.name, chan):
         return None
 
-    global_pfx = "Duck {noun} scores across the network: ".format(
-        noun=score_type.noun
-    )
-    chan_pfx = "Duck {noun} scores in {chan}: ".format(
-        noun=score_type.noun, chan=chan
-    )
-    no_ducks = "It appears no one has {verb} any ducks yet.".format(
-        verb=score_type.verb
-    )
+    global_pfx = f"Duck {score_type.noun} scores across the network: "
+    chan_pfx = f"Duck {score_type.noun} scores in {chan}: "
+    no_ducks = f"It appears no one has {score_type.verb} any ducks yet."
 
     out = global_pfx if text else chan_pfx
 
@@ -686,9 +682,7 @@ def duckforgive(text):
     """<nick> - Allows people to be removed from the mandatory cooldown period."""
     if text.lower() in scripters and scripters[text.lower()] > time():
         scripters[text.lower()] = 0
-        return "{} has been removed from the mandatory cooldown period.".format(
-            text
-        )
+        return f"{text} has been removed from the mandatory cooldown period."
 
     return "I couldn't find anyone banned from the hunt by that nick"
 
@@ -701,13 +695,9 @@ def hunt_opt_out(text, chan, db, conn):
     """
     if not text:
         if is_opt_out(conn.name, chan):
-            return "Duck hunt is disabled in {}. To re-enable it run .hunt_opt_out remove #channel".format(
-                chan
-            )
+            return f"Duck hunt is disabled in {chan}. To re-enable it run .hunt_opt_out remove #channel"
 
-        return "Duck hunt is enabled in {}. To disable it run .hunt_opt_out add #channel".format(
-            chan
-        )
+        return f"Duck hunt is enabled in {chan}. To disable it run .hunt_opt_out add #channel"
 
     if text == "list":
         return ", ".join(opt_out)
@@ -728,9 +718,7 @@ def hunt_opt_out(text, chan, db, conn):
         db.execute(query)
         db.commit()
         load_optout(db)
-        return "The duckhunt has been successfully disabled in {}.".format(
-            channel
-        )
+        return f"The duckhunt has been successfully disabled in {channel}."
 
     if command.lower() == "remove":
         if not is_opt_out(conn.name, channel):

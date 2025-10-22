@@ -151,5 +151,5 @@ def stock(text):
         )
 
     return colors.parse(
-        "$(clear){} {}$(clear)".format(out, " | ".join(parts)).format_map(data)
+        f"$(clear){out} {' | '.join(parts)}$(clear)".format_map(data)
     )

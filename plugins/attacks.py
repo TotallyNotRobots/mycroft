@@ -131,7 +131,7 @@ ATTACKS = (
     ),
     BasicAttack(
         "pokemon",
-        "<user> - uses a pokémon on <user>",
+        "<user> - uses a pok\xe9mon on <user>",
         response=RespType.MESSAGE,
     ),
     BasicAttack(

@@ -23,7 +23,7 @@ async def test_cap_req(patch_import_module):
     ]
     cap_names = [s.split("=")[0] for s in caps]
 
-    params = ParamList.parse("* LS :" + " ".join(caps))
+    params = ParamList.parse(f"* LS :{' '.join(caps)}")
     event = Event(
         irc_paramlist=params,
         bot=MagicMock(),
@@ -59,7 +59,7 @@ async def test_cap_req(patch_import_module):
 
     def cmd(cmd, subcmd, *args):
         calls.append((cmd, subcmd) + args)
-        p = ParamList.parse("* ACK :" + " ".join(args))
+        p = ParamList.parse(f"* ACK :{' '.join(args)}")
         cmd_event = Event(
             irc_paramlist=p,
             bot=event.bot,

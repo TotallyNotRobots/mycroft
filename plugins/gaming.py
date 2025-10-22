@@ -107,9 +107,9 @@ def dice(text, event):
                 raise
 
     if desc:
-        return "{}: {} ({})".format(desc.strip(), total, ", ".join(rolls))
+        return f"{desc.strip()}: {total} ({', '.join(rolls)})"
 
-    return "{} ({})".format(total, ", ".join(rolls))
+    return f"{total} ({', '.join(rolls)})"
 
 
 @hook.command()
@@ -139,11 +139,7 @@ def coin(text, notice, action):
         amount = 1
 
     if amount == 1:
-        action(
-            "flips a coin and gets {}.".format(
-                random.choice(["heads", "tails"])
-            )
-        )
+        action(f"flips a coin and gets {random.choice(['heads', 'tails'])}.")
         return None
 
     if amount == 0:
@@ -155,9 +151,5 @@ def coin(text, notice, action):
     n = random.normalvariate(mu, sigma)
     heads = clamp(int(round(n)), 0, amount)
     tails = amount - heads
-    action(
-        "flips {} coins and gets {} heads and {} tails.".format(
-            amount, heads, tails
-        )
-    )
+    action(f"flips {amount} coins and gets {heads} heads and {tails} tails.")
     return None

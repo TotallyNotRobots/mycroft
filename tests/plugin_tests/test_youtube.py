@@ -54,7 +54,7 @@ video_data: dict[str, Any] = {
 
 class TestGetVideoDescription:
     base_url = "https://www.googleapis.com/youtube/v3/"
-    api_url = base_url + ("videos")
+    api_url = f"{base_url}videos"
 
     def get_params(self, id, key):
         return {

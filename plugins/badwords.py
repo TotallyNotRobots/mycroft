@@ -38,7 +38,7 @@ def load_bad(db):
         words.append(word)
 
     new_regex = re.compile(
-        r"(?:\s|^|[^\w\s])({})(?:\s|$|[^\w\s])".format("|".join(words)),
+        rf"(?:\s|^|[^\w\s])({'|'.join(words)})(?:\s|$|[^\w\s])",
         re.IGNORECASE,
     )
 
@@ -59,9 +59,7 @@ def add_bad(text, nick, db):
     word = re.escape(word)
     wordlist = list_bad(channel)
     if word in wordlist:
-        return "{} is already added to the bad word list for {}".format(
-            word, channel
-        )
+        return f"{word} is already added to the bad word list for {channel}"
 
     if len(badcache[channel]) >= 10:
         return (
@@ -92,9 +90,7 @@ def del_bad(text, db):
     db.commit()
     newlist = list_bad(channel)
     load_bad(db)
-    return "Removing {} new bad word list for {} is: {}".format(
-        word, channel, newlist
-    )
+    return f"Removing {word} new bad word list for {channel} is: {newlist}"
 
 
 @hook.command("listbad", permissions=["badwords"])

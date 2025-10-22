@@ -11,7 +11,7 @@ def plpaste(text, bot):
         file_path = bot.plugin_manager.commands[text].plugin.file_path
         with open(file_path, encoding="utf-8") as f:
             return web.paste(f.read(), ext="py")
-    elif text + ".py" in listdir("plugins/"):
+    elif f"{text}.py" in listdir("plugins/"):
         with open(f"plugins/{text}.py", encoding="utf-8") as f:
             return web.paste(f.read(), ext="py")
     else:

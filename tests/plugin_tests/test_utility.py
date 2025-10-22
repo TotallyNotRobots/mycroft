@@ -199,9 +199,7 @@ def test_base64_decode(text, out):
     if out is None:
         assert ret is None
         assert len(mock_notice.args) == 1
-        assert mock_notice.args[0][0][0] == "Invalid base64 string '{}'".format(
-            text
-        )
+        assert mock_notice.args[0][0][0] == f"Invalid base64 string '{text}'"
     else:
         assert ret == out
 
@@ -372,7 +370,10 @@ def test_usa(text, out):
 @pytest.mark.parametrize(
     "text,out",
     [
-        ("foo bar baz!", "ᶠᵒᵒ ᵇᵃʳ ᵇᵃᶻ!"),
+        (
+            "foo bar baz!",
+            "\u1da0\u1d52\u1d52 \u1d47\u1d43\u02b3 \u1d47\u1d43\u1dbb!",
+        ),
     ],
 )
 def test_superscript(text, out):
