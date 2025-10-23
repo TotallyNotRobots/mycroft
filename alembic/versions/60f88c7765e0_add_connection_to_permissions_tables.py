@@ -135,8 +135,8 @@ def upgrade() -> None:
         ],
     )
     op.drop_table(old_perm_table.name)
-    op.drop_table(old_group_table.name)
     op.drop_table(old_member_table.name)
+    op.drop_table(old_group_table.name)
 
 
 def downgrade() -> None:
@@ -254,5 +254,5 @@ def downgrade() -> None:
         [dict(row) for row in existing_members.values()],
     )
     op.drop_table(old_perm_table.name)
-    op.drop_table(old_group_table.name)
     op.drop_table(old_member_table.name)
+    op.drop_table(old_group_table.name)
