@@ -236,6 +236,8 @@ class PluginManager:
             self._load_mod(
                 self.file_path_to_import(path.resolve()),
                 reload=reload,
+                # Don't set the loaded attribute since we are only partially loading
+                mark_loaded=False,
             )
 
     async def load_all(self, plugin_dir):
@@ -256,13 +258,17 @@ class PluginManager:
             *[self.unload_plugin(path) for path in self.plugins],
         )
 
-    def _load_mod(self, name: str, *, reload: bool = True):
+    def _load_mod(
+        self, name: str, *, reload: bool = True, mark_loaded: bool = True
+    ):
         plugin_module = importlib.import_module(name)
         # if this plugin was loaded before, reload it
         if hasattr(plugin_module, LOADED_ATTR) and reload:
             plugin_module = importlib.reload(plugin_module)
 
-        setattr(plugin_module, LOADED_ATTR, True)
+        if mark_loaded:
+            setattr(plugin_module, LOADED_ATTR, True)
+
         return plugin_module
 
     async def load_plugin(self, path):

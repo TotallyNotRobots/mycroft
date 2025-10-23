@@ -3,6 +3,7 @@ import itertools
 import logging
 import re
 from asyncio import Task
+from collections.abc import Callable
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -15,6 +16,7 @@ from cloudbot import hook, plugin
 from cloudbot.event import CommandEvent, EventType
 from cloudbot.plugin import Plugin
 from cloudbot.util import database
+from tests.util.mock_bot import MockBot
 from tests.util.mock_module import MockModule
 
 
@@ -167,6 +169,17 @@ def test_plugin_load(mock_manager, patch_import_module, patch_import_reload):
         mock_manager.get_plugin(mock_manager.bot.plugin_dir / "test.py").code
         is newmod
     )
+
+
+@pytest.mark.asyncio
+async def test_get_plugin_tables_reentrant(
+    mock_bot_factory: Callable[..., MockBot],
+):
+    mock_bot = mock_bot_factory(base_dir=Path.cwd().resolve())
+    assert mock_bot.plugin_dir.exists()
+    mock_manager = mock_bot.plugin_manager
+    mock_manager.get_plugin_tables(mock_bot.plugin_dir, reload=True)
+    mock_manager.get_plugin_tables(mock_bot.plugin_dir, reload=True)
 
 
 class WeirdObject:
