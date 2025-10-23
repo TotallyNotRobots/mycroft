@@ -97,7 +97,7 @@ repos:
   hooks:
   - id: commitizen
 - repo: https://github.com/andreoliwa/nitpick
-  rev: 'a5532d554f2c9035bb05ec14ee1bf31469e0a563'    # frozen: v0.37.0
+  rev: 'a1373f03f5a9394c75cc03e5da1b0cb6ff615dbb'  # frozen: v0.38.0
   hooks:
   - id: nitpick
 - repo: https://github.com/ikamensh/flynt
