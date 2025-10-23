@@ -15,6 +15,7 @@ from sqlalchemy import Table, create_engine
 from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, scoped_session, sessionmaker
+from typing_extensions import override
 from watchdog.observers import Observer
 
 from cloudbot.client import Client
@@ -30,8 +31,11 @@ logger = logging.getLogger("cloudbot")
 
 
 class AbstractBot:
-    def __init__(self, *, config: Config) -> None:
+    def __init__(
+        self, *, config: Config, loop: asyncio.AbstractEventLoop | None = None
+    ) -> None:
         self.config = config
+        self.loop = loop
 
     def get_connection_configs(self) -> KeyFoldDict:
         out = KeyFoldDict()
@@ -48,6 +52,16 @@ class AbstractBot:
             out[name] = config
 
         return out
+
+    def get_plugin_manager(self) -> PluginManager:
+        raise NotImplementedError
+
+    @property
+    def plugin_manager(self) -> PluginManager:
+        return self.get_plugin_manager()
+
+    async def process(self, event: "Event") -> None:
+        raise NotImplementedError
 
 
 class BotInstanceHolder:
@@ -122,7 +136,6 @@ class CloudBot(AbstractBot):
         # basic variables
         self.base_dir = base_dir or Path().resolve()
         self.plugin_dir = self.base_dir / "plugins"
-        self.loop = loop
         self.start_time = time.time()
         self.running = True
         self.clients: dict[str, type[Client]] = {}
@@ -146,7 +159,7 @@ class CloudBot(AbstractBot):
             self.data_path.mkdir(parents=True)
 
         # set up config
-        super().__init__(config=Config())
+        super().__init__(config=Config(), loop=loop)
         logger.debug("Config system initialised.")
 
         self.executor = ThreadPoolExecutor(
@@ -197,7 +210,11 @@ class CloudBot(AbstractBot):
         if self.config_reloading_enabled:
             self.config_reloader = ConfigReloader(self)
 
-        self.plugin_manager = PluginManager(self)
+        self._plugin_manager = PluginManager(self)
+
+    @override
+    def get_plugin_manager(self) -> PluginManager:
+        return self._plugin_manager
 
     @property
     def data_dir(self) -> str:
@@ -356,6 +373,7 @@ class CloudBot(AbstractBot):
 
                 self.register_client(_type, obj)
 
+    @override
     async def process(self, event):
         run_before_tasks = []
         tasks = []

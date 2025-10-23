@@ -55,10 +55,12 @@ class _CommandHook(_Hook):
         self.main_alias = None
 
         if function.__doc__:
-            doc = inspect.cleandoc(function.__doc__)
             # Split on the first entirely blank line
-            self.doc = " ".join(
-                doc.split("\n\n", 1)[0].strip("\n").split("\n")
+            self.doc: str | None = " ".join(
+                inspect.cleandoc(function.__doc__)
+                .split("\n\n", 1)[0]
+                .strip("\n")
+                .split("\n")
             ).strip()
         else:
             self.doc = None

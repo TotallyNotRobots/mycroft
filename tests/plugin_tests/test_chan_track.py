@@ -1,13 +1,14 @@
-import asyncio
 from typing import Any
-from unittest.mock import MagicMock
 
 import pytest
 from irclib.parser import Prefix, TagList
 
+from cloudbot.client import Client
 from cloudbot.clients.irc import _IrcProtocol
 from cloudbot.util.func_utils import call_with_args
 from plugins.core import chan_track, server_info
+from tests.util.mock_conn import MockClient
+from tests.util.mock_irc_client import MockIrcClient
 
 
 class MockConn:
@@ -29,13 +30,26 @@ class MockConn:
         else:
             self.loop = loop
 
-    def get_statuses(self, chars):
-        return [self.memory["server_info"]["statuses"][c] for c in chars]
+
+def get_statuses(conn: Client, chars: str):
+    return [conn.memory["server_info"]["statuses"][c] for c in chars]
 
 
 @pytest.mark.asyncio
-async def test_replace_user_data():
-    conn = MockConn(loop=asyncio.get_running_loop())
+async def test_replace_user_data(mock_db, mock_bot_factory):
+    bot = mock_bot_factory(db=mock_db)
+    conn = MockClient(bot=bot)
+    conn.memory.update(
+        {
+            "server_info": {
+                "statuses": {},
+            },
+            "server_caps": {
+                "userhost-in-names": True,
+                "multi-prefix": True,
+            },
+        }
+    )
     serv_info = conn.memory["server_info"]
     server_info.handle_prefixes("(YohvV)!@%+-", serv_info)
     users = chan_track.UsersDict(conn)
@@ -59,15 +73,16 @@ async def test_replace_user_data():
         "ExampleUser2", "bar", "baz"
     )
 
-    assert chan.users["foo"].status == conn.get_statuses("@+")
-    assert chan.users["exampleuser"].status == conn.get_statuses("@")
-    assert chan.users["Foo1"].status == conn.get_statuses("!@%+-")
+    assert chan.users["foo"].status == get_statuses(conn, "@+")
+    assert chan.users["exampleuser"].status == get_statuses(conn, "@")
+    assert chan.users["Foo1"].status == get_statuses(conn, "!@%+-")
     assert not chan.users["exampleuser2"].status
 
 
 @pytest.mark.asyncio
-async def test_missing_on_nick():
-    conn = MockConn(loop=asyncio.get_running_loop())
+async def test_missing_on_nick(mock_db, mock_bot_factory):
+    bot = mock_bot_factory(db=mock_db)
+    conn = MockClient(bot=bot)
     chans = chan_track.get_chans(conn)
     chan = chans.getchan("#foo")
 
@@ -76,8 +91,20 @@ async def test_missing_on_nick():
 
 
 @pytest.mark.asyncio
-async def test_channel_members():
-    conn = MockConn(loop=asyncio.get_running_loop())
+async def test_channel_members(mock_db, mock_bot_factory):
+    bot = mock_bot_factory(db=mock_db)
+    conn = MockClient(bot=bot)
+    conn.memory.update(
+        {
+            "server_info": {
+                "statuses": {},
+            },
+            "server_caps": {
+                "userhost-in-names": True,
+                "multi-prefix": True,
+            },
+        }
+    )
     serv_info = conn.memory["server_info"]
     server_info.handle_prefixes("(YohvV)!@%+-", serv_info)
     server_info.handle_chan_modes(
@@ -107,17 +134,17 @@ async def test_channel_members():
 
     user = users.getuser("exampleuserfoo")
 
-    assert chan.get_member(user).status == conn.get_statuses("-")
+    assert chan.get_member(user).status == get_statuses(conn, "-")
 
     chan_track.on_join("nick1", "user", "host", conn, ["#bar"])
 
     assert users["Nick1"].host == "host"
 
-    assert chans["#Bar"].users["Nick1"].status == conn.get_statuses("")
+    assert chans["#Bar"].users["Nick1"].status == get_statuses(conn, "")
 
     chan_track.on_mode(chan.name, [chan.name, "+sop", test_user.nick], conn)
 
-    assert chan.get_member(test_user).status == conn.get_statuses("@-")
+    assert chan.get_member(test_user).status == get_statuses(conn, "@-")
 
     chan_track.on_part(chan.name, test_user.nick, conn)
 
@@ -146,7 +173,7 @@ NAMES_MOCK_TRAFFIC = [
 
 
 @pytest.mark.asyncio
-async def test_names_handling():
+async def test_names_handling(mock_db, mock_bot_factory):
     handlers = {
         "JOIN": chan_track.on_join,
         "PART": chan_track.on_part,
@@ -156,10 +183,29 @@ async def test_names_handling():
         "366": chan_track.on_names,
     }
 
-    bot = MagicMock()
-    bot.loop = asyncio.get_running_loop()
+    bot = mock_bot_factory(db=mock_db)
 
-    conn = MockConn(bot)
+    conn = MockIrcClient(
+        bot=bot,
+        name="testconn",
+        nick="BotFoo",
+        config={
+            "connection": {
+                "server": "foo.invalid",
+            },
+        },
+    )
+    conn.memory.update(
+        {
+            "server_info": {
+                "statuses": {},
+            },
+            "server_caps": {
+                "userhost-in-names": True,
+                "multi-prefix": True,
+            },
+        }
+    )
     serv_info = conn.memory["server_info"]
     server_info.handle_prefixes("(YohvV)!@%+-", serv_info)
     server_info.handle_chan_modes(
@@ -172,11 +218,9 @@ async def test_names_handling():
 
 
 @pytest.mark.asyncio
-async def test_account_tag():
-    bot = MagicMock()
-    bot.loop = asyncio.get_running_loop()
-
-    conn = MockConn(bot)
+async def test_account_tag(mock_db, mock_bot_factory):
+    bot = mock_bot_factory(db=mock_db)
+    conn = MockClient(bot=bot)
     data = {
         "conn": conn,
         "irc_tags": TagList.from_dict({"account": "foo"}),

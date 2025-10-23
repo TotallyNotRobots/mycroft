@@ -43,13 +43,13 @@ def check_status(status, api):
 
 
 @hook.command("time")
-def time_command(text, reply):
+def time_command(text: str, reply) -> str:
     """<location> - Gets the current time in <location>."""
     dev_key = bot.config.get_api_key("google_dev_key")
     if not dev_key:
         return "This command requires a Google Developers Console API key."
 
-    if text.lower().startswith("utc") or text.lower().startswith("gmt"):
+    if text.lower().startswith(("utc", "gmt")):
         timezone = text.strip()
         pattern = re.compile(r"utc|gmt|[:+]")
         utcoffset = [x for x in pattern.split(text.lower()) if x]
@@ -70,7 +70,7 @@ def time_command(text, reply):
                 )
                 raise
 
-            curtime = datetime.datetime.utcnow()
+            curtime = datetime.datetime.now(datetime.timezone.utc)
             tztime = curtime + offset
             formatted_time = datetime.datetime.strftime(
                 tztime, "%I:%M %p, %A, %B %d, %Y"
@@ -100,7 +100,7 @@ def time_command(text, reply):
 
     params = {
         "location": formatted_location,
-        "timestamp": epoch,
+        "timestamp": str(epoch),
         "key": dev_key,
     }
 

@@ -153,6 +153,9 @@ def time_parse(string, granularity="seconds") -> int | float | None:
     5450
     """
     match = re.match(r"\s*" + SIGN + r"\s*(?P<unsigned>.*)$", string)
+    if not match:
+        return None
+
     sign = -1 if match.groupdict()["sign"] == "-" else 1
     string = match.groupdict()["unsigned"]
     for timefmt in TIME_FORMATS:

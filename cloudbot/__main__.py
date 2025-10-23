@@ -23,7 +23,7 @@ async def async_main():
     logger.info("Starting CloudBot.")
 
     # create the bot
-    _bot = CloudBot(loop=asyncio.get_running_loop())
+    _bot: CloudBot | None = CloudBot(loop=asyncio.get_running_loop())
 
     # whether we are killed while restarting
     stopped_while_restarting = False
@@ -40,6 +40,9 @@ async def async_main():
             # we are currently in the process of restarting
             stopped_while_restarting = True
         else:
+            if _bot.loop is None:
+                raise ValueError("Can't find loop on bot")
+
             asyncio.run_coroutine_threadsafe(
                 _bot.stop(f"Killed (Received SIGINT {signum})"),
                 _bot.loop,
@@ -53,6 +56,10 @@ async def async_main():
     signal.signal(signal.SIGINT, exit_gracefully)
 
     # start the bot
+
+    if _bot is None:
+        logger.info("Bot terminated before running, exiting")
+        return 0
 
     # CloudBot.run() will return True if it should restart, False otherwise
     restart = await _bot.run()

@@ -21,13 +21,12 @@ class MockBot(AbstractBot):
     ):
         self.old_db = None
         self.do_db_migrate = False
-        self.loop = loop
         self.base_dir = base_dir
         self.data_path = self.base_dir / "data"
         self.data_dir = str(self.data_path)
         self.plugin_dir = self.base_dir / "plugins"
-        if self.loop:
-            self.stopped_future: Awaitable[bool] = self.loop.create_future()
+        if loop:
+            self.stopped_future: Awaitable[bool] = loop.create_future()
         else:
             self.stopped_future = None
 
@@ -38,18 +37,21 @@ class MockBot(AbstractBot):
 
         self.running = True
         self.logger = logging.getLogger("cloudbot")
-        super().__init__(config=MockConfig())
+        super().__init__(config=MockConfig(), loop=loop)
 
         if config is not None:
             self.config.update(config)
 
-        self.plugin_manager = PluginManager(self)
+        self._plugin_manager = PluginManager(self)
         self.plugin_reloading_enabled = False
         self.config_reloading_enabled = False
         self.observer = Observer()
         self.repo_link = "https://github.com/foobar/baz"
         self.user_agent = "User agent"
         self.connections: dict[str, Client] = {}
+
+    def get_plugin_manager(self) -> PluginManager:
+        return self._plugin_manager
 
     def close(self):
         self.observer.stop()
