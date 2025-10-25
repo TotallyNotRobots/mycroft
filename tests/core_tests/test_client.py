@@ -50,6 +50,14 @@ async def test_client_no_config(mock_bot_factory, mock_db):
 
 
 @pytest.mark.asyncio
+async def test_client_no_loop(mock_bot_factory, mock_db):
+    bot = mock_bot_factory(db=mock_db)
+    bot.loop = None
+    with pytest.raises(ValueError, match="Missing event loop on bot"):
+        _ = MockClient(bot, "foo", "foobot", channels=["#foo"])
+
+
+@pytest.mark.asyncio
 async def test_client(mock_bot_factory, mock_db):
     client = MockClient(
         mock_bot_factory(db=mock_db),

@@ -8,6 +8,7 @@ from pathlib import Path
 
 from cloudbot.bot import CloudBot
 from cloudbot.db import db_init
+from cloudbot.errors import ShouldBeUnreachable
 
 
 async def async_main():
@@ -41,7 +42,7 @@ async def async_main():
             stopped_while_restarting = True
         else:
             if _bot.loop is None:
-                raise ValueError("Can't find loop on bot")
+                raise ShouldBeUnreachable
 
             asyncio.run_coroutine_threadsafe(
                 _bot.stop(f"Killed (Received SIGINT {signum})"),
@@ -57,7 +58,7 @@ async def async_main():
 
     # start the bot
 
-    if _bot is None:
+    if _bot is None:  # pragma: no cover # This shouldn't happen
         logger.info("Bot terminated before running, exiting")
         return 0
 
