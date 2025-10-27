@@ -273,7 +273,7 @@ class TestPluginLoad:
         mock_bot,
         patch_import_module,
         patch_import_reload,
-        caplog,
+        caplog_bot,
     ):
         plugin_a = MockModule()
         plugin_b = MockModule()
@@ -298,7 +298,7 @@ class TestPluginLoad:
 
         await mock_manager.load_plugin(str(plugin_file))
 
-        assert caplog.record_tuples == [
+        assert caplog_bot.record_tuples == [
             ("cloudbot", 20, "Loaded command foo from test.py"),
             (
                 "cloudbot",
@@ -310,10 +310,10 @@ class TestPluginLoad:
         patch_import_module.return_value = plugin_b
         plugin_file_b = plugin_file.with_name("test2.py")
         plugin_file_b.touch()
-        caplog.clear()
+        caplog_bot.clear()
         await mock_manager.load_plugin(str(plugin_file_b))
 
-        assert caplog.record_tuples == [
+        assert caplog_bot.record_tuples == [
             (
                 "cloudbot",
                 30,
@@ -342,7 +342,7 @@ class TestPluginLoad:
         mock_bot,
         patch_import_module,
         patch_import_reload,
-        caplog,
+        caplog_bot,
     ):
         mod = MockModule()
 
@@ -360,7 +360,7 @@ class TestPluginLoad:
 
         await mock_manager.load_plugin(str(plugin_file))
 
-        assert caplog.record_tuples == [
+        assert caplog_bot.record_tuples == [
             ("cloudbot", 20, "Loaded regex regex from test.py"),
             (
                 "cloudbot",
@@ -370,11 +370,11 @@ class TestPluginLoad:
             ),
         ]
         assert len(mock_manager.regex_hooks) == 1
-        caplog.clear()
+        caplog_bot.clear()
 
         await mock_manager.unload_plugin(str(plugin_file))
         assert len(mock_manager.regex_hooks) == 0
-        assert caplog.record_tuples == [
+        assert caplog_bot.record_tuples == [
             ("cloudbot", 20, "Unloaded all plugins from test")
         ]
 
@@ -386,7 +386,7 @@ class TestPluginLoad:
         mock_bot,
         patch_import_module,
         patch_import_reload,
-        caplog,
+        caplog_bot,
     ):
         mod = MockModule()
 
@@ -404,7 +404,7 @@ class TestPluginLoad:
 
         await mock_manager.load_plugin(str(plugin_file))
 
-        assert caplog.record_tuples == [
+        assert caplog_bot.record_tuples == [
             (
                 "cloudbot",
                 20,
@@ -421,11 +421,11 @@ class TestPluginLoad:
         assert plugin is not None
         assert len(plugin.tasks) == 1
         task: Task = plugin.tasks[0]
-        caplog.clear()
+        caplog_bot.clear()
 
         await mock_manager.unload_plugin(str(plugin_file))
         await asyncio.sleep(0)
-        assert caplog.record_tuples == [
+        assert caplog_bot.record_tuples == [
             (
                 "cloudbot",
                 10,
@@ -495,9 +495,9 @@ async def test_load_on_start_error(
     mock_bot,
     patch_import_module,
     patch_import_reload,
-    caplog,
+    caplog_bot,
 ):
-    caplog.set_level(logging.INFO)
+    caplog_bot.set_level(logging.INFO)
     mod = MockModule()
 
     @hook.on_start()
@@ -515,7 +515,7 @@ async def test_load_on_start_error(
 
     await mock_manager.load_plugin(str(plugin_file))
 
-    assert caplog.record_tuples == [
+    assert caplog_bot.record_tuples == [
         ("cloudbot", 40, "Error in hook test:start"),
         (
             "cloudbot",
@@ -533,7 +533,7 @@ async def test_load_config_hooks(
     mock_bot,
     patch_import_module,
     patch_import_reload,
-    caplog,
+    caplog_bot,
 ):
     mod = MockModule()
 
@@ -551,7 +551,7 @@ async def test_load_config_hooks(
 
     await mock_manager.load_plugin(str(plugin_file))
 
-    assert caplog.record_tuples == [
+    assert caplog_bot.record_tuples == [
         ("cloudbot", 20, "Loaded Config hook config from test.py"),
         (
             "cloudbot",
@@ -561,11 +561,11 @@ async def test_load_config_hooks(
         ),
     ]
     assert len(mock_manager.config_hooks) == 1
-    caplog.clear()
+    caplog_bot.clear()
 
     await mock_manager.unload_plugin(str(plugin_file))
     assert len(mock_manager.config_hooks) == 0
-    assert caplog.record_tuples == [
+    assert caplog_bot.record_tuples == [
         ("cloudbot", 20, "Unloaded all plugins from test")
     ]
 
@@ -577,7 +577,7 @@ async def test_unload_raw_hooks(
     mock_bot,
     patch_import_module,
     patch_import_reload,
-    caplog,
+    caplog_bot,
 ):
     mod = MockModule()
 
@@ -600,13 +600,13 @@ async def test_unload_raw_hooks(
 
     await mock_manager.load_plugin(str(plugin_file))
 
-    caplog.clear()
+    caplog_bot.clear()
     assert mock_manager.raw_triggers["PRIVMSG"][0].function is irc_raw
 
     await mock_manager.unload_plugin(str(plugin_file))
 
     assert len(mock_manager.raw_triggers["PRIVMSG"]) == 0
-    assert caplog.record_tuples == [
+    assert caplog_bot.record_tuples == [
         ("cloudbot", 20, "Unloaded all plugins from test")
     ]
 
@@ -618,7 +618,7 @@ async def test_unload_event_hooks(
     mock_bot,
     patch_import_module,
     patch_import_reload,
-    caplog,
+    caplog_bot,
 ):
     mod = MockModule()
 
@@ -641,13 +641,13 @@ async def test_unload_event_hooks(
 
     await mock_manager.load_plugin(str(plugin_file))
 
-    caplog.clear()
+    caplog_bot.clear()
     assert mock_manager.event_type_hooks[EventType.notice][0].function is event
 
     await mock_manager.unload_plugin(str(plugin_file))
 
     assert len(mock_manager.event_type_hooks[EventType.notice]) == 0
-    assert caplog.record_tuples == [
+    assert caplog_bot.record_tuples == [
         ("cloudbot", 20, "Unloaded all plugins from test")
     ]
 
@@ -690,9 +690,9 @@ async def test_launch(
     sieve_allow,
     single_thread,
     sieve_error,
-    caplog,
+    caplog_bot,
 ):
-    caplog.set_level(logging.INFO)
+    caplog_bot.set_level(logging.INFO)
     called = False
     sieve_called = False
     post_called = 0
@@ -740,7 +740,7 @@ async def test_launch(
         text="",
         triggered_command="test",
     )
-    caplog.clear()
+    caplog_bot.clear()
     result = await mock_manager.launch(event.hook, event)
     if do_sieve:
         if sieve_allow and not sieve_error:
@@ -752,7 +752,7 @@ async def test_launch(
 
     if sieve_error and sieve_called:
         assert result == called and not called
-        assert caplog.record_tuples == [
+        assert caplog_bot.record_tuples == [
             (
                 "cloudbot",
                 40,
@@ -782,9 +782,9 @@ async def test_launch_async(
     sieve_allow,
     single_thread,
     sieve_error,
-    caplog,
+    caplog_bot,
 ):
-    caplog.set_level(logging.INFO)
+    caplog_bot.set_level(logging.INFO)
     called = False
     sieve_called = False
     post_called = 0
@@ -831,7 +831,7 @@ async def test_launch_async(
         text="",
         triggered_command="test",
     )
-    caplog.clear()
+    caplog_bot.clear()
     result = await mock_manager.launch(event.hook, event)
     if do_sieve:
         if sieve_allow and not sieve_error:
@@ -843,7 +843,7 @@ async def test_launch_async(
 
     if sieve_error and sieve_called:
         assert result == called and not called
-        assert caplog.record_tuples == [
+        assert caplog_bot.record_tuples == [
             (
                 "cloudbot",
                 40,

@@ -42,6 +42,8 @@ def caplog_bot(
 ) -> Generator[pytest.LogCaptureFixture, None, None]:
     caplog.set_level(logging.WARNING, "asyncio")
     caplog.set_level(logging.WARNING, "alembic")
+    caplog.set_level(0, "cloudbot")
+    caplog.set_level(0, "plugins")
     caplog.set_level(0)
     yield caplog
 
