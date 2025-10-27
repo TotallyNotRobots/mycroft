@@ -241,7 +241,7 @@ class TestRegexStatus:
 class TestRegexSieve:
     @pytest.mark.asyncio
     async def test_block_regex_hook(
-        self, mock_bot_factory, mock_db: MockDB, caplog
+        self, mock_bot_factory, mock_db: MockDB, caplog_bot
     ):
         mock_bot = mock_bot_factory(db=mock_db)
         regex_chans.table.create(mock_db.engine)
@@ -312,11 +312,11 @@ class TestRegexSieve:
             assert re_match.mock_calls == []
 
             assert res is None
-            assert caplog.messages == ["[net] Denying my_func from #chan"]
+            assert caplog_bot.messages == ["[net] Denying my_func from #chan"]
 
     @pytest.mark.asyncio
     async def test_allow_regex_hook(
-        self, mock_bot_factory, mock_db: MockDB, caplog
+        self, mock_bot_factory, mock_db: MockDB, caplog_bot
     ):
         mock_bot = mock_bot_factory(db=mock_db)
         regex_chans.table.create(mock_db.engine)
@@ -387,11 +387,11 @@ class TestRegexSieve:
             assert re_match.mock_calls == []
 
             assert res is event
-            assert caplog.messages == ["[net] Allowing my_func to #chan"]
+            assert caplog_bot.messages == ["[net] Allowing my_func to #chan"]
 
     @pytest.mark.asyncio
     async def test_no_block_other_hook(
-        self, mock_bot_factory, mock_db: MockDB, caplog
+        self, mock_bot_factory, mock_db: MockDB, caplog_bot
     ):
         mock_bot = mock_bot_factory(db=mock_db)
         regex_chans.table.create(mock_db.engine)
@@ -457,11 +457,11 @@ class TestRegexSieve:
             assert conn.mock_calls == []
 
             assert res is event
-            assert caplog.messages == []
+            assert caplog_bot.messages == []
 
     @pytest.mark.asyncio
     async def test_allow_other_hook(
-        self, mock_bot_factory, mock_db: MockDB, caplog
+        self, mock_bot_factory, mock_db: MockDB, caplog_bot
     ):
         mock_bot = mock_bot_factory(db=mock_db)
         regex_chans.table.create(mock_db.engine)
@@ -527,7 +527,7 @@ class TestRegexSieve:
             assert conn.mock_calls == []
 
             assert res is event
-            assert caplog.messages == []
+            assert caplog_bot.messages == []
 
 
 class SetStatusBase:
@@ -742,7 +742,7 @@ class TestResetRegex(SetStatusBase):
         return [{"connection": "net", "channel": "#chan", "status": "DISABLED"}]
 
 
-def test_bad_value(mock_db: MockDB, caplog):
+def test_bad_value(mock_db: MockDB, caplog_bot):
     regex_chans.table.create(mock_db.engine)
     mock_db.load_data(
         regex_chans.table,
@@ -753,7 +753,7 @@ def test_bad_value(mock_db: MockDB, caplog):
 
     assert not regex_chans.status_cache
 
-    assert caplog.messages == [
+    assert caplog_bot.messages == [
         "[regex_chans] Unknown status: ('net', '#chan', 'UNKNOWN'), falling back "
         "to default",
     ]
