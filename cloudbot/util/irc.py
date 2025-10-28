@@ -1,9 +1,8 @@
 import logging
 from collections.abc import Mapping
 from enum import Enum
-from typing import Optional
 
-import attr
+import attrs
 
 logger = logging.getLogger(__name__)
 
@@ -19,14 +18,14 @@ class ModeType(Enum):
 PARAM_MODE_TYPES = (ModeType.A, ModeType.B, ModeType.Status)
 
 
-@attr.s(hash=True)
+@attrs.define(hash=True)
 class ChannelMode:
     """
     An IRC channel mode
     """
 
-    character = attr.ib(type=str)
-    type = attr.ib(type=ModeType)
+    character: str
+    type: ModeType
 
     def has_param(self, adding: bool) -> bool:
         return self.type in PARAM_MODE_TYPES or (
@@ -34,16 +33,16 @@ class ChannelMode:
         )
 
 
-@attr.s(hash=True)
+@attrs.define(hash=True)
 class ModeChange:
     """
     Represents a single change of a mode
     """
 
-    char = attr.ib(type=str)
-    adding = attr.ib(type=bool)
-    param = attr.ib(type=Optional[str])
-    info = attr.ib(type=ChannelMode)
+    char: str
+    adding: bool
+    param: str | None
+    info: ChannelMode | None
 
     @property
     def is_status(self) -> bool:
@@ -53,14 +52,14 @@ class ModeChange:
         return self.info.type == ModeType.Status
 
 
-@attr.s(hash=True)
+@attrs.define(hash=True)
 class StatusMode(ChannelMode):
     """
     An IRC status mode
     """
 
-    prefix = attr.ib(type=str)
-    level = attr.ib(type=int)
+    prefix: str
+    level: int
 
     @classmethod
     def make(cls, prefix: str, char: str, level: int) -> "StatusMode":

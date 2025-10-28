@@ -27,11 +27,15 @@ if TYPE_CHECKING:
 
         def __contains__(self, item: K_contra) -> bool: ...
 
-        def get(self, item: K_contra, default: V = None) -> V | None: ...
+        def get(self, item: K_contra, default: V | None = None) -> V | None: ...
 
-        def setdefault(self, key: K_contra, default: V | T = None) -> V | T: ...
+        def setdefault(
+            self, key: K_contra, default: V | T | None = None
+        ) -> V | T | None: ...
 
-        def pop(self, key: K_contra, default: V | T = None) -> V | T: ...
+        def pop(
+            self, key: K_contra, default: V | T | None = None
+        ) -> V | T | None: ...
 
 else:
 
@@ -56,7 +60,7 @@ class KeyFoldMixin(MapBase[K_contra, V]):
     def __delitem__(self, key: K_contra) -> None:
         return super().__delitem__(cast(K_contra, key.casefold()))  # type: ignore[safe-super]
 
-    def pop(self, key: K_contra, *args) -> V:
+    def pop(self, key: K_contra, *args) -> V | None:
         """
         Wraps `dict.pop`
         """

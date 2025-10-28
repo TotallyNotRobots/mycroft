@@ -172,6 +172,47 @@ def test_time_command(mock_requests, freeze_time, mock_api_keys):
             "\x0206:14 PM, Thursday, August 22, 2019\x02 - New York, USA (EDT)",
         ),
     ]
+
+    assert conn.mock_calls == []
+
+
+def test_time_command_utc(mock_requests, freeze_time, mock_api_keys):
+    conn = MagicMock()
+    event = CommandEvent(
+        text="GMT+2",
+        triggered_command="time",
+        cmd_prefix=".",
+        hook=MagicMock(),
+        channel="#foo",
+        nick="bar",
+        conn=conn,
+        bot=conn.bot,
+    )
+
+    assert wrap_hook_response(time_plugin.time_command, event) == [
+        ("return", "\x0203:14 PM, Thursday, August 22, 2019\x02 (GMT+2)"),
+    ]
+
+    assert conn.mock_calls == []
+
+
+def test_time_command_utc_15m(mock_requests, freeze_time, mock_api_keys):
+    conn = MagicMock()
+    event = CommandEvent(
+        text="GMT+2:15",
+        triggered_command="time",
+        cmd_prefix=".",
+        hook=MagicMock(),
+        channel="#foo",
+        nick="bar",
+        conn=conn,
+        bot=conn.bot,
+    )
+
+    assert wrap_hook_response(time_plugin.time_command, event) == [
+        ("return", "\x0203:29 PM, Thursday, August 22, 2019\x02 (GMT+2:15)"),
+    ]
+
     assert conn.mock_calls == []
 
 

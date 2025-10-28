@@ -128,14 +128,16 @@ def expand(url, service=None):
     if service:
         impl = shorteners[service]
     else:
-        impl = None
+        _impl = None
         for name in shorteners:
             if name in url:
-                impl = shorteners[name]
+                _impl = shorteners[name]
                 break
 
-        if impl is None:
+        if _impl is None:
             impl = Shortener()
+        else:
+            impl = _impl
 
     return impl.expand(url)
 
@@ -178,7 +180,7 @@ def paste(
 
 class ServiceError(Exception):
     def __init__(
-        self, request: Request | PreparedRequest, message: str
+        self, request: Request | PreparedRequest | None, message: str
     ) -> None:
         super().__init__(message)
         self.request = request

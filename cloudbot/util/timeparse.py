@@ -37,6 +37,8 @@ License:
 
 import re
 
+from cloudbot.errors import ShouldBeUnreachable
+
 SIGN = r"(?P<sign>[+|-])?"
 
 # YEARS      = r'(?P<years>\d+)\s*(?:ys?|yrs?.?|years?)'
@@ -151,8 +153,12 @@ def time_parse(string, granularity="seconds") -> int | float | None:
     5400
     >>> time_parse('1:30:50', granularity='minutes')
     5450
+    >>> time_parse('')
     """
     match = re.match(r"\s*" + SIGN + r"\s*(?P<unsigned>.*)$", string)
+    if not match:
+        raise ShouldBeUnreachable()
+
     sign = -1 if match.groupdict()["sign"] == "-" else 1
     string = match.groupdict()["unsigned"]
     for timefmt in TIME_FORMATS:

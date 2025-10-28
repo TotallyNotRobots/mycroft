@@ -107,12 +107,10 @@ class CommandPager(Pager):
                 return [out.format(len(self))]
 
             try:
-                page = self[index - 1]
+                return self[index - 1]
             except IndexError:
                 out = "Please specify a valid page number between 1 and {}."
                 return [out.format(len(self))]
-
-            return page
 
         page = self.next()
         if page is not None:

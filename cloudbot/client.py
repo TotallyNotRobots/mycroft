@@ -2,10 +2,13 @@ import asyncio
 import collections
 import logging
 import random
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from cloudbot.permissions import PermissionManager
 from cloudbot.util import CLIENT_ATTR
+
+if TYPE_CHECKING:
+    from cloudbot.bot import AbstractBot
 
 logger = logging.getLogger("cloudbot")
 
@@ -32,14 +35,26 @@ class Client:
     A Client representing each connection the bot makes to a single server
     """
 
-    def __init__(self, bot, _type, name, nick, *, channels=None, config=None):
+    def __init__(
+        self,
+        bot: "AbstractBot",
+        _type: str,
+        name: str,
+        nick: str,
+        *,
+        channels=None,
+        config=None,
+    ) -> None:
         self.bot = bot
+        if bot.loop is None:
+            raise ValueError("Missing event loop on bot")
+
         self.loop = bot.loop
         self.name = name
         self.nick = nick
         self._type = _type
 
-        self.channels = []
+        self.channels: list[str] = []
 
         if channels is None:
             self.config_channels = []
@@ -50,8 +65,9 @@ class Client:
             self.config = {}
         else:
             self.config = config
-        self.vars = {}
-        self.history = {}
+
+        self.vars: dict[str, Any] = {}
+        self.history: dict[str, tuple[str, float, str]] = {}
 
         # create permissions manager
         self.permissions = PermissionManager(self)

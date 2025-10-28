@@ -9,6 +9,7 @@ from collections.abc import Mapping
 from functools import partial
 from itertools import chain
 from pathlib import Path
+from typing import Literal
 
 from irclib.parser import Message
 
@@ -130,7 +131,7 @@ class IrcClient(Client):
             conn_config.get("bind_port"),
         )
 
-        self.local_bind: bool | tuple[str, str]
+        self.local_bind: Literal[False] | tuple[str, str]
         if not (local_bind[0] or local_bind[1]):
             self.local_bind = False
         else:
@@ -140,12 +141,12 @@ class IrcClient(Client):
         self.ssl_context = self.make_ssl_context(conn_config)
 
         # transport and protocol
-        self._transport = None
-        self._protocol = None
+        self._transport: asyncio.Transport | None = None
+        self._protocol: "_IrcProtocol" | None = None
 
         self._connecting = False
 
-        self._channel_keys: dict[str, str] = {}
+        self._channel_keys: dict[str, str | None] = {}
 
     def set_channel_key(
         self, channel: str, key: str, *, override: bool = True
@@ -276,16 +277,16 @@ class IrcClient(Client):
 
         self._active = True
 
-        optional_params = {}
-        if self.local_bind:
-            optional_params["local_addr"] = self.local_bind
-
         coro = self.loop.create_connection(
             partial(_IrcProtocol, self),
             host=self.server,
             port=self.port,
             ssl=self.ssl_context,
-            **optional_params,
+            local_addr=(
+                (self.local_bind[0], int(self.local_bind[1]))
+                if self.local_bind
+                else None
+            ),
         )
 
         if timeout is not None:
@@ -391,13 +392,19 @@ class IrcClient(Client):
         """
         Sends a raw IRC line unchecked. Doesn't do connected check, and is *not* threadsafe
         """
+        if self._protocol is None:
+            raise ValueError("Tried to send without a protocol")
+
         asyncio.ensure_future(
             self._protocol.send(line, log=log), loop=self.loop
         )
 
     @property
-    def connected(self):
-        return self._protocol and self._protocol.connected
+    def connected(self) -> bool:
+        if not self._protocol:
+            return False
+
+        return self._protocol.connected
 
     def is_nick_valid(self, nick):
         return bool(irc_nick_re.fullmatch(nick))
@@ -406,7 +413,7 @@ class IrcClient(Client):
 class _IrcProtocol(asyncio.Protocol):
     """ """
 
-    def __init__(self, conn):
+    def __init__(self, conn: "IrcClient") -> None:
         """ """
         self.loop = conn.loop
         self.bot = conn.bot
@@ -420,7 +427,7 @@ class _IrcProtocol(asyncio.Protocol):
         self._connecting = True
 
         # transport
-        self._transport = None
+        self._transport: asyncio.Transport | None = None
 
         # Future that waits until we are connected
         self._connected_future = self.loop.create_future()
@@ -456,9 +463,13 @@ class _IrcProtocol(asyncio.Protocol):
 
     async def send(self, line, log=True):
         # make sure we are connected before sending
-        if not self.connected:
+        if not self.connected or self._transport is None:
             if self._connecting:
                 await self._connected_future
+                if self._transport is None:
+                    raise ValueError(
+                        "Connected future set, but transport missing!"
+                    )
             else:
                 raise ValueError(
                     "Attempted to send data to a closed connection"
@@ -546,33 +557,36 @@ class _IrcProtocol(asyncio.Protocol):
         target = _get_param(message, target_params)
 
         # Parse for CTCP
-        if event_type is EventType.message and content_raw.startswith("\x01"):
-            possible_ctcp = content_raw[1:]
-            if content_raw.endswith("\x01"):
-                possible_ctcp = possible_ctcp[:-1]
+        ctcp_text: str | None = None
+        if event_type is EventType.message:
+            if content_raw is None:
+                raise ValueError(f"Missing content_raw for {event_type}")
 
-            if "\x01" in possible_ctcp:
-                logger.debug(
-                    "[%s] Invalid CTCP message received, "
-                    "treating it as a mornal message",
-                    self.conn.name,
-                )
-                ctcp_text = None
-            else:
-                ctcp_text = possible_ctcp
-                ctcp_text_split = ctcp_text.split(None, 1)
-                if ctcp_text_split[0] == "ACTION":
-                    # this is a CTCP ACTION, set event_type and content accordingly
-                    event_type = EventType.action
-                    content = irc_clean(ctcp_text_split[1])
+            if content_raw.startswith("\x01"):
+                possible_ctcp = content_raw[1:]
+                if content_raw.endswith("\x01"):
+                    possible_ctcp = possible_ctcp[:-1]
+
+                if "\x01" in possible_ctcp:
+                    logger.debug(
+                        "[%s] Invalid CTCP message received, "
+                        "treating it as a mornal message",
+                        self.conn.name,
+                    )
+                    ctcp_text = None
                 else:
-                    # this shouldn't be considered a regular message
-                    event_type = EventType.other
-        else:
-            ctcp_text = None
+                    ctcp_text = possible_ctcp
+                    ctcp_text_split = ctcp_text.split(None, 1)
+                    if ctcp_text_split[0] == "ACTION":
+                        # this is a CTCP ACTION, set event_type and content accordingly
+                        event_type = EventType.action
+                        content = irc_clean(ctcp_text_split[1])
+                    else:
+                        # this shouldn't be considered a regular message
+                        event_type = EventType.other
 
         # Channel
-        channel = _get_param(message, chan_params)
+        channel: str | None = _get_param(message, chan_params)
 
         prefix = message.prefix
         if prefix is None:
@@ -594,7 +608,7 @@ class _IrcProtocol(asyncio.Protocol):
 
             # Channel for a PM is the sending user
             if channel == self.conn.nick.lower():
-                channel = nick.lower()
+                channel = nick.lower() if nick else nick
         else:
             # If the channel isn't set, it's the sending user/server
             channel = nick.lower() if nick else nick
@@ -623,5 +637,5 @@ class _IrcProtocol(asyncio.Protocol):
         return event
 
     @property
-    def connected(self):
+    def connected(self) -> bool:
         return self._connected

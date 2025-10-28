@@ -35,7 +35,7 @@ def test_send_not_connected(mock_db):
     with pytest.raises(ValueError):
         client.send("foobar")
 
-    assert bot.mock_calls == [("loop.create_future", (), {})]
+    assert bot.mock_calls == [call.loop.create_future()]
 
 
 @pytest.mark.asyncio
@@ -456,7 +456,7 @@ class TestLineParsing:
 
 
 class TestConnect:
-    async def make_client(self) -> irc.IrcClient:
+    async def make_client(self) -> tuple[irc.IrcClient, MagicMock]:
         bot = MagicMock(loop=asyncio.get_running_loop(), config={})
         conn_config = {
             "connection": {
@@ -470,11 +470,11 @@ class TestConnect:
             bot, "irc", "testconn", "foo", config=conn_config
         )
         client.active = True
-        return client
+        return client, bot
 
     @pytest.mark.asyncio()
     async def test_exc(self, caplog_bot, mock_db):
-        client = await self.make_client()
+        client, bot = await self.make_client()
         runs = 0
 
         async def connect(timeout):
@@ -524,11 +524,11 @@ class TestConnect:
                 "foo)",
             ),
         ]
-        assert client.bot.mock_calls == []
+        assert bot.mock_calls == []
 
     @pytest.mark.asyncio()
     async def test_timeout_exc(self, caplog_bot, mock_db):
-        client = await self.make_client()
+        client, bot = await self.make_client()
         runs = 0
 
         async def connect(timeout):
@@ -573,11 +573,11 @@ class TestConnect:
                 "[testconn] Timeout occurred while connecting to host.invalid:6667",
             ),
         ]
-        assert client.bot.mock_calls == []
+        assert bot.mock_calls == []
 
     @pytest.mark.asyncio()
     async def test_other_exc(self, caplog_bot, mock_db):
-        client = await self.make_client()
+        client, bot = await self.make_client()
 
         client.connect = AsyncMock()  # type: ignore
         client.connect.side_effect = Exception("foo")
@@ -592,11 +592,11 @@ class TestConnect:
                 "[testconn|permissions] Created permission manager for testconn.",
             ),
         ]
-        assert client.bot.mock_calls == []
+        assert bot.mock_calls == []
 
     @pytest.mark.asyncio()
     async def test_one_connect(self, caplog_bot, mock_db):
-        client = await self.make_client()
+        client, bot = await self.make_client()
 
         async def _connect(timeout=5):
             await asyncio.sleep(timeout)
@@ -615,12 +615,12 @@ class TestConnect:
                 "[testconn|permissions] Created permission manager for testconn.",
             ),
         ]
-        assert client.bot.mock_calls == []
+        assert bot.mock_calls == []
 
     @pytest.mark.asyncio()
     async def test_create_socket(self, caplog_bot, mock_db):
-        client = await self.make_client()
-        client.loop.create_connection = mock = MagicMock()
+        client, bot = await self.make_client()
+        bot.loop.create_connection = mock = MagicMock()
         fut: "Future[Tuple[None, None]]" = asyncio.Future(loop=client.loop)
         fut.set_result((None, None))
         mock.return_value = fut
@@ -635,7 +635,7 @@ class TestConnect:
             ),
             ("cloudbot", 20, "[testconn] Connecting"),
         ]
-        assert client.bot.mock_calls == [
+        assert bot.mock_calls == [
             ("plugin_manager.connect_hooks.__iter__", (), {})
         ]
 
@@ -674,8 +674,8 @@ class TestSend:
         proto = irc._IrcProtocol(conn)
         proto.connection_made(MagicMock())
         sieve = object()
-        proto.bot.plugin_manager.out_sieves = [sieve]
-        proto.bot.plugin_manager.internal_launch = launch = MagicMock()
+        conn.bot.plugin_manager.out_sieves = [sieve]
+        conn.bot.plugin_manager.internal_launch = launch = MagicMock()
         fut = proto.loop.create_future()
         fut.set_result((False, None))
         launch.return_value = fut
