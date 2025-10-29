@@ -6,7 +6,7 @@ from requests import HTTPError
 from plugins import bible
 
 
-def test_bible(mock_requests):
+def test_bible(mock_requests) -> None:
     mock_requests.add(
         "GET",
         "https://labs.bible.org/api?passage=foo&formatting=plain&type=json",
@@ -25,7 +25,7 @@ def test_bible(mock_requests):
     assert event.mock_calls == []
 
 
-def test_bible_404(mock_requests):
+def test_bible_404(mock_requests) -> None:
     mock_requests.add(
         "GET",
         "https://labs.bible.org/api?passage=foo&formatting=plain&type=json",

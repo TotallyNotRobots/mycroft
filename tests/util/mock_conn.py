@@ -1,11 +1,13 @@
+from typing import Any
 from unittest.mock import MagicMock, _CallList
 
 from cloudbot.bot import AbstractBot
 from cloudbot.client import Client
+from cloudbot.permissions import PermissionManager
 
 
 class MockClient(Client):
-    def __init__(self, *, bot: "AbstractBot", nick=None, name=None):
+    def __init__(self, *, bot: "AbstractBot", nick=None, name=None) -> None:
         super().__init__(
             bot=bot,
             _type="mock",
@@ -26,7 +28,7 @@ class MockClient(Client):
     def notice(self, target, text):
         return self._mock.notice(target, text)
 
-    def is_nick_valid(self, nick):
+    def is_nick_valid(self, nick) -> bool:
         return True
 
     def mock_calls(self) -> _CallList:
@@ -34,12 +36,12 @@ class MockClient(Client):
 
 
 class MockConn:
-    def __init__(self, *, nick=None, name=None, loop=None):
+    def __init__(self, *, nick=None, name=None, loop=None) -> None:
         self.nick = nick or "TestBot"
         self.name = name or "testconn"
-        self.permissions = None
-        self.config = {}
-        self.history = {}
+        self.permissions: PermissionManager | None = None
+        self.config: dict[str, Any] = {}
+        self.history: dict[str, list[tuple[str, float, str]]] = {}
         self.reload = MagicMock()
         self.try_connect = MagicMock()
         self.notice = MagicMock()
@@ -47,5 +49,5 @@ class MockConn:
         self.loop = loop
         self.ready = True
 
-    def is_nick_valid(self, nick):
+    def is_nick_valid(self, nick) -> bool:
         return True

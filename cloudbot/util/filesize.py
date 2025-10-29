@@ -52,6 +52,10 @@ many individuals on behalf of Zope Corporation. Specific attributions
 are listed in the accompanying credits file.
 """
 
+from typing import TypeAlias
+
+System: TypeAlias = tuple[tuple[int, str | tuple[str, str]], ...]
+
 traditional = (
     (1024**5, "P"),
     (1024**4, "T"),
@@ -105,7 +109,7 @@ I = iec
 S = si
 
 
-def size(b, system=traditional):
+def size(b: float | int, system: System = traditional) -> str | None:
     """Human-readable file size.
 
     Using the traditional system, where a factor of 1024 is used::
@@ -167,4 +171,5 @@ def size(b, system=traditional):
             suffix = singular
         else:
             suffix = multiple
+
     return str(amount) + suffix

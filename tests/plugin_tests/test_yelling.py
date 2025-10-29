@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 from plugins import link_announcer, yelling
 
 
-def test_yell_check():
+def test_yell_check() -> None:
     conn = MagicMock()
     bot = conn.bot
     plugin_manager = bot.plugin_manager

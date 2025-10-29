@@ -78,7 +78,7 @@ class KeyFoldMixin(MapBase[K_contra, V]):
         """
         return super().setdefault(cast(K_contra, key.casefold()), default)  # type: ignore[safe-super]
 
-    def update(self, *args, **kwargs):
+    def update(self, *args, **kwargs) -> None:
         """
         Wrap `dict.update`
         """

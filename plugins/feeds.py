@@ -6,7 +6,7 @@ from cloudbot.util import formatting, web
 
 
 class FeedAlias:
-    def __init__(self, url, limit=3):
+    def __init__(self, url, limit=3) -> None:
         self.url = url
         self.limit = limit
 

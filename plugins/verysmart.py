@@ -6,7 +6,7 @@ vsquotes: list[str] = []
 
 
 @hook.on_start()
-def load_quotes(bot):
+def load_quotes(bot) -> None:
     """- Import quotes from data directory."""
     vsquotes.clear()
     with open((bot.data_path / "verysmart.txt"), encoding="utf-8") as fp:

@@ -1,10 +1,10 @@
 import inspect
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from typing import Any, TypeVar
 
 
 class ParameterError(Exception):
-    def __init__(self, name, valid_args):
+    def __init__(self, name: str, valid_args: Iterable[str]) -> None:
         super().__init__(
             f"{name!r} is not a valid parameter, valid parameters are: {list(valid_args)}"
         )

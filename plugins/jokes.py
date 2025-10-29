@@ -17,7 +17,7 @@ def load_joke_file(path: Path) -> list[str]:
 
 
 @hook.on_start()
-def load_jokes(bot):
+def load_jokes(bot) -> None:
     """Load strings into memory from files in the data directory.
     Put 'NAME.txt' in `file_list` to make those strings available as `joke_lines['NAME']`.
     """
@@ -38,7 +38,7 @@ def load_jokes(bot):
 
 
 @hook.command()
-def yomomma(text, nick, conn, is_nick_valid):
+def yomomma(text, nick, conn, is_nick_valid) -> str:
     """<nick> - Tells a yo momma joke to <nick>."""
     target = text.strip()
     if not is_nick_valid(target) or target.lower() == conn.nick.lower():
@@ -48,19 +48,19 @@ def yomomma(text, nick, conn, is_nick_valid):
 
 
 @hook.command(autohelp=False)
-def doit(message):
+def doit(message) -> None:
     """- Prints a do it line, example: mathematicians do with a pencil."""
     message(random.choice(joke_lines["do_it"]))
 
 
 @hook.command(autohelp=False)
-def pun(message):
+def pun(message) -> None:
     """- Come on everyone loves puns right?"""
     message(random.choice(joke_lines["puns"]))
 
 
 @hook.command(autohelp=False)
-def confucious(message):
+def confucious(message) -> None:
     """- Confucious say man standing on toilet is high on pot.
     (Note that the spelling is deliberate: https://www.urbandictionary.com/define.php?term=Confucious)
     """
@@ -69,19 +69,19 @@ def confucious(message):
 
 
 @hook.command(autohelp=False)
-def dadjoke(message):
+def dadjoke(message) -> None:
     """- Love em or hate em, bring on the dad jokes."""
     message(random.choice(joke_lines["one_liners"]))
 
 
 @hook.command(autohelp=False)
-def wisdom(message):
+def wisdom(message) -> None:
     """- Words of wisdom from various bathroom stalls."""
     message(random.choice(joke_lines["wisdom"]))
 
 
 @hook.command(autohelp=False)
-def bookpun(message):
+def bookpun(message) -> None:
     """- Suggests a pun of a book title/author."""
     # suggestions = ["Why not try", "You should read", "You gotta check out"]
     message(random.choice(joke_lines["book_puns"]))
@@ -106,7 +106,7 @@ def zombs():
 
 
 @hook.command("awesome", "iscool", "cool")
-def awesome(text, is_nick_valid):
+def awesome(text, is_nick_valid) -> str:
     """<nick> - Returns a link to show <nick> how awesome they are.
     See https://github.com/sebastianbarfurth/is-awesome.cool
     """
@@ -118,7 +118,7 @@ def awesome(text, is_nick_valid):
 
 
 @hook.command(autohelp=False)
-def triforce(message):
+def triforce(message) -> None:
     """- Returns a triforce!"""
     top = ["\u00a0\u25b2", "\u00a0\u00a0\u25b2", "\u25b2", "\u00a0\u25b2"]
     bottom = ["\u25b2\u00a0\u25b2", "\u25b2 \u25b2", "\u25b2\u25b2"]
@@ -138,12 +138,12 @@ def kero(text):
 
 
 @hook.command(autohelp=False)
-def lawyerjoke(message):
+def lawyerjoke(message) -> None:
     """- Returns a lawyer joke, so lawyers know how much we hate them."""
     message(random.choice(joke_lines["lawyerjoke"]))
 
 
 @hook.command(autohelp=False)
-def fuck():
+def fuck() -> str:
     """- Returns something funny."""
     return "something funny."

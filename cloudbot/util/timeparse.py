@@ -36,6 +36,7 @@ License:
 """
 
 import re
+from typing import Literal
 
 from cloudbot.errors import ShouldBeUnreachable
 
@@ -89,7 +90,7 @@ MULTIPLIERS = dict(
 )
 
 
-def _interpret_as_minutes(string, mdict):
+def _interpret_as_minutes(string: str, mdict):
     """
     Times like "1:22" are ambiguous; do they represent minutes and seconds
     or hours and minutes?  By default, timeparse assumes the latter.  Call
@@ -114,7 +115,9 @@ def _interpret_as_minutes(string, mdict):
     return mdict
 
 
-def time_parse(string, granularity="seconds") -> int | float | None:
+def time_parse(
+    string: str, granularity: Literal["seconds", "minutes"] = "seconds"
+) -> int | float | None:
     """
     Parse a time expression, returning it as a number of seconds.  If
     possible, the return value will be an `int`; if this is not

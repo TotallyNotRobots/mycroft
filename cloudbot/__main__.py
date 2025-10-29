@@ -11,7 +11,7 @@ from cloudbot.db import db_init
 from cloudbot.errors import ShouldBeUnreachable
 
 
-async def async_main():
+async def async_main() -> int:
     # store the original working directory, for use when restarting
     original_wd = Path().resolve()
 
@@ -90,14 +90,14 @@ async def async_main():
     # close logging, and exit the program.
     logger.debug("Stopping logging engine")
     logging.shutdown()
+    return 0
 
 
 def main() -> int:
     if not db_init():
         return 1
 
-    asyncio.run(async_main())
-    return 0
+    return asyncio.run(async_main())
 
 
 # This is a simple call to main, so test coverage doesn't matter. We will

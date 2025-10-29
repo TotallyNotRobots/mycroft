@@ -30,7 +30,7 @@ logger = logging.getLogger("cloudbot")
 
 
 @hook.on_start()
-def load_cache(db):
+def load_cache(db) -> None:
     new_cache = grab_cache.copy()
     new_cache.clear()
     for row in db.execute(table.select().order_by(table.c.time)):
@@ -56,7 +56,7 @@ def moregrab(text, chan, conn):
     return pages.handle_lookup(text)
 
 
-def check_grabs(name, quote, chan):
+def check_grabs(name, quote, chan) -> bool:
     try:
         if quote in grab_cache[chan][name]:
             return True
@@ -66,7 +66,7 @@ def check_grabs(name, quote, chan):
         return False
 
 
-def grab_add(nick, time, msg, chan, db):
+def grab_add(nick, time, msg, chan, db) -> None:
     # Adds a quote to the grab table
     db.execute(
         table.insert().values(name=nick, time=time, quote=msg, chan=chan)
@@ -85,7 +85,7 @@ def get_latest_line(conn, chan, nick):
 
 
 @hook.command()
-def grab(text, nick, chan, db, conn):
+def grab(text, nick, chan, db, conn) -> str:
     """<nick> - grabs the last message from the specified nick and adds it to the quote database"""
     if text.lower() == nick.lower():
         return "Didn't your mother teach you not to grab yourself?"

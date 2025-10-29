@@ -9,7 +9,7 @@ book_search_api = f"{base_url}volumes?"
 
 
 @hook.command("books", "gbooks")
-def books(text, reply, bot):
+def books(text, reply, bot) -> str:
     """<query> - Searches Google Books for <query>."""
     dev_key = bot.config.get_api_key("google_dev_key")
     if not dev_key:

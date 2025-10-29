@@ -6,7 +6,7 @@ from responses import RequestsMock
 from plugins import imgur
 
 
-def test_imgur_no_api(mock_requests: RequestsMock, mock_api_keys):
+def test_imgur_no_api(mock_requests: RequestsMock, mock_api_keys) -> None:
     mock_api_keys.config.get_api_key.return_value = None
     imgur.set_api()
     response = imgur.imgur("aries")
@@ -14,7 +14,7 @@ def test_imgur_no_api(mock_requests: RequestsMock, mock_api_keys):
     assert response == "No imgur API details"
 
 
-def test_imgur_no_results(mock_requests: RequestsMock, mock_api_keys):
+def test_imgur_no_results(mock_requests: RequestsMock, mock_api_keys) -> None:
     random.seed(0)
     mock_requests.add(
         responses.GET,
@@ -34,7 +34,7 @@ def test_imgur_no_results(mock_requests: RequestsMock, mock_api_keys):
     assert response == "No results found."
 
 
-def test_imgur_meme(mock_requests: RequestsMock, mock_api_keys):
+def test_imgur_meme(mock_requests: RequestsMock, mock_api_keys) -> None:
     random.seed(0)
     mock_requests.add(
         responses.GET,

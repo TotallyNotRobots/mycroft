@@ -9,7 +9,7 @@ from plugins import tell
 from tests.util.mock_conn import MockConn
 
 
-def init_tables(mock_db):
+def init_tables(mock_db) -> None:
     db_engine = mock_db.engine
     tell.TellMessage.__table__.create(db_engine)
     tell.disable_table.create(db_engine)
@@ -20,7 +20,7 @@ def init_tables(mock_db):
     tell.load_ignores(session)
 
 
-def test_migrate_db(temp_metadata, mock_db, freeze_time):
+def test_migrate_db(temp_metadata, mock_db, freeze_time) -> None:
     init_tables(mock_db)
     session = mock_db.session()
 
@@ -79,7 +79,7 @@ def test_migrate_db(temp_metadata, mock_db, freeze_time):
     ]
 
 
-def test_tellcmd(mock_db):
+def test_tellcmd(mock_db) -> None:
     init_tables(mock_db)
     session = mock_db.session()
 
@@ -90,7 +90,7 @@ def test_tellcmd(mock_db):
     mock_conn.name = "MockConn"
     sender = Prefix("TestUser", "user", "example.com")
 
-    def _test(text, output):
+    def _test(text, output) -> None:
         tell.tell_cmd(
             text,
             sender.nick,
@@ -159,7 +159,7 @@ def test_tellcmd(mock_db):
     assert tell.count_unread(session, mock_conn.name, "OtherUser") == 10
 
 
-def test_showtells(mock_db, freeze_time):
+def test_showtells(mock_db, freeze_time) -> None:
     init_tables(mock_db)
     db = mock_db.session()
     conn = MockConn()
@@ -203,7 +203,7 @@ def test_showtells(mock_db, freeze_time):
     ]
 
 
-def test_showtells_no_tells(mock_db, freeze_time):
+def test_showtells_no_tells(mock_db, freeze_time) -> None:
     init_tables(mock_db)
     db = mock_db.session()
     conn = MockConn()
@@ -214,7 +214,7 @@ def test_showtells_no_tells(mock_db, freeze_time):
     assert event.mock_calls == [call.notice("You have no pending messages.")]
 
 
-def test_tellinput_showtells(mock_db, freeze_time):
+def test_tellinput_showtells(mock_db, freeze_time) -> None:
     init_tables(mock_db)
     db = mock_db.session()
     conn = MockConn()
@@ -226,7 +226,7 @@ def test_tellinput_showtells(mock_db, freeze_time):
     assert event.mock_calls == []
 
 
-def test_tellinput_no_tells(mock_db, freeze_time):
+def test_tellinput_no_tells(mock_db, freeze_time) -> None:
     init_tables(mock_db)
     db = mock_db.session()
     conn = MockConn()
@@ -239,7 +239,7 @@ def test_tellinput_no_tells(mock_db, freeze_time):
     assert event.mock_calls == []
 
 
-def test_tellinput_bad_cache(mock_db, freeze_time):
+def test_tellinput_bad_cache(mock_db, freeze_time) -> None:
     init_tables(mock_db)
     db = mock_db.session()
     conn = MockConn()
@@ -252,7 +252,7 @@ def test_tellinput_bad_cache(mock_db, freeze_time):
     assert event.mock_calls == []
 
 
-def test_tellinput(mock_db, freeze_time):
+def test_tellinput(mock_db, freeze_time) -> None:
     init_tables(mock_db)
     db = mock_db.session()
     conn = MockConn()
@@ -269,7 +269,7 @@ def test_tellinput(mock_db, freeze_time):
     ]
 
 
-def test_read_tell_spam(mock_db, freeze_time):
+def test_read_tell_spam(mock_db, freeze_time) -> None:
     init_tables(mock_db)
     db = mock_db.session()
     conn = MockConn()
@@ -338,7 +338,7 @@ def test_read_tell_spam(mock_db, freeze_time):
     ]
 
 
-def test_tellinput_multiple(mock_db, freeze_time):
+def test_tellinput_multiple(mock_db, freeze_time) -> None:
     init_tables(mock_db)
     db = mock_db.session()
     conn = MockConn()
@@ -392,7 +392,7 @@ def test_tellinput_multiple(mock_db, freeze_time):
     ]
 
 
-def test_can_send_to_user(mock_db, freeze_time):
+def test_can_send_to_user(mock_db, freeze_time) -> None:
     init_tables(mock_db)
     db = mock_db.session()
     conn = MockConn()
@@ -402,7 +402,7 @@ def test_can_send_to_user(mock_db, freeze_time):
     assert tell.can_send_to_user(conn, sender_mask, target) is True
 
 
-def test_can_send_to_user_disabled(mock_db, freeze_time):
+def test_can_send_to_user_disabled(mock_db, freeze_time) -> None:
     init_tables(mock_db)
     db = mock_db.session()
     conn = MockConn()
@@ -414,7 +414,7 @@ def test_can_send_to_user_disabled(mock_db, freeze_time):
     assert tell.can_send_to_user(conn, sender_mask, target) is False
 
 
-def test_can_send_to_user_ignored(mock_db, freeze_time):
+def test_can_send_to_user_ignored(mock_db, freeze_time) -> None:
     init_tables(mock_db)
     db = mock_db.session()
     conn = MockConn()
@@ -426,7 +426,7 @@ def test_can_send_to_user_ignored(mock_db, freeze_time):
     assert tell.can_send_to_user(conn, sender_mask, target) is False
 
 
-def test_load_disabled(mock_db, freeze_time):
+def test_load_disabled(mock_db, freeze_time) -> None:
     init_tables(mock_db)
     session = mock_db.session()
 
@@ -443,7 +443,7 @@ def test_load_disabled(mock_db, freeze_time):
     assert tell.disable_cache == {"foo": {"bar"}}
 
 
-def test_add_disabled(mock_db, freeze_time):
+def test_add_disabled(mock_db, freeze_time) -> None:
     db_engine = mock_db.engine
     tell.disable_table.create(db_engine)
     session = mock_db.session()
@@ -457,7 +457,7 @@ def test_add_disabled(mock_db, freeze_time):
     ]
 
 
-def test_del_disabled(mock_db, freeze_time):
+def test_del_disabled(mock_db, freeze_time) -> None:
     db_engine = mock_db.engine
     tell.disable_table.create(db_engine)
     session = mock_db.session()
@@ -478,7 +478,7 @@ def test_del_disabled(mock_db, freeze_time):
     assert tell.disable_cache == {}
 
 
-def test_load_ignored(mock_db, freeze_time):
+def test_load_ignored(mock_db, freeze_time) -> None:
     db_engine = mock_db.engine
     tell.ignore_table.create(db_engine)
     session = mock_db.session()
@@ -496,7 +496,7 @@ def test_load_ignored(mock_db, freeze_time):
     assert tell.ignore_cache == {"foo": {"bar": ["baz"]}}
 
 
-def test_tell_disable(mock_db, freeze_time):
+def test_tell_disable(mock_db, freeze_time) -> None:
     event = MagicMock()
     tell.disable_cache.clear()
     tell.disable_table.create(mock_db.engine)
@@ -513,7 +513,7 @@ def test_tell_disable(mock_db, freeze_time):
     ]
 
 
-def test_tell_disable_self(mock_db, freeze_time):
+def test_tell_disable_self(mock_db, freeze_time) -> None:
     event = MagicMock()
     tell.disable_cache.clear()
     tell.disable_table.create(mock_db.engine)
@@ -530,7 +530,7 @@ def test_tell_disable_self(mock_db, freeze_time):
     ]
 
 
-def test_tell_disable_no_perms(mock_db, freeze_time):
+def test_tell_disable_no_perms(mock_db, freeze_time) -> None:
     event = MagicMock()
     tell.disable_cache.clear()
     tell.disable_table.create(mock_db.engine)
@@ -549,7 +549,7 @@ def test_tell_disable_no_perms(mock_db, freeze_time):
     assert mock_db.get_data(tell.disable_table) == []
 
 
-def test_tell_disable_other(mock_db, freeze_time):
+def test_tell_disable_other(mock_db, freeze_time) -> None:
     event = MagicMock()
     tell.disable_cache.clear()
     tell.disable_table.create(mock_db.engine)
@@ -566,7 +566,7 @@ def test_tell_disable_other(mock_db, freeze_time):
     ]
 
 
-def test_tell_disable_already_disabled(mock_db, freeze_time):
+def test_tell_disable_already_disabled(mock_db, freeze_time) -> None:
     event = MagicMock()
     tell.disable_cache.clear()
     tell.disable_table.create(mock_db.engine)
@@ -591,7 +591,7 @@ def test_tell_disable_already_disabled(mock_db, freeze_time):
     ]
 
 
-def test_tell_disable_already_disabled_other(mock_db, freeze_time):
+def test_tell_disable_already_disabled_other(mock_db, freeze_time) -> None:
     event = MagicMock()
     tell.disable_cache.clear()
     tell.disable_table.create(mock_db.engine)
@@ -616,7 +616,7 @@ def test_tell_disable_already_disabled_other(mock_db, freeze_time):
     ]
 
 
-def test_tell_enable(mock_db, freeze_time):
+def test_tell_enable(mock_db, freeze_time) -> None:
     event = MagicMock()
     tell.disable_cache.clear()
     tell.disable_table.create(mock_db.engine)
@@ -639,7 +639,7 @@ def test_tell_enable(mock_db, freeze_time):
     assert mock_db.get_data(tell.disable_table) == []
 
 
-def test_tell_enable_self(mock_db, freeze_time):
+def test_tell_enable_self(mock_db, freeze_time) -> None:
     event = MagicMock()
     tell.disable_cache.clear()
     tell.disable_table.create(mock_db.engine)
@@ -662,7 +662,7 @@ def test_tell_enable_self(mock_db, freeze_time):
     assert mock_db.get_data(tell.disable_table) == []
 
 
-def test_tell_enable_no_perms(mock_db, freeze_time):
+def test_tell_enable_no_perms(mock_db, freeze_time) -> None:
     event = MagicMock()
     tell.disable_cache.clear()
     tell.disable_table.create(mock_db.engine)
@@ -681,7 +681,7 @@ def test_tell_enable_no_perms(mock_db, freeze_time):
     assert mock_db.get_data(tell.disable_table) == []
 
 
-def test_tell_enable_other(mock_db, freeze_time):
+def test_tell_enable_other(mock_db, freeze_time) -> None:
     event = MagicMock()
     tell.disable_cache.clear()
     tell.disable_table.create(mock_db.engine)
@@ -704,7 +704,7 @@ def test_tell_enable_other(mock_db, freeze_time):
     assert mock_db.get_data(tell.disable_table) == []
 
 
-def test_tell_enable_already_enabled(mock_db, freeze_time):
+def test_tell_enable_already_enabled(mock_db, freeze_time) -> None:
     event = MagicMock()
     tell.disable_cache.clear()
     tell.disable_table.create(mock_db.engine)
@@ -719,7 +719,7 @@ def test_tell_enable_already_enabled(mock_db, freeze_time):
     assert mock_db.get_data(tell.disable_table) == []
 
 
-def test_tell_enable_already_enabled_other(mock_db, freeze_time):
+def test_tell_enable_already_enabled_other(mock_db, freeze_time) -> None:
     event = MagicMock()
     tell.disable_cache.clear()
     tell.disable_table.create(mock_db.engine)
@@ -734,7 +734,7 @@ def test_tell_enable_already_enabled_other(mock_db, freeze_time):
     assert mock_db.get_data(tell.disable_table) == []
 
 
-def test_tell_list_disabled(mock_db, freeze_time, patch_paste):
+def test_tell_list_disabled(mock_db, freeze_time, patch_paste) -> None:
     patch_paste.return_value = "Pasted."
     event = MagicMock()
     tell.disable_cache.clear()
@@ -766,7 +766,7 @@ def test_tell_list_disabled(mock_db, freeze_time, patch_paste):
     ]
 
 
-def test_tell_ignore(mock_db, freeze_time):
+def test_tell_ignore(mock_db, freeze_time) -> None:
     event = MagicMock()
     tell.ignore_cache.clear()
     tell.ignore_table.create(mock_db.engine)
@@ -786,7 +786,7 @@ def test_tell_ignore(mock_db, freeze_time):
     ]
 
 
-def test_tell_ignore_existing(mock_db, freeze_time):
+def test_tell_ignore_existing(mock_db, freeze_time) -> None:
     event = MagicMock()
     tell.ignore_cache.clear()
     tell.ignore_table.create(mock_db.engine)
@@ -806,7 +806,7 @@ def test_tell_ignore_existing(mock_db, freeze_time):
     ]
 
 
-def test_tell_unignore_not_Set(mock_db, freeze_time):
+def test_tell_unignore_not_Set(mock_db, freeze_time) -> None:
     event = MagicMock()
     tell.ignore_cache.clear()
     tell.ignore_table.create(mock_db.engine)
@@ -824,7 +824,7 @@ def test_tell_unignore_not_Set(mock_db, freeze_time):
     assert mock_db.get_data(tell.ignore_table) == []
 
 
-def test_tell_unignore(mock_db, freeze_time):
+def test_tell_unignore(mock_db, freeze_time) -> None:
     event = MagicMock()
     tell.ignore_cache.clear()
     tell.ignore_table.create(mock_db.engine)
@@ -847,7 +847,7 @@ def test_tell_unignore(mock_db, freeze_time):
     assert mock_db.get_data(tell.ignore_table) == []
 
 
-def test_tell_list_ignores(mock_db, freeze_time):
+def test_tell_list_ignores(mock_db, freeze_time) -> None:
     event = MagicMock()
     tell.ignore_cache.clear()
     tell.ignore_table.create(mock_db.engine)
@@ -868,7 +868,7 @@ def test_tell_list_ignores(mock_db, freeze_time):
     assert event.mock_calls == []
 
 
-def test_tell_list_ignores_empty(mock_db, freeze_time):
+def test_tell_list_ignores_empty(mock_db, freeze_time) -> None:
     event = MagicMock()
     tell.ignore_cache.clear()
     tell.ignore_table.create(mock_db.engine)

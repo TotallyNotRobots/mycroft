@@ -13,7 +13,7 @@ from tests.util.mock_module import MockModule
 
 
 @pytest.mark.asyncio()
-async def test_cap_req(patch_import_module):
+async def test_cap_req(patch_import_module) -> None:
     caps = [
         "some-cap",
         "another-cap",
@@ -37,7 +37,7 @@ async def test_cap_req(patch_import_module):
 
     called = False
 
-    def func():
+    def func() -> bool:
         nonlocal called
         called = True
         return True
@@ -57,7 +57,7 @@ async def test_cap_req(patch_import_module):
 
     calls = []
 
-    def cmd(cmd, subcmd, *args):
+    def cmd(cmd, subcmd, *args) -> None:
         calls.append((cmd, subcmd) + args)
         p = ParamList.parse(f"* ACK :{' '.join(args)}")
         cmd_event = Event(

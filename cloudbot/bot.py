@@ -247,10 +247,10 @@ class CloudBot(AbstractBot):
     def get_client(self, name: str) -> type[Client]:
         return self.clients[name]
 
-    def register_client(self, name, cls):
+    def register_client(self, name, cls) -> None:
         self.clients[name] = cls
 
-    def create_connections(self):
+    def create_connections(self) -> None:
         """Create a BotConnection for all the networks defined in the config"""
         for name, config in self.get_connection_configs().items():
             nick = config["nick"]
@@ -266,7 +266,7 @@ class CloudBot(AbstractBot):
             )
             logger.debug("[%s] Created connection.", name)
 
-    async def stop(self, reason=None, *, restart=False):
+    async def stop(self, reason=None, *, restart=False) -> None:
         """quits all networks and shuts the bot down"""
         logger.info("Stopping bot.")
 
@@ -311,11 +311,11 @@ class CloudBot(AbstractBot):
         if self.stopped_future:
             self.stopped_future.set_result(restart)
 
-    async def restart(self, reason=None):
+    async def restart(self, reason=None) -> None:
         """shuts the bot down and restarts it"""
         await self.stop(reason=reason, restart=True)
 
-    async def _init_routine(self):
+    async def _init_routine(self) -> None:
         # Load plugins
         await self.plugin_manager.load_all(self.plugin_dir)
 
@@ -353,7 +353,7 @@ class CloudBot(AbstractBot):
         # Run a manual garbage collection cycle, to clean up any unused objects created during initialization
         gc.collect()
 
-    def load_clients(self):
+    def load_clients(self) -> None:
         """
         Load all clients from the "clients" directory
         """
@@ -374,12 +374,12 @@ class CloudBot(AbstractBot):
                 self.register_client(_type, obj)
 
     @override
-    async def process(self, event):
+    async def process(self, event) -> None:
         run_before_tasks = []
         tasks = []
         halted = False
 
-        def add_hook(hook, _event, _run_before=False):
+        def add_hook(hook, _event, _run_before=False) -> bool:
             nonlocal halted
             if halted:
                 return False
@@ -500,7 +500,7 @@ class CloudBot(AbstractBot):
         await asyncio.gather(*run_before_tasks)
         await asyncio.gather(*tasks)
 
-    async def reload_config(self):
+    async def reload_config(self) -> None:
         self.config.load_config()
 
         # reload permissions

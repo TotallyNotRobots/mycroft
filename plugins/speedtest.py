@@ -10,7 +10,7 @@ base_url = "http://www.speedtest.net/my-result/{}"
 
 
 @hook.regex(speedtest_re)
-def speedtest_url(match):
+def speedtest_url(match) -> str:
     test_id = match.group(1)
     url = base_url.format(test_id)
 

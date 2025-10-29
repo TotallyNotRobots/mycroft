@@ -8,7 +8,7 @@ from cloudbot.client import Client
 class MockClient(Client):  # pylint: disable=abstract-method
     _connected = False
 
-    def __init__(self, bot, *args, **kwargs):
+    def __init__(self, bot, *args, **kwargs) -> None:
         super().__init__(bot, "TestClient", *args, **kwargs)
         self.active = True
 
@@ -16,12 +16,12 @@ class MockClient(Client):  # pylint: disable=abstract-method
     def connected(self):
         return self._connected
 
-    async def connect(self, timeout=None):
+    async def connect(self, timeout=None) -> None:
         self._connected = True
 
 
 class FailingMockClient(MockClient):  # pylint: disable=abstract-method
-    def __init__(self, *args, fail_count=None, **kwargs):
+    def __init__(self, *args, fail_count=None, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.fail_count = fail_count
 
@@ -32,7 +32,7 @@ class FailingMockClient(MockClient):  # pylint: disable=abstract-method
 
 
 @pytest.mark.asyncio
-async def test_reload(mock_bot_factory, mock_db):
+async def test_reload(mock_bot_factory, mock_db) -> None:
     client = MockClient(
         mock_bot_factory(db=mock_db), "foo", "foobot", channels=["#foo"]
     )
@@ -42,7 +42,7 @@ async def test_reload(mock_bot_factory, mock_db):
 
 
 @pytest.mark.asyncio
-async def test_client_no_config(mock_bot_factory, mock_db):
+async def test_client_no_config(mock_bot_factory, mock_db) -> None:
     client = MockClient(
         mock_bot_factory(db=mock_db), "foo", "foobot", channels=["#foo"]
     )
@@ -50,7 +50,7 @@ async def test_client_no_config(mock_bot_factory, mock_db):
 
 
 @pytest.mark.asyncio
-async def test_client_no_loop(mock_bot_factory, mock_db):
+async def test_client_no_loop(mock_bot_factory, mock_db) -> None:
     bot = mock_bot_factory(db=mock_db)
     bot.loop = None
     with pytest.raises(ValueError, match="Missing event loop on bot"):
@@ -58,7 +58,7 @@ async def test_client_no_loop(mock_bot_factory, mock_db):
 
 
 @pytest.mark.asyncio
-async def test_client(mock_bot_factory, mock_db):
+async def test_client(mock_bot_factory, mock_db) -> None:
     client = MockClient(
         mock_bot_factory(db=mock_db),
         "foo",
@@ -80,7 +80,7 @@ async def test_client(mock_bot_factory, mock_db):
 
 
 @pytest.mark.asyncio
-async def test_client_connect_exc(mock_bot_factory, mock_db):
+async def test_client_connect_exc(mock_bot_factory, mock_db) -> None:
     with patch("random.randrange", return_value=1):
         client = FailingMockClient(
             mock_bot_factory(db=mock_db),
@@ -94,7 +94,7 @@ async def test_client_connect_exc(mock_bot_factory, mock_db):
 
 
 @pytest.mark.asyncio()
-async def test_try_connect(mock_bot_factory, mock_db):
+async def test_try_connect(mock_bot_factory, mock_db) -> None:
     client = MockClient(
         mock_bot_factory(db=mock_db),
         "foo",
@@ -108,7 +108,7 @@ async def test_try_connect(mock_bot_factory, mock_db):
 
 
 @pytest.mark.asyncio
-async def test_auto_reconnect(mock_bot_factory, mock_db):
+async def test_auto_reconnect(mock_bot_factory, mock_db) -> None:
     client = MockClient(
         mock_bot_factory(db=mock_db),
         "foo",

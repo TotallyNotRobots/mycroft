@@ -22,7 +22,7 @@ seen_table = table(
 
 
 @hook.on_start()
-def load_data(bot):
+def load_data(bot) -> None:
     hookups.clear()
     with open((bot.data_path / "hookup.json"), encoding="utf-8") as f:
         hookups.update(json.load(f))

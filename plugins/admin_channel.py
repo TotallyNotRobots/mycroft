@@ -9,7 +9,7 @@ KICK_LOG = "{nick} used KICK to kick {target} in {channel}."
 REMOVE_LOG = "{nick} used REMOVE on {target} in {channel} because {reason!r}."
 
 
-def check_for_chan_mode(char, mode_warn, event):
+def check_for_chan_mode(char, mode_warn, event) -> bool:
     serv_info = event.conn.memory["server_info"]
     modes = serv_info.get("channel_modes", "")
     status = serv_info.get("statuses", [])
@@ -22,7 +22,7 @@ def check_for_chan_mode(char, mode_warn, event):
     return False
 
 
-def mode_cmd(mode, action, param, event, mode_warn=True):
+def mode_cmd(mode, action, param, event, mode_warn=True) -> bool:
     """generic mode setting function"""
     chan = event.chan
     nick = event.nick
@@ -52,7 +52,7 @@ def mode_cmd(mode, action, param, event, mode_warn=True):
     return True
 
 
-def mode_cmd_no_target(mode, action, param, event, mode_warn=True):
+def mode_cmd_no_target(mode, action, param, event, mode_warn=True) -> bool:
     """generic mode setting function without a target"""
     chan = event.chan
     if not check_for_chan_mode(mode[1], mode_warn, event):
@@ -77,7 +77,7 @@ def mode_cmd_no_target(mode, action, param, event, mode_warn=True):
     return True
 
 
-def do_extban(char, action, param, event, adding=True):
+def do_extban(char, action, param, event, adding=True) -> bool:
     serv_info = event.conn.memory["server_info"]
     if char not in serv_info.get("extbans", ""):
         return False
@@ -98,19 +98,19 @@ def do_extban(char, action, param, event, adding=True):
 
 
 @hook.command(permissions=["op_ban", "op", "chanop"])
-def ban(text, event):
+def ban(text, event) -> None:
     """[channel] <user> - bans <user> in [channel], or in the caller's channel if no channel is specified"""
     mode_cmd("+b", "ban", text, event)
 
 
 @hook.command(permissions=["op_ban", "op", "chanop"])
-def unban(text, event):
+def unban(text, event) -> None:
     """[channel] <user> - unbans <user> in [channel], or in the caller's channel if no channel is specified"""
     mode_cmd("-b", "unban", text, event)
 
 
 @hook.command(permissions=["op_quiet", "op", "chanop"])
-def quiet(text, event):
+def quiet(text, event) -> None:
     """[channel] <user> - quiets <user> in [channel], or in the caller's channel if no channel is specified"""
     if mode_cmd("+q", "quiet", text, event, False):
         return
@@ -120,7 +120,7 @@ def quiet(text, event):
 
 
 @hook.command(permissions=["op_quiet", "op", "chanop"])
-def unquiet(text, event):
+def unquiet(text, event) -> None:
     """[channel] <user> - unquiets <user> in [channel], or in the caller's channel if no channel is specified"""
     if mode_cmd("-q", "unquiet", text, event, False):
         return
@@ -130,31 +130,31 @@ def unquiet(text, event):
 
 
 @hook.command(permissions=["op_voice", "op", "chanop"])
-def voice(text, event):
+def voice(text, event) -> None:
     """[channel] <user> - voices <user> in [channel], or in the caller's channel if no channel is specified"""
     mode_cmd("+v", "voice", text, event)
 
 
 @hook.command(permissions=["op_voice", "op", "chanop"])
-def devoice(text, event):
+def devoice(text, event) -> None:
     """[channel] <user> - devoices <user> in [channel], or in the caller's channel if no channel is specified"""
     mode_cmd("-v", "devoice", text, event)
 
 
 @hook.command(permissions=["op_op", "op", "chanop"])
-def op(text, event):
+def op(text, event) -> None:
     """[channel] <user> - ops <user> in [channel], or in the caller's channel if no channel is specified"""
     mode_cmd("+o", "op", text, event)
 
 
 @hook.command(permissions=["op_op", "op", "chanop"])
-def deop(text, event):
+def deop(text, event) -> None:
     """[channel] <user> - deops <user> in [channel], or in the caller's channel if no channel is specified"""
     mode_cmd("-o", "deop", text, event)
 
 
 @hook.command(permissions=["op_topic", "op", "chanop"])
-def topic(text, conn, chan, nick, event):
+def topic(text, conn, chan, nick, event) -> None:
     """[channel] <topic> - changes the topic to <topic> in [channel], or in the caller's channel
     if no channel is specified"""
     split = text.split(" ")
@@ -169,7 +169,7 @@ def topic(text, conn, chan, nick, event):
 
 
 @hook.command(permissions=["op_kick", "op", "chanop"])
-def kick(text, chan, conn, nick, event):
+def kick(text, chan, conn, nick, event) -> None:
     """[channel] <user> - kicks <user> from [channel], or from the caller's channel if no channel is specified"""
     split = text.split(" ")
 
@@ -196,7 +196,7 @@ def kick(text, chan, conn, nick, event):
 
 
 @hook.command(permissions=["op_rem", "op", "chanop"])
-def remove(text, chan, conn, nick, event):
+def remove(text, chan, conn, nick, event) -> None:
     """<user> - force removes <user> from the caller's channel."""
     split = text.split(" ")
     user = split[0]
@@ -212,24 +212,24 @@ def remove(text, chan, conn, nick, event):
 
 
 @hook.command(permissions=["op_mute", "op", "chanop"], autohelp=False)
-def mute(text, event):
+def mute(text, event) -> None:
     """[channel] - mutes [channel], or in the caller's channel if no channel is specified"""
     mode_cmd_no_target("+m", "mute", text, event)
 
 
 @hook.command(permissions=["op_mute", "op", "chanop"], autohelp=False)
-def unmute(text, event):
+def unmute(text, event) -> None:
     """[channel] - unmutes [channel], or in the caller's channel if no channel is specified"""
     mode_cmd_no_target("-m", "unmute", text, event)
 
 
 @hook.command(permissions=["op_lock", "op", "chanop"], autohelp=False)
-def lock(text, event):
+def lock(text, event) -> None:
     """[channel] - locks [channel], or in the caller's channel if no channel is specified"""
     mode_cmd_no_target("+i", "lock", text, event)
 
 
 @hook.command(permissions=["op_lock", "op", "chanop"], autohelp=False)
-def unlock(text, event):
+def unlock(text, event) -> None:
     """[channel] - unlocks [channel], or in the caller's channel if no channel is specified"""
     mode_cmd_no_target("-i", "unlock", text, event)

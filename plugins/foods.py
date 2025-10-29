@@ -7,7 +7,7 @@ from cloudbot.util import textgen
 
 
 class BasicFood:
-    def __init__(self, name, unit, *commands, file=None):
+    def __init__(self, name, unit, *commands, file=None) -> None:
         self.name = name
         self.unit = unit
         self.commands = commands or (name,)
@@ -63,7 +63,7 @@ BASIC_FOOD = (
 basic_food_data: dict[str, dict[str, Any]] = defaultdict(dict)
 
 
-def load_template_data(bot, filename, data_dict):
+def load_template_data(bot, filename, data_dict) -> None:
     data_dict.clear()
     food_dir = bot.data_path / "food"
     with open((food_dir / filename), encoding="utf-8") as f:
@@ -71,7 +71,7 @@ def load_template_data(bot, filename, data_dict):
 
 
 @hook.on_start()
-def load_foods(bot):
+def load_foods(bot) -> None:
     basic_food_data.clear()
 
     for food in BASIC_FOOD:
@@ -112,7 +112,7 @@ def basic_food(food):
     return func
 
 
-def init_hooks():
+def init_hooks() -> None:
     for food in BASIC_FOOD:
         globals()[food.name] = hook.command(*food.commands)(basic_food(food))
 

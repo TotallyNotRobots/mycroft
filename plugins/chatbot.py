@@ -11,7 +11,7 @@ container = APIContainer()
 
 
 @hook.on_start()
-def make_api(bot):
+def make_api(bot) -> None:
     container.api = CleverWrap(bot.config.get_api_key("cleverbot"))
 
 

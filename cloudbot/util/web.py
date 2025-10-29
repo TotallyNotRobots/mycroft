@@ -70,7 +70,7 @@ class RegistryItem(Generic[_T]):
 
 
 class Registry(Generic[_T]):
-    def __init__(self):
+    def __init__(self) -> None:
         self._items: dict[str, RegistryItem[_T]] = {}
 
     def register(self, name: str, item: _T) -> None:
@@ -114,17 +114,27 @@ class Registry(Generic[_T]):
             item.working = True
 
 
-def shorten(url: str, custom=None, key=None, service=DEFAULT_SHORTENER):
+def shorten(
+    url: str,
+    custom: str | None = None,
+    key: str | None = None,
+    service: str = DEFAULT_SHORTENER,
+) -> str:
     impl = shorteners[service]
     return impl.shorten(url, custom, key)
 
 
-def try_shorten(url, custom=None, key=None, service=DEFAULT_SHORTENER):
+def try_shorten(
+    url: str,
+    custom: str | None = None,
+    key: str | None = None,
+    service: str = DEFAULT_SHORTENER,
+) -> str:
     impl = shorteners[service]
     return impl.try_shorten(url, custom, key)
 
 
-def expand(url, service=None):
+def expand(url: str, service: str | None = None) -> str:
     if service:
         impl = shorteners[service]
     else:
@@ -148,7 +158,7 @@ class NoPasteException(Exception):
 
 def paste(
     data: str | bytes,
-    ext="txt",
+    ext: str = "txt",
     service=DEFAULT_PASTEBIN,
     raise_on_no_paste=False,
 ) -> str:
@@ -187,7 +197,7 @@ class ServiceError(Exception):
 
 
 class ServiceHTTPError(ServiceError):
-    def __init__(self, message: str, response: Response):
+    def __init__(self, message: str, response: Response) -> None:
         super().__init__(
             response.request,
             f"[HTTP {response.status_code}] {message}",
@@ -197,19 +207,23 @@ class ServiceHTTPError(ServiceError):
 
 
 class Shortener:
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
-    def shorten(self, url, custom=None, key=None):
+    def shorten(
+        self, url: str, custom: str | None = None, key: str | None = None
+    ) -> str:
         return url
 
-    def try_shorten(self, url, custom=None, key=None):
+    def try_shorten(
+        self, url: str, custom: str | None = None, key: str | None = None
+    ) -> str:
         try:
             return self.shorten(url, custom, key)
         except ServiceError:
             return url
 
-    def expand(self, url):
+    def expand(self, url: str) -> str:
         try:
             r = requests.get(url, allow_redirects=False)
             r.raise_for_status()
@@ -226,10 +240,10 @@ class Shortener:
 
 
 class Pastebin:
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
-    def paste(self, data, ext) -> str:
+    def paste(self, data: str | bytes, ext: str) -> str:
         raise NotImplementedError
 
 
@@ -240,7 +254,9 @@ pastebins = Registry[Pastebin]()
 
 
 class Isgd(Shortener):
-    def shorten(self, url, custom=None, key=None):
+    def shorten(
+        self, url: str, custom: str | None = None, key: str | None = None
+    ) -> str:
         p = {"url": url, "format": "json"}
         if custom:
             p["shorturl"] = custom
@@ -260,11 +276,11 @@ class Isgd(Shortener):
             raise ServiceError(r.request, str(e)) from e
 
         if "shorturl" in j:
-            return j["shorturl"]
+            return str(j["shorturl"])
 
         raise ServiceHTTPError(j["errormessage"], r)
 
-    def expand(self, url):
+    def expand(self, url: str) -> str:
         p = {"shorturl": url, "format": "json"}
         try:
             r = requests.get("https://is.gd/forward.php", params=p)
@@ -278,13 +294,15 @@ class Isgd(Shortener):
         j = r.json()
 
         if "url" in j:
-            return j["url"]
+            return str(j["url"])
 
         raise ServiceHTTPError(j["errormessage"], r)
 
 
 class Googl(Shortener):
-    def shorten(self, url, custom=None, key=None):
+    def shorten(
+        self, url: str, custom: str | None = None, key: str | None = None
+    ) -> str:
         h = {"content-type": "application/json"}
         k = {"key": key}
         p = {"longUrl": url}
@@ -305,11 +323,11 @@ class Googl(Shortener):
         j = r.json()
 
         if "error" not in j:
-            return j["id"]
+            return str(j["id"])
 
         raise ServiceHTTPError(j["error"]["message"], r)
 
-    def expand(self, url):
+    def expand(self, url: str) -> str:
         p = {"shortUrl": url}
         try:
             r = requests.get(
@@ -325,13 +343,15 @@ class Googl(Shortener):
         j = r.json()
 
         if "error" not in j:
-            return j["longUrl"]
+            return str(j["longUrl"])
 
         raise ServiceHTTPError(j["error"]["message"], r)
 
 
 class Gitio(Shortener):
-    def shorten(self, url, custom=None, key=None):
+    def shorten(
+        self, url: str, custom: str | None = None, key: str | None = None
+    ) -> str:
         p = {"url": url, "code": custom}
         try:
             r = requests.post("https://git.io", data=p)
@@ -353,11 +373,11 @@ class Gitio(Shortener):
 
 
 class Hastebin(Pastebin):
-    def __init__(self, base_url):
+    def __init__(self, base_url: str) -> None:
         super().__init__()
         self.url = base_url
 
-    def paste(self, data, ext) -> str:
+    def paste(self, data: str | bytes, ext: str) -> str:
         if isinstance(data, str):
             encoded = data.encode()
         else:

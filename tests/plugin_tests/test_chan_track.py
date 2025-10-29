@@ -12,7 +12,7 @@ from tests.util.mock_irc_client import MockIrcClient
 
 
 class MockConn:
-    def __init__(self, bot=None, loop=None):
+    def __init__(self, bot=None, loop=None) -> None:
         self.name = "foo"
         self.memory: dict[str, Any] = {
             "server_info": {
@@ -36,7 +36,7 @@ def get_statuses(conn: Client, chars: str):
 
 
 @pytest.mark.asyncio
-async def test_replace_user_data(mock_db, mock_bot_factory):
+async def test_replace_user_data(mock_db, mock_bot_factory) -> None:
     bot = mock_bot_factory(db=mock_db)
     conn = MockClient(bot=bot)
     conn.memory.update(
@@ -80,7 +80,7 @@ async def test_replace_user_data(mock_db, mock_bot_factory):
 
 
 @pytest.mark.asyncio
-async def test_missing_on_nick(mock_db, mock_bot_factory):
+async def test_missing_on_nick(mock_db, mock_bot_factory) -> None:
     bot = mock_bot_factory(db=mock_db)
     conn = MockClient(bot=bot)
     chans = chan_track.get_chans(conn)
@@ -91,7 +91,7 @@ async def test_missing_on_nick(mock_db, mock_bot_factory):
 
 
 @pytest.mark.asyncio
-async def test_channel_members(mock_db, mock_bot_factory):
+async def test_channel_members(mock_db, mock_bot_factory) -> None:
     bot = mock_bot_factory(db=mock_db)
     conn = MockClient(bot=bot)
     conn.memory.update(
@@ -173,7 +173,7 @@ NAMES_MOCK_TRAFFIC = [
 
 
 @pytest.mark.asyncio
-async def test_names_handling(mock_db, mock_bot_factory):
+async def test_names_handling(mock_db, mock_bot_factory) -> None:
     handlers = {
         "JOIN": chan_track.on_join,
         "PART": chan_track.on_part,
@@ -218,7 +218,7 @@ async def test_names_handling(mock_db, mock_bot_factory):
 
 
 @pytest.mark.asyncio
-async def test_account_tag(mock_db, mock_bot_factory):
+async def test_account_tag(mock_db, mock_bot_factory) -> None:
     bot = mock_bot_factory(db=mock_db)
     conn = MockClient(bot=bot)
     data = {
@@ -245,19 +245,19 @@ async def test_account_tag(mock_db, mock_bot_factory):
 
 
 class TestSerializer:
-    def test_simple(self):
+    def test_simple(self) -> None:
         assert chan_track.MappingSerializer().serialize("a") == '"a"'
         assert chan_track.MappingSerializer().serialize(1) == "1"
         assert chan_track.MappingSerializer().serialize(None) == "null"
         assert chan_track.MappingSerializer().serialize(True) == "true"
 
-    def test_dict(self):
+    def test_dict(self) -> None:
         assert (
             chan_track.MappingSerializer().serialize({"a": 1, "b": True})
             == '{"a": 1, "b": true}'
         )
 
-    def test_int_list(self):
+    def test_int_list(self) -> None:
         assert (
             chan_track.MappingSerializer().serialize([1, 2, 3]) == "[1, 2, 3]"
         )

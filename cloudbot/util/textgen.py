@@ -51,7 +51,7 @@ TEMPLATE_RE = re.compile(r"{(.+?)\}")
 class TextGenerator:
     def __init__(
         self, templates, parts, default_templates=None, variables=None
-    ):
+    ) -> None:
         self.templates = templates
         self.default_templates = default_templates
         self.parts = parts

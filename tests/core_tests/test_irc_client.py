@@ -26,7 +26,7 @@ def make_mock_conn(*, name="testconn"):
     return conn
 
 
-def test_send_not_connected(mock_db):
+def test_send_not_connected(mock_db) -> None:
     bot = MagicMock()
     client = irc.IrcClient(
         bot, "irc", "foo", "bar", config={"connection": {"server": "server"}}
@@ -39,7 +39,7 @@ def test_send_not_connected(mock_db):
 
 
 @pytest.mark.asyncio
-async def test_send_closed(mock_db):
+async def test_send_closed(mock_db) -> None:
     bot = MagicMock(loop=asyncio.get_running_loop())
     client = irc.IrcClient(
         bot, "irc", "foo", "bar", config={"connection": {"server": "server"}}
@@ -78,7 +78,7 @@ class TestLineParsing:
         conn.nick = "me"
         out = []
 
-        async def func(e):
+        async def func(e) -> None:
             out.append(self._filter_event(e))
 
         conn.bot.process = func
@@ -87,7 +87,7 @@ class TestLineParsing:
         return conn, out, proto
 
     @pytest.mark.asyncio
-    async def test_data_received(self, caplog_bot):
+    async def test_data_received(self, caplog_bot) -> None:
         conn, out, proto = self.make_proto()
         proto.data_received(
             b":server.host COMMAND this is :a command\r\n:server.host PRIVMSG me :hi\r\n"
@@ -142,7 +142,7 @@ class TestLineParsing:
         assert conn.mock_calls == []
 
     @pytest.mark.asyncio
-    async def test_broken_line_doesnt_interrupt(self, caplog_bot):
+    async def test_broken_line_doesnt_interrupt(self, caplog_bot) -> None:
         conn, out, proto = self.make_proto()
         proto.data_received(
             b":server\2.host CMD this is :a command\r\nPRIVMSG\r\n:server.host PRIVMSG me :hi\r\n"
@@ -203,7 +203,7 @@ class TestLineParsing:
         assert conn.mock_calls == [("describe_server", (), {})]
 
     @pytest.mark.asyncio
-    async def test_pong(self, caplog_bot):
+    async def test_pong(self, caplog_bot) -> None:
         conn, _, proto = self.make_proto()
         proto.data_received(b":server PING hi\r\n")
 
@@ -212,7 +212,7 @@ class TestLineParsing:
         assert caplog_bot.record_tuples == []
 
     @pytest.mark.asyncio
-    async def test_simple_cmd(self, caplog_bot):
+    async def test_simple_cmd(self, caplog_bot) -> None:
         conn, _, proto = self.make_proto()
         event = proto.parse_line(":server.host COMMAND this is :a command")
 
@@ -240,7 +240,7 @@ class TestLineParsing:
         assert conn.mock_calls == []
 
     @pytest.mark.asyncio
-    async def test_parse_privmsg(self, caplog_bot):
+    async def test_parse_privmsg(self, caplog_bot) -> None:
         conn, _, proto = self.make_proto()
         event = proto.parse_line(
             ":sender!user@host PRIVMSG #channel :this is a message"
@@ -270,7 +270,7 @@ class TestLineParsing:
         assert conn.mock_calls == []
 
     @pytest.mark.asyncio
-    async def test_parse_privmsg_ctcp_action(self, caplog_bot):
+    async def test_parse_privmsg_ctcp_action(self, caplog_bot) -> None:
         conn, _, proto = self.make_proto()
         event = proto.parse_line(
             ":sender!user@host PRIVMSG #channel :\1ACTION this is an action\1"
@@ -301,7 +301,7 @@ class TestLineParsing:
         assert conn.mock_calls == []
 
     @pytest.mark.asyncio
-    async def test_parse_privmsg_ctcp_version(self, caplog_bot):
+    async def test_parse_privmsg_ctcp_version(self, caplog_bot) -> None:
         conn, _, proto = self.make_proto()
         event = proto.parse_line(
             ":sender!user@host PRIVMSG #channel :\1VERSION\1"
@@ -331,7 +331,7 @@ class TestLineParsing:
         assert conn.mock_calls == []
 
     @pytest.mark.asyncio
-    async def test_parse_privmsg_bad_ctcp(self, caplog_bot):
+    async def test_parse_privmsg_bad_ctcp(self, caplog_bot) -> None:
         conn, _, proto = self.make_proto()
         event = proto.parse_line(
             ":sender!user@host PRIVMSG #channel :\1VERSION\1aa"
@@ -367,7 +367,7 @@ class TestLineParsing:
         assert conn.mock_calls == []
 
     @pytest.mark.asyncio
-    async def test_parse_privmsg_format_reset(self, caplog_bot):
+    async def test_parse_privmsg_format_reset(self, caplog_bot) -> None:
         conn, _, proto = self.make_proto()
         event = proto.parse_line(
             ":sender!user@host PRIVMSG #channel :\x02some text\x0faa"
@@ -397,7 +397,7 @@ class TestLineParsing:
         assert conn.mock_calls == []
 
     @pytest.mark.asyncio
-    async def test_parse_no_prefix(self, caplog_bot):
+    async def test_parse_no_prefix(self, caplog_bot) -> None:
         conn, _, proto = self.make_proto()
         event = proto.parse_line("SOMECMD thing")
 
@@ -425,7 +425,7 @@ class TestLineParsing:
         assert conn.mock_calls == []
 
     @pytest.mark.asyncio
-    async def test_parse_pm_privmsg(self, caplog_bot):
+    async def test_parse_pm_privmsg(self, caplog_bot) -> None:
         conn, _, proto = self.make_proto()
         event = proto.parse_line(
             ":sender!user@host PRIVMSG me :this is a message"
@@ -473,7 +473,7 @@ class TestConnect:
         return client, bot
 
     @pytest.mark.asyncio()
-    async def test_exc(self, caplog_bot, mock_db):
+    async def test_exc(self, caplog_bot, mock_db) -> None:
         client, bot = await self.make_client()
         runs = 0
 
@@ -527,7 +527,7 @@ class TestConnect:
         assert bot.mock_calls == []
 
     @pytest.mark.asyncio()
-    async def test_timeout_exc(self, caplog_bot, mock_db):
+    async def test_timeout_exc(self, caplog_bot, mock_db) -> None:
         client, bot = await self.make_client()
         runs = 0
 
@@ -576,7 +576,7 @@ class TestConnect:
         assert bot.mock_calls == []
 
     @pytest.mark.asyncio()
-    async def test_other_exc(self, caplog_bot, mock_db):
+    async def test_other_exc(self, caplog_bot, mock_db) -> None:
         client, bot = await self.make_client()
 
         client.connect = AsyncMock()  # type: ignore
@@ -595,10 +595,10 @@ class TestConnect:
         assert bot.mock_calls == []
 
     @pytest.mark.asyncio()
-    async def test_one_connect(self, caplog_bot, mock_db):
+    async def test_one_connect(self, caplog_bot, mock_db) -> None:
         client, bot = await self.make_client()
 
-        async def _connect(timeout=5):
+        async def _connect(timeout=5) -> None:
             await asyncio.sleep(timeout)
 
         client._connect = _connect  # type: ignore
@@ -618,7 +618,7 @@ class TestConnect:
         assert bot.mock_calls == []
 
     @pytest.mark.asyncio()
-    async def test_create_socket(self, caplog_bot, mock_db):
+    async def test_create_socket(self, caplog_bot, mock_db) -> None:
         client, bot = await self.make_client()
         bot.loop.create_connection = mock = MagicMock()
         fut: "Future[Tuple[None, None]]" = asyncio.Future(loop=client.loop)
@@ -642,7 +642,7 @@ class TestConnect:
 
 class TestProtocol:
     @pytest.mark.asyncio
-    async def test_connection_made(self, caplog_bot):
+    async def test_connection_made(self, caplog_bot) -> None:
         conn = make_mock_conn()
         proto = irc._IrcProtocol(conn)
         transport = MagicMock()
@@ -654,7 +654,7 @@ class TestProtocol:
         assert conn.mock_calls == []
 
     @pytest.mark.asyncio
-    async def test_connection_lost(self, caplog_bot):
+    async def test_connection_lost(self, caplog_bot) -> None:
         conn = make_mock_conn()
         proto = irc._IrcProtocol(conn)
         proto._connected = True
@@ -669,7 +669,7 @@ class TestProtocol:
 
 class TestSend:
     @pytest.mark.asyncio()
-    async def test_send_sieve_error(self, caplog_bot):
+    async def test_send_sieve_error(self, caplog_bot) -> None:
         conn = make_mock_conn()
         proto = irc._IrcProtocol(conn)
         proto.connection_made(MagicMock())

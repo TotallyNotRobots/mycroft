@@ -27,7 +27,7 @@ def setup_db(mock_db):
     return sess
 
 
-def test_horoscope(mock_requests: RequestsMock, mock_db: MockDB):
+def test_horoscope(mock_requests: RequestsMock, mock_db: MockDB) -> None:
     sess = setup_db(mock_db)
     mock_requests.add(
         "GET",
@@ -54,7 +54,7 @@ def test_horoscope(mock_requests: RequestsMock, mock_db: MockDB):
     assert mock_db.get_data(horoscope.table) == [("some_user", "aries")]
 
 
-def test_invalid_syntax(mock_requests: RequestsMock, mock_db: MockDB):
+def test_invalid_syntax(mock_requests: RequestsMock, mock_db: MockDB) -> None:
     sess = setup_db(mock_db)
 
     event = MagicMock()
@@ -68,7 +68,7 @@ def test_invalid_syntax(mock_requests: RequestsMock, mock_db: MockDB):
     assert event.notice_doc.call_count == 1
 
 
-def test_database_read(mock_requests: RequestsMock, mock_db: MockDB):
+def test_database_read(mock_requests: RequestsMock, mock_db: MockDB) -> None:
     sess = setup_db(mock_db)
 
     mock_requests.add(
@@ -96,7 +96,7 @@ def test_database_read(mock_requests: RequestsMock, mock_db: MockDB):
     event.message.assert_called_once_with("\x02cancer\x02 Some horoscope text")
 
 
-def test_parse_fail(mock_requests: RequestsMock, mock_db: MockDB):
+def test_parse_fail(mock_requests: RequestsMock, mock_db: MockDB) -> None:
     sess = setup_db(mock_db)
 
     mock_requests.add(
@@ -120,7 +120,7 @@ def test_parse_fail(mock_requests: RequestsMock, mock_db: MockDB):
     event.reply.assert_called_once_with("Unable to parse horoscope posting")
 
 
-def test_page_error(mock_requests: RequestsMock, mock_db: MockDB):
+def test_page_error(mock_requests: RequestsMock, mock_db: MockDB) -> None:
     sess = setup_db(mock_db)
 
     event = MagicMock()
@@ -137,7 +137,7 @@ def test_page_error(mock_requests: RequestsMock, mock_db: MockDB):
     )
 
 
-def test_bad_sign(mock_requests: RequestsMock):
+def test_bad_sign(mock_requests: RequestsMock) -> None:
     db = MagicMock()
     event = MagicMock()
     sign = "some_sign"

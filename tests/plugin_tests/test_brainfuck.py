@@ -22,5 +22,5 @@ from plugins import brainfuck
         (".." * 500, "No printable output"),
     ],
 )
-def test_brainfuck(text, output):
+def test_brainfuck(text, output) -> None:
     assert brainfuck.bf(text) == output

@@ -18,7 +18,7 @@ def get_data(query_type):  # pragma: no cover
         return response.content
 
 
-def write_data(query_tyoe):  # pragma: no cover
+def write_data(query_tyoe) -> None:  # pragma: no cover
     with (SCRIPT_DIR / f"dogpile-{query_tyoe}.html").open(
         "wb", encoding="utf-8"
     ) as file:

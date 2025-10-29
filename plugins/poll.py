@@ -11,19 +11,19 @@ class PollError(Exception):
 
 
 class PollOption:
-    def __init__(self, title):
+    def __init__(self, title) -> None:
         self.title = title
         self.votes = 0
 
 
 class Poll:
-    def __init__(self, question, creator, options=("Yes", "No")):
+    def __init__(self, question, creator, options=("Yes", "No")) -> None:
         self.question = question
         self.creator = creator
         self.option_list = list(options)
         self.options = {i.lower(): PollOption(i) for i in options}
 
-        self.voted = []
+        self.voted: list[str] = []
 
     def vote(self, voted_option, voter):
         """

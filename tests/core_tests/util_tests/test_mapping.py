@@ -3,7 +3,7 @@ from cloudbot.util.mapping import KeyFoldDict
 
 class TestKeyFoldDict:
     @staticmethod
-    def test_get():
+    def test_get() -> None:
         data = KeyFoldDict()
         data["TEST"] = 1
 
@@ -12,7 +12,7 @@ class TestKeyFoldDict:
         assert data.get("test") == 1
 
     @staticmethod
-    def test_setdefault():
+    def test_setdefault() -> None:
         data = KeyFoldDict()
 
         data["test"] = 2
@@ -26,7 +26,7 @@ class TestKeyFoldDict:
         assert data["stuff"] == 5
 
     @staticmethod
-    def test_update_kwargs():
+    def test_update_kwargs() -> None:
         data = KeyFoldDict()
 
         data.update(a=1, B=2, vAR=3, VAL=4, mapping=5)
@@ -46,7 +46,7 @@ class TestKeyFoldDict:
         assert data["maPPiNg"] == 5
 
     @staticmethod
-    def test_update_mapping():
+    def test_update_mapping() -> None:
         data = KeyFoldDict()
 
         data.update({"a": 1, "B": 2, "woRDs1": 3})
@@ -60,7 +60,7 @@ class TestKeyFoldDict:
         assert data["worDs1"] == 3
 
     @staticmethod
-    def test_update_sequence():
+    def test_update_sequence() -> None:
         data = KeyFoldDict()
 
         data.update([("a", 1), ("B", 2), ("SEa", 3)])

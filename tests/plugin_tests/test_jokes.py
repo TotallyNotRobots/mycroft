@@ -9,14 +9,14 @@ from tests.util.mock_conn import MockConn
 
 
 @pytest.mark.asyncio
-async def test_load_jokes(mock_bot_factory):
+async def test_load_jokes(mock_bot_factory) -> None:
     mock_bot = mock_bot_factory(
         base_dir=Path(__file__).parent.parent.parent.resolve()
     )
     jokes.load_jokes(mock_bot)
 
 
-def test_lawuerjoke():
+def test_lawuerjoke() -> None:
     jokes.joke_lines.clear()
     jokes.joke_lines["lawyerjoke"] = ["foobar"]
     event = MagicMock()
@@ -25,7 +25,7 @@ def test_lawuerjoke():
     assert event.mock_calls == [call.message("foobar")]
 
 
-def test_doit():
+def test_doit() -> None:
     jokes.joke_lines.clear()
     jokes.joke_lines["do_it"] = ["foobar"]
     event = MagicMock()
@@ -34,7 +34,7 @@ def test_doit():
     assert event.mock_calls == [call.message("foobar")]
 
 
-def test_puns():
+def test_puns() -> None:
     jokes.joke_lines.clear()
     jokes.joke_lines["puns"] = ["foobar"]
     event = MagicMock()
@@ -43,7 +43,7 @@ def test_puns():
     assert event.mock_calls == [call.message("foobar")]
 
 
-def test_confucious():
+def test_confucious() -> None:
     jokes.joke_lines.clear()
     jokes.joke_lines["confucious"] = ["foobar"]
     event = MagicMock()
@@ -52,7 +52,7 @@ def test_confucious():
     assert event.mock_calls == [call.message("Confucious say foobar")]
 
 
-def test_yo_mamma():
+def test_yo_mamma() -> None:
     jokes.joke_lines.clear()
     jokes.joke_lines["yo_momma"] = ["foobar"]
     event = MagicMock()
@@ -65,7 +65,7 @@ def test_yo_mamma():
     assert event.mock_calls == [call.is_nick_valid("bar")]
 
 
-def test_dadjokes():
+def test_dadjokes() -> None:
     jokes.joke_lines.clear()
     jokes.joke_lines["one_liners"] = ["foobar"]
     event = MagicMock()
@@ -74,7 +74,7 @@ def test_dadjokes():
     assert event.mock_calls == [call.message("foobar")]
 
 
-def test_wisdom():
+def test_wisdom() -> None:
     jokes.joke_lines.clear()
     jokes.joke_lines["wisdom"] = ["foobar"]
     event = MagicMock()
@@ -83,7 +83,7 @@ def test_wisdom():
     assert event.mock_calls == [call.message("foobar")]
 
 
-def test_bookpun():
+def test_bookpun() -> None:
     jokes.joke_lines.clear()
     jokes.joke_lines["book_puns"] = ["foobar"]
     event = MagicMock()
@@ -103,11 +103,11 @@ def test_bookpun():
         ("", "Sorry I couldn't turn anything in '' into boobs for you."),
     ],
 )
-def test_boobies(text, out):
+def test_boobies(text, out) -> None:
     assert jokes.boobies(text) == out
 
 
-def test_awesome():
+def test_awesome() -> None:
     res = jokes.awesome("foo", lambda text: True)
     assert res == (
         "foo: I am blown away by your recent awesome action(s). Please read "
@@ -115,12 +115,12 @@ def test_awesome():
     )
 
 
-def test_awesome_bad_nick():
+def test_awesome_bad_nick() -> None:
     res = jokes.awesome("foo", lambda text: False)
     assert res == "Sorry I can't tell foo how awesome they are."
 
 
-def test_triforce():
+def test_triforce() -> None:
     random.seed(0)
     event = MagicMock()
     res = jokes.triforce(event.message)
@@ -131,7 +131,7 @@ def test_triforce():
     ]
 
 
-def test_kero():
+def test_kero() -> None:
     jokes.joke_lines.clear()
     jokes.joke_lines["kero"] = ["foobar"]
     res = jokes.kero("barfoo")

@@ -31,21 +31,21 @@ class SpotifyAPI:
     api_url = URL("https://api.spotify.com/v1")
     token_refresh_url = URL("https://accounts.spotify.com/api/token")
 
-    def __init__(self, client_id=None, client_secret=None):
+    def __init__(self, client_id=None, client_secret=None) -> None:
         self._client_id = client_id
         self._client_secret = client_secret
         self._access_token = None
         self._token_expires = datetime.min
         self._lock = RLock()  # Make sure only one requests is parsed at a time
 
-    def set_keys(self, client_id, client_secret):
+    def set_keys(self, client_id, client_secret) -> None:
         self._client_id = client_id
         self._client_secret = client_secret
 
         if self:
             self._refresh_token()
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return bool(self._client_id and self._client_secret)
 
     def request(self, endpoint, params=None):
@@ -65,7 +65,7 @@ class SpotifyAPI:
     def search(self, params):
         return self.request("search", params)
 
-    def _refresh_token(self):
+    def _refresh_token(self) -> None:
         with self._lock:
             basic_auth = HTTPBasicAuth(self._client_id, self._client_secret)
             gtcc = {"grant_type": "client_credentials"}
@@ -163,7 +163,7 @@ def _format_search(text, _type, reply):
 
 
 @hook.on_start()
-def set_keys():
+def set_keys() -> None:
     api.set_keys(
         bot.config.get_api_key("spotify_client_id"),
         bot.config.get_api_key("spotify_client_secret"),

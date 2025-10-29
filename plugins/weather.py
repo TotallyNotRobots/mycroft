@@ -92,7 +92,7 @@ def mph_to_kph(mph):
 
 
 class LocationNotFound(Exception):
-    def __init__(self, location):
+    def __init__(self, location) -> None:
         super().__init__(f"Unable to find location {location!r}")
         self.location = location
 
@@ -111,7 +111,7 @@ def find_location(location, bias=None):
     return out
 
 
-def add_location(nick, location, db):
+def add_location(nick, location, db) -> None:
     test = dict(location_cache)
     location = str(location)
     if nick.lower() in test:
@@ -130,7 +130,7 @@ def add_location(nick, location, db):
 
 
 @hook.on_start()
-def load_cache(db):
+def load_cache(db) -> None:
     new_cache = []
     for row in db.execute(table.select()):
         new_cache.append((row.nick, row.loc))
@@ -140,7 +140,7 @@ def load_cache(db):
 
 
 @hook.on_start()
-def create_maps_api(bot):
+def create_maps_api(bot) -> None:
     google_key = bot.config.get_api_key("google_dev_key")
     if google_key:
         data.maps_api = googlemaps.Client(google_key)
@@ -149,7 +149,7 @@ def create_maps_api(bot):
 
 
 @hook.on_start()
-def create_owm_api(bot):
+def create_owm_api(bot) -> None:
     owm_key = bot.config.get_api_key("openweathermap")
     if owm_key:
         data.owm_api = OWM(owm_key, pyowm.owm.cfg.get_default_config())

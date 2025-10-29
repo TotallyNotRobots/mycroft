@@ -38,7 +38,7 @@ ReminderCacheEntry = tuple[str, datetime, datetime, str, str]
 reminder_cache: list[ReminderCacheEntry] = []
 
 
-async def delete_reminder(async_call, db, network, remind_time, user):
+async def delete_reminder(async_call, db, network, remind_time, user) -> None:
     query = (
         table.delete()
         .where(table.c.network == network.lower())
@@ -49,7 +49,7 @@ async def delete_reminder(async_call, db, network, remind_time, user):
     await async_call(db.commit)
 
 
-async def delete_all(async_call, db, network, user):
+async def delete_all(async_call, db, network, user) -> None:
     query = (
         table.delete()
         .where(table.c.network == network.lower())
@@ -68,7 +68,7 @@ async def add_reminder(
     message,
     remind_time,
     added_time,
-):
+) -> None:
     query = table.insert().values(
         network=network.lower(),
         added_user=added_user.lower(),
@@ -82,7 +82,7 @@ async def add_reminder(
 
 
 @hook.on_start()
-async def load_cache(async_call, db):
+async def load_cache(async_call, db) -> None:
     new_cache = []
 
     for network, remind_time, added_time, user, message in await async_call(
@@ -109,7 +109,7 @@ def _load_cache_db(db):
 
 
 @hook.periodic(30, initial_interval=30)
-async def check_reminders(bot, async_call, db):
+async def check_reminders(bot, async_call, db) -> None:
     current_time = datetime.now()
 
     for reminder in reminder_cache:

@@ -6,7 +6,7 @@ from cloudbot import hook
 
 
 @hook.command(autohelp=False)
-def kernel(reply):
+def kernel(reply) -> None:
     """- gets a list of linux kernel versions"""
     r = requests.get("https://www.kernel.org/finger_banner")
     r.raise_for_status()

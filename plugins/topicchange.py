@@ -6,7 +6,7 @@ topicchange_data: list[str] = []
 
 
 @hook.on_start()
-def load_topicchange(bot):
+def load_topicchange(bot) -> None:
     topicchange_data.clear()
     with open((bot.data_path / "topicchange.txt"), encoding="utf-8") as f:
         topicchange_data.extend(
@@ -15,6 +15,6 @@ def load_topicchange(bot):
 
 
 @hook.command("changetopic", "discuss", "question", autohelp=False)
-def topicchange(message):
+def topicchange(message) -> None:
     """- generates a random question to help start a conversation or change a topic"""
     message(random.choice(topicchange_data))

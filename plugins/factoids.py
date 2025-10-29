@@ -27,7 +27,7 @@ table = Table(
 
 
 @hook.on_start()
-def load_cache(db):
+def load_cache(db) -> None:
     new_cache = factoid_cache.copy()
     new_cache.clear()
     for row in db.execute(table.select()):
@@ -41,7 +41,7 @@ def load_cache(db):
     factoid_cache.update(new_cache)
 
 
-def add_factoid(db, word, chan, data, nick):
+def add_factoid(db, word, chan, data, nick) -> None:
     if word in factoid_cache[chan]:
         # if we have a set value, update
         db.execute(
@@ -60,7 +60,7 @@ def add_factoid(db, word, chan, data, nick):
     load_cache(db)
 
 
-def del_factoid(db, chan, word=None):
+def del_factoid(db, chan, word=None) -> None:
     clause = table.c.chan == chan
 
     if word is not None:
@@ -72,7 +72,7 @@ def del_factoid(db, chan, word=None):
 
 
 @hook.command("r", "remember", permissions=["op", "chanop"])
-def remember(text, nick, db, chan, notice, event):
+def remember(text, nick, db, chan, notice, event) -> None:
     """<word> [+]<data> - remembers <data> with <word> - add + to <data> to append. If the input starts with <act> the
     message will be sent as an action. If <user> in in the message it will be replaced by input arguments when command
     is called."""
@@ -115,7 +115,7 @@ def paste_facts(facts, raise_on_no_paste=False):
     return web.paste(tbl, "md", "hastebin", raise_on_no_paste=raise_on_no_paste)
 
 
-def remove_fact(chan, names, db, notice):
+def remove_fact(chan, names, db, notice) -> None:
     found = {}
     missing = []
     for name in names:
@@ -141,7 +141,7 @@ def remove_fact(chan, names, db, notice):
 
 
 @hook.command("f", "forget", permissions=["op", "chanop"])
-def forget(text, chan, db, notice):
+def forget(text, chan, db, notice) -> None:
     """<word>... - Remove factoids with the specified names"""
     remove_fact(chan, text.split(), db, notice)
 
@@ -149,14 +149,14 @@ def forget(text, chan, db, notice):
 @hook.command(
     "forgetall", "clearfacts", autohelp=False, permissions=["op", "chanop"]
 )
-def forget_all(chan, db):
+def forget_all(chan, db) -> str:
     """- Remove all factoids in the current channel"""
     del_factoid(db, chan)
     return "Facts cleared."
 
 
 @hook.command()
-def info(text, chan, notice):
+def info(text, chan, notice) -> None:
     """<factoid> - shows the source of a factoid"""
 
     text = text.strip().lower()
@@ -171,7 +171,7 @@ factoid_re = re.compile(rf"^{re.escape(FACTOID_CHAR)} ?(.+)", re.I)
 
 
 @hook.regex(factoid_re)
-def factoid(content, match, chan, message, action):
+def factoid(content, match, chan, message, action) -> None:
     """<word> - shows what data is associated with <word>"""
     arg1 = ""
     if len(content.split()) >= 2:
@@ -196,7 +196,7 @@ def factoid(content, match, chan, message, action):
 
 
 @hook.command("listfacts", autohelp=False)
-def listfactoids(notice, chan):
+def listfactoids(notice, chan) -> None:
     """- lists all available factoids"""
     reply_text: list[str] = []
     reply_text_length = 0

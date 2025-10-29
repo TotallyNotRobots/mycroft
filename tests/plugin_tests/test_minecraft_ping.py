@@ -14,7 +14,7 @@ def mock_mcserver():
         yield mock
 
 
-def test_mcping(mock_mcserver):
+def test_mcping(mock_mcserver) -> None:
     mock_mcserver.return_value = server = MagicMock()
     server.status.return_value = JavaStatusResponse.build(
         {
@@ -44,7 +44,7 @@ def test_mcping(mock_mcserver):
         (ValueError("Some other ValueError"), "Some other ValueError"),
     ],
 )
-def test_mcping_lookup_errors(error, reply, mock_mcserver):
+def test_mcping_lookup_errors(error, reply, mock_mcserver) -> None:
     mock_mcserver.side_effect = error
     res = minecraft_ping.mcping("host.invalid")
 
@@ -65,7 +65,7 @@ def test_mcping_lookup_errors(error, reply, mock_mcserver):
         ),
     ],
 )
-def test_mcping_status_errors(error, reply, mock_mcserver):
+def test_mcping_status_errors(error, reply, mock_mcserver) -> None:
     mock_mcserver.return_value = server = MagicMock()
     server.status.side_effect = error
     res = minecraft_ping.mcping("host.invalid")

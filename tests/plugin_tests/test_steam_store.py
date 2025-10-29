@@ -13,7 +13,7 @@ from plugins import steam_store
 )
 def test_format_game(
     mock_requests, is_free, price_now, price_original, price_str
-):
+) -> None:
     appid = "appid"
     data = {
         "name": "foo",

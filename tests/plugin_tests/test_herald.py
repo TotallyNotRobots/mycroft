@@ -30,7 +30,7 @@ class TestWelcome:
         )
         return wrap_hook_response(herald.welcome, event)
 
-    def test_no_herald(self, clear_cache):
+    def test_no_herald(self, clear_cache) -> None:
         result = self._run()
         assert result == []
 
@@ -43,7 +43,7 @@ class TestWelcome:
             ("o\u200b<", "DECOY DUCK --> o\u200b<"),
         ],
     )
-    def test_char_strip(self, mock_db, clear_cache, text, out):
+    def test_char_strip(self, mock_db, clear_cache, text, out) -> None:
         nick = "foobaruser"
         chan = "#foo"
         herald.table.create(mock_db.engine)
@@ -57,7 +57,7 @@ class TestWelcome:
         result = self._run()
         assert result == [("message", (chan, out))]
 
-    def test_flood(self, clear_cache, freeze_time, mock_db):
+    def test_flood(self, clear_cache, freeze_time, mock_db) -> None:
         chan = "#foo"
         nick = "foobaruser"
         nick1 = "foonick"
@@ -112,7 +112,7 @@ class TestWelcome:
         assert check(event) == [("message", ("#foo", "\u200b Some herald"))]
 
 
-def test_add_herald(mock_db: MockDB, clear_cache):
+def test_add_herald(mock_db: MockDB, clear_cache) -> None:
     herald.table.create(mock_db.engine)
     herald.load_cache(mock_db.session())
     reply = MagicMock()
@@ -125,7 +125,7 @@ def test_add_herald(mock_db: MockDB, clear_cache):
     assert reply.mock_calls == [call("greeting successfully added")]
 
 
-def test_update_herald(mock_db: MockDB, clear_cache):
+def test_update_herald(mock_db: MockDB, clear_cache) -> None:
     herald.table.create(mock_db.engine)
     mock_db.add_row(
         herald.table,
@@ -144,7 +144,7 @@ def test_update_herald(mock_db: MockDB, clear_cache):
     assert reply.mock_calls == [call("greeting successfully added")]
 
 
-def test_delete_herald(mock_db: MockDB, clear_cache):
+def test_delete_herald(mock_db: MockDB, clear_cache) -> None:
     herald.table.create(mock_db.engine)
     mock_db.add_row(
         herald.table,
@@ -163,7 +163,7 @@ def test_delete_herald(mock_db: MockDB, clear_cache):
     ]
 
 
-def test_op_delete_herald(mock_db, clear_cache):
+def test_op_delete_herald(mock_db, clear_cache) -> None:
     herald.table.create(mock_db.engine)
     mock_db.add_row(
         herald.table,

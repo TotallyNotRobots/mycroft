@@ -27,7 +27,7 @@ table = Table(
 )
 
 
-def track_seen(event, db):
+def track_seen(event, db) -> None:
     """Tracks messages for the .seen command"""
     # keep private messages private
     now = time.time()
@@ -59,7 +59,7 @@ def track_seen(event, db):
 
 
 @hook.event([EventType.message, EventType.action], singlethread=True)
-def chat_tracker(event, db):
+def chat_tracker(event, db) -> None:
     if event.type is EventType.action:
         event.content = f"\x01ACTION {event.content}\x01"
 
@@ -67,7 +67,7 @@ def chat_tracker(event, db):
 
 
 @hook.command()
-def seen(text, nick, chan, db, event):
+def seen(text, nick, chan, db, event) -> str:
     """<nick> <channel> - tells when a nickname was last in active in one of my channels"""
 
     if event.conn.nick.lower() == text.lower():

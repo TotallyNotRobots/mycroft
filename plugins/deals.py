@@ -5,7 +5,7 @@ from cloudbot.util import web
 
 
 @hook.command("meh", autohelp=False)
-def meh():
+def meh() -> str:
     """- List the current meh.com deal."""
     url = "https://meh.com/deals.rss"
 
@@ -17,7 +17,7 @@ def meh():
 
 
 @hook.command("slickdeals", autohelp=False)
-def slickdeals():
+def slickdeals() -> str:
     """- List the top 3 frontpage slickdeals.net deals."""
     url = "https://slickdeals.net/newsearch.php?mode=frontpage&searcharea=deals&searchin=first&rss=1"  # codespell:ignore
 

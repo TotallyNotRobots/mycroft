@@ -8,7 +8,7 @@ from plugins.core import sasl
 from tests.util.mock_conn import MockConn
 
 
-def test_sasl_available_enabled():
+def test_sasl_available_enabled() -> None:
     event = CapEvent(
         cap="sasl",
         cap_param=None,
@@ -18,7 +18,7 @@ def test_sasl_available_enabled():
     assert sasl.sasl_available(event.conn) is True
 
 
-def test_sasl_available_disabled():
+def test_sasl_available_disabled() -> None:
     event = CapEvent(
         cap="sasl",
         cap_param=None,
@@ -28,7 +28,7 @@ def test_sasl_available_disabled():
     assert sasl.sasl_available(event.conn) is False
 
 
-def test_sasl_available_no_config():
+def test_sasl_available_no_config() -> None:
     event = CapEvent(
         cap="sasl",
         cap_param=None,
@@ -39,7 +39,7 @@ def test_sasl_available_no_config():
 
 
 @pytest.mark.asyncio
-async def test_sasl_ack_plain():
+async def test_sasl_ack_plain() -> None:
     event = CapEvent(
         cap="sasl",
         cap_param=None,

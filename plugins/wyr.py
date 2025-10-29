@@ -18,6 +18,6 @@ from cloudbot import hook
 
 
 @hook.command("wyr", "wouldyourather", autohelp=False)
-def wyr():
+def wyr() -> str:
     """- What would you rather do? This API has been retired"""
     return "rrrather.com has been retired"

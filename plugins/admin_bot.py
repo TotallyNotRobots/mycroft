@@ -14,7 +14,7 @@ from cloudbot.util import formatting
     permissions=["permissions_users"],
     autohelp=False,
 )
-def get_permission_groups(conn):
+def get_permission_groups(conn) -> str:
     """- lists all valid groups"""
     return f"Valid groups: {[group.name for group in conn.permissions.get_groups()]}"
 
@@ -112,7 +112,7 @@ def remove_user_from_group(user, group: str, event):
 
 
 @hook.command("deluser", permissions=["permissions_users"])
-def remove_permission_user(text: str, event, conn):
+def remove_permission_user(text: str, event, conn) -> None:
     """<user> [group] - removes <user> from [group], or from all groups if no group is specified"""
     split = text.split()
     if len(split) > 2:
@@ -185,7 +185,7 @@ def add_permissions_user(
 
 
 @hook.command("stopthebot", permissions=["botcontrol"])
-async def stop(text, bot):
+async def stop(text, bot) -> None:
     """[reason] - stops me with [reason] as its quit message."""
     if text:
         await bot.stop(reason=text)
@@ -194,7 +194,7 @@ async def stop(text, bot):
 
 
 @hook.command(permissions=["botcontrol"])
-async def restart(text, bot):
+async def restart(text, bot) -> None:
     """[reason] - restarts me with [reason] as its quit message."""
     if text:
         await bot.restart(reason=text)
@@ -210,7 +210,7 @@ async def rehash_config(bot: CloudBot) -> str:
 
 
 @hook.command(permissions=["botcontrol", "snoonetstaff"])
-def join(text, conn, nick, notice, admin_log):
+def join(text, conn, nick, notice, admin_log) -> None:
     """<channel> [key] - joins <channel> with the optional [key]"""
     parts = text.split(None, 1)
     target = parts.pop(0)
@@ -238,7 +238,7 @@ def parse_targets(text, chan):
 
 
 @hook.command(permissions=["botcontrol", "snoonetstaff"], autohelp=False)
-def part(text, conn, nick, chan, notice, admin_log):
+def part(text, conn, nick, chan, notice, admin_log) -> None:
     """[#channel] - parts [#channel], or the caller's channel if no channel is specified"""
     for target in parse_targets(text, chan):
         admin_log(f"{nick} used PART to make me leave {target}.")
@@ -247,7 +247,7 @@ def part(text, conn, nick, chan, notice, admin_log):
 
 
 @hook.command(autohelp=False, permissions=["botcontrol"])
-def cycle(text, conn, chan, notice):
+def cycle(text, conn, chan, notice) -> None:
     """[#channel] - cycles [#channel], or the caller's channel if no channel is specified"""
     for target in parse_targets(text, chan):
         notice(f"Attempting to cycle {target}...")
@@ -256,7 +256,7 @@ def cycle(text, conn, chan, notice):
 
 
 @hook.command("nick", permissions=["botcontrol"])
-def change_nick(text, conn, notice, is_nick_valid):
+def change_nick(text, conn, notice, is_nick_valid) -> None:
     """<nick> - changes my nickname to <nick>"""
     if not is_nick_valid(text):
         notice(f"Invalid username '{text}'")
@@ -268,7 +268,7 @@ def change_nick(text, conn, notice, is_nick_valid):
 
 
 @hook.command(permissions=["botcontrol"])
-def raw(text, conn, notice):
+def raw(text, conn, notice) -> None:
     """<command> - sends <command> as a raw IRC command"""
     notice("Raw command sent.")
     conn.send(text)
@@ -283,7 +283,7 @@ def get_chan(chan, text):
 
 
 @hook.command(permissions=["botcontrol", "snoonetstaff"])
-def say(text, conn, chan, nick, admin_log):
+def say(text, conn, chan, nick, admin_log) -> None:
     """[#channel] <message> - says <message> to [#channel], or to the caller's channel if no channel is specified"""
     channel, text = get_chan(chan, text)
     admin_log(f'{nick} used SAY to make me SAY "{text}" in {channel}.')
@@ -291,7 +291,7 @@ def say(text, conn, chan, nick, admin_log):
 
 
 @hook.command("message", "sayto", permissions=["botcontrol", "snoonetstaff"])
-def send_message(text, conn, nick, admin_log):
+def send_message(text, conn, nick, admin_log) -> None:
     """<name> <message> - says <message> to <name>"""
     split = text.split(None, 1)
     channel = split[0]
@@ -313,7 +313,7 @@ def me(
 
 
 @hook.command(autohelp=False, permissions=["botcontrol"])
-def listchans(conn, chan, message, notice):
+def listchans(conn, chan, message, notice) -> None:
     """- Lists the current channels the bot is in"""
     chans = ", ".join(sorted(conn.channels, key=lambda x: x.strip("#").lower()))
     lines = formatting.chunk_str(f"I am currently in: {chans}")

@@ -11,7 +11,7 @@ from plugins import spotify
     "text,item_type,item_id",
     [("open.spotify.com/user/foobar", "user", "foobar")],
 )
-def test_http_re(text, item_type, item_id):
+def test_http_re(text, item_type, item_id) -> None:
     match = spotify.http_re.search(text)
     assert match and match.group(2) == item_type and match.group(3) == item_id
 
@@ -19,7 +19,7 @@ def test_http_re(text, item_type, item_id):
 @pytest.mark.parametrize(
     "text,item_type,item_id", [("spotify:user:foobar", "user", "foobar")]
 )
-def test_spotify_re(text, item_type, item_id):
+def test_spotify_re(text, item_type, item_id) -> None:
     match = spotify.spotify_re.search(text)
     assert match and match.group(2) == item_type and match.group(3) == item_id
 
@@ -50,7 +50,7 @@ def test_spotify_re(text, item_type, item_id):
         ],
     ],
 )
-def test_format_response(data, item_type, output):
+def test_format_response(data, item_type, output) -> None:
     assert spotify._format_response(data, item_type) == output
 
 
@@ -79,17 +79,17 @@ async def setup_api(mock_bot_factory, unset_bot, mock_requests):
     yield
 
 
-def test_api_active(setup_api):
+def test_api_active(setup_api) -> None:
     assert spotify.api
 
 
-def test_api_inactive():
+def test_api_inactive() -> None:
     spotify.api = spotify.SpotifyAPI()
 
     assert not spotify.api
 
 
-def test_search_no_results(mock_requests, setup_api):
+def test_search_no_results(mock_requests, setup_api) -> None:
     mock_requests.add(
         "GET",
         "https://api.spotify.com/v1/search",
@@ -133,7 +133,7 @@ def test_search_no_results(mock_requests, setup_api):
         ]
     ],
 )
-def test_format_search_track(data, output, mock_requests, setup_api):
+def test_format_search_track(data, output, mock_requests, setup_api) -> None:
     mock_requests.add("GET", "https://api.spotify.com/v1/search", json=data)
 
     reply = MagicMock()

@@ -10,14 +10,14 @@ from tests.util.mock_irc_client import MockIrcClient
 
 
 class MockClient(Client):  # pylint: disable=abstract-method
-    def __init__(self, bot, *args, **kwargs):
+    def __init__(self, bot, *args, **kwargs) -> None:
         super().__init__(bot, "TestClient", *args, **kwargs)
         self.active = True
         self.join = MagicMock()  # type: ignore[method-assign]
 
 
 @pytest.mark.asyncio
-async def test_do_joins(mock_bot_factory, mock_db):
+async def test_do_joins(mock_bot_factory, mock_db) -> None:
     client = MockClient(
         mock_bot_factory(db=mock_db),
         "foo",
@@ -46,7 +46,7 @@ async def test_do_joins(mock_bot_factory, mock_db):
 
 
 @pytest.mark.asyncio
-async def test_invite_join(mock_bot_factory, mock_db):
+async def test_invite_join(mock_bot_factory, mock_db) -> None:
     bot = mock_bot_factory(db=mock_db)
     conn = MockIrcClient(
         bot, "fooconn", "foo", {"connection": {"server": "host.invalid"}}
@@ -57,7 +57,7 @@ async def test_invite_join(mock_bot_factory, mock_db):
 
 
 @pytest.mark.asyncio
-async def test_invite_join_disabled(mock_bot_factory, mock_db):
+async def test_invite_join_disabled(mock_bot_factory, mock_db) -> None:
     bot = mock_bot_factory(db=mock_db)
     conn = MockIrcClient(
         bot,
@@ -104,7 +104,7 @@ async def test_invite_join_disabled(mock_bot_factory, mock_db):
         ({"mode": "+I"}, [call("MODE foobot +I")]),
     ],
 )
-async def test_on_connect(config, calls, mock_db):
+async def test_on_connect(config, calls, mock_db) -> None:
     bot = MagicMock()
     config = config.copy()
     config.setdefault("connection", {}).setdefault("server", "host.invalid")

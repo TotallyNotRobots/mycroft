@@ -12,7 +12,7 @@ from tests.util import HookResult, wrap_hook_response
 
 
 class MatchAPIKey(Response):
-    def __init__(self, method, url, api_key=None, **kwargs):
+    def __init__(self, method, url, api_key=None, **kwargs) -> None:
         super().__init__(method, url, **kwargs)
         self.api_key = api_key
 
@@ -32,7 +32,7 @@ def init_response(
     pct_change=18.9,
     show_btc=True,
     price=50000000000.0,
-):
+) -> None:
     if check_api_key:
         b = bot.get()
         assert b is not None
@@ -157,7 +157,7 @@ def init_response(
         )
 
 
-def test_api(mock_requests, mock_api_keys):
+def test_api(mock_requests, mock_api_keys) -> None:
     bot.config["plugins"] = {}
     init_response(mock_requests, check_api_key=True)
 
@@ -169,7 +169,7 @@ def test_api(mock_requests, mock_api_keys):
     assert result.circulating_supply == 100
 
 
-def test_cache(freeze_time):
+def test_cache(freeze_time) -> None:
     c = cryptocurrency.Cache[str, str]()
     c.put("foo", "bar", 30)
 
@@ -196,11 +196,11 @@ def test_cache(freeze_time):
         (0.001231549654135151564, "0.0012315497"),
     ],
 )
-def test_format_price(price, out):
+def test_format_price(price, out) -> None:
     assert cryptocurrency.format_price(price) == out
 
 
-def test_crypto_cmd(mock_requests):
+def test_crypto_cmd(mock_requests) -> None:
     init_response(mock_requests)
 
     conn = MagicMock()
@@ -245,7 +245,7 @@ def _run_alias():
     return wrap_hook_response(cryptocurrency.btc_alias, event)
 
 
-def test_btc_alias(mock_requests):
+def test_btc_alias(mock_requests) -> None:
     init_response(mock_requests)
 
     res = _run_alias()
@@ -258,7 +258,7 @@ def test_btc_alias(mock_requests):
     ]
 
 
-def test_btc_alias_neg_change(mock_requests):
+def test_btc_alias_neg_change(mock_requests) -> None:
     init_response(mock_requests, pct_change=-14.5)
 
     res = _run_alias()
@@ -271,7 +271,7 @@ def test_btc_alias_neg_change(mock_requests):
     ]
 
 
-def test_btc_alias_no_change(mock_requests):
+def test_btc_alias_no_change(mock_requests) -> None:
     init_response(mock_requests, pct_change=0)
 
     res = _run_alias()
@@ -284,7 +284,7 @@ def test_btc_alias_no_change(mock_requests):
     ]
 
 
-def test_no_show_btc(mock_requests):
+def test_no_show_btc(mock_requests) -> None:
     show_btc = cryptocurrency.get_plugin_config({}, "show_btc", False)
     init_response(mock_requests, show_btc=show_btc)
 
@@ -298,7 +298,7 @@ def test_no_show_btc(mock_requests):
     ]
 
 
-def test_crypto_cmd_bad_symbol(mock_requests):
+def test_crypto_cmd_bad_symbol(mock_requests) -> None:
     init_response(mock_requests, fiat_map=False, quote=False)
 
     conn = MagicMock()
@@ -320,7 +320,7 @@ def test_crypto_cmd_bad_symbol(mock_requests):
     assert res == [HookResult("return", "Unknown cryptocurrency 'ABC'")]
 
 
-def test_crypto_cmd_bad_fiat(mock_requests):
+def test_crypto_cmd_bad_fiat(mock_requests) -> None:
     init_response(mock_requests, quote=False)
 
     conn = MagicMock()
@@ -342,7 +342,7 @@ def test_crypto_cmd_bad_fiat(mock_requests):
     assert res == [HookResult("return", "Unknown fiat currency 'ABC'")]
 
 
-def test_cmd_api_error(mock_requests):
+def test_cmd_api_error(mock_requests) -> None:
     init_response(mock_requests, error_msg="FooBar")
     conn = MagicMock()
     conn.config = {}
@@ -367,7 +367,7 @@ def test_cmd_api_error(mock_requests):
     ]
 
 
-def test_list_currencies(patch_paste, mock_requests):
+def test_list_currencies(patch_paste, mock_requests) -> None:
     init_response(mock_requests, fiat_map=False, quote=False)
     cryptocurrency.currency_list()
     patch_paste.assert_called_with("Symbol     Name\nBTC        bitcoin")

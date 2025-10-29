@@ -23,7 +23,7 @@ def pluginlist(bot):
 
 
 @hook.command(permissions=["botcontrol"])
-async def pluginload(bot, text, reply):
+async def pluginload(bot, text, reply) -> str:
     """<plugin path> - (Re)load <plugin> manually"""
     manager = bot.plugin_manager
     path = str(Path(text.strip()).resolve())
@@ -40,7 +40,7 @@ async def pluginload(bot, text, reply):
 
 
 @hook.command(permissions=["botcontrol"])
-async def pluginunload(bot, text):
+async def pluginunload(bot, text) -> str:
     """<plugin path> - Unload <plugin> manually"""
     manager = bot.plugin_manager
     path = str(Path(text.strip()).resolve())

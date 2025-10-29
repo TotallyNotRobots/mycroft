@@ -81,8 +81,8 @@ class ChannelState:
     Represents the state of the hunt in a single channel
     """
 
-    def __init__(self):
-        self.masks = []
+    def __init__(self) -> None:
+        self.masks: list[str] = []
         self.messages = 0
         self.game_on = False
         self.no_duck_kick = False
@@ -91,7 +91,7 @@ class ChannelState:
         self.duck_time = 0
         self.shoot_time = 0
 
-    def clear_messages(self):
+    def clear_messages(self) -> None:
         self.messages = 0
         self.masks.clear()
 
@@ -107,7 +107,7 @@ class ChannelState:
             and len(self.masks) >= mask_req
         )
 
-    def handle_message(self, event):
+    def handle_message(self, event) -> None:
         if self.game_on and self.duck_status == 0:
             self.messages += 1
             if event.host not in self.masks:
@@ -139,7 +139,7 @@ def get_config(conn, field, default):
 
 
 @hook.on_start()
-def load_optout(db: Session):
+def load_optout(db: Session) -> None:
     """load a list of channels duckhunt should be off in. Right now I am being lazy and not
     differentiating between networks this should be cleaned up later."""
     new_data = defaultdict(list)
@@ -151,12 +151,12 @@ def load_optout(db: Session):
     opt_out.update(new_data)
 
 
-def is_opt_out(network, chan):
+def is_opt_out(network, chan) -> bool:
     return chan.casefold() in opt_out[network]
 
 
 @hook.on_start()
-def load_status(db):
+def load_status(db) -> None:
     rows = db.execute(status_table.select())
     for row in rows:
         net = row.network
@@ -172,7 +172,7 @@ def get_state_table(network, chan):
     return game_status[network.casefold()][chan.casefold()]
 
 
-def save_channel_state(db, network, chan, status=None):
+def save_channel_state(db, network, chan, status=None) -> None:
     if status is None:
         status = get_state_table(network, chan)
 
@@ -201,7 +201,7 @@ def save_on_exit(db):
 
 
 # @hook.periodic(8 * 3600, singlethread=True)  # Run every 8 hours
-def save_status(db, _sleep=True):
+def save_status(db, _sleep=True) -> None:
     for network in game_status:
         for chan, status in game_status[network].items():
             save_channel_state(db, network, chan, status)
@@ -210,7 +210,7 @@ def save_status(db, _sleep=True):
                 sleep(5)
 
 
-def set_game_state(db, conn, chan, active=None, duck_kick=None):
+def set_game_state(db, conn, chan, active=None, duck_kick=None) -> None:
     status = get_state_table(conn.name, chan)
     if active is not None:
         status.game_on = active
@@ -222,7 +222,7 @@ def set_game_state(db, conn, chan, active=None, duck_kick=None):
 
 
 @hook.event([EventType.message, EventType.action], singlethread=True)
-def increment_msg_counter(event, conn):
+def increment_msg_counter(event, conn) -> None:
     """Increment the number of messages said in an active game channel. Also keep track of the unique masks that are
     speaking.
     """
@@ -263,7 +263,7 @@ def start_hunt(db, chan, message, conn):
     return None
 
 
-def set_ducktime(chan, conn):
+def set_ducktime(chan, conn) -> None:
     status: ChannelState = get_state_table(conn, chan)
     status.next_duck_time = random.randint(
         int(time()) + 480, int(time()) + 3600
@@ -329,7 +329,7 @@ def generate_duck():
 
 
 @hook.periodic(11, initial_interval=11)
-def deploy_duck(bot):
+def deploy_duck(bot) -> None:
     for network in game_status:
         if network not in bot.connections:
             continue
@@ -362,7 +362,7 @@ def hit_or_miss(deploy, shoot):
     return 1
 
 
-def dbadd_entry(nick, chan, db, conn, shoot, friend):
+def dbadd_entry(nick, chan, db, conn, shoot, friend) -> None:
     """Takes care of adding a new row to the database."""
     query = table.insert().values(
         network=conn.name,
@@ -559,7 +559,7 @@ def get_scores(db, score_type, network, chan=None):
 
 
 class ScoreType:
-    def __init__(self, name, column_name, noun, verb):
+    def __init__(self, name, column_name, noun, verb) -> None:
         self.name = name
         self.column_name = column_name
         self.noun = noun
@@ -678,7 +678,7 @@ def killers(text, event, chan, conn, db):
 
 
 @hook.command("duckforgive", permissions=["op", "ignore"])
-def duckforgive(text):
+def duckforgive(text) -> str:
     """<nick> - Allows people to be removed from the mandatory cooldown period."""
     if text.lower() in scripters and scripters[text.lower()] > time():
         scripters[text.lower()] = 0

@@ -37,7 +37,7 @@ from plugins import gaming
         ),
     ],
 )
-def test_dice(text, out):
+def test_dice(text, out) -> None:
     random.seed(1)
     event = MagicMock()
     res = gaming.dice(text, event)
@@ -45,7 +45,7 @@ def test_dice(text, out):
     assert event.mock_calls == []
 
 
-def test_dice_overflow():
+def test_dice_overflow() -> None:
     random.seed(1)
     event = MagicMock()
     with pytest.raises(OverflowError):
@@ -56,14 +56,14 @@ def test_dice_overflow():
     ]
 
 
-def test_dice_bad_input():
+def test_dice_bad_input() -> None:
     event = MagicMock()
     res = gaming.dice("something", event)
     assert res is None
     assert event.mock_calls == [call.notice("Invalid dice roll 'something'")]
 
 
-def test_dice_num_only():
+def test_dice_num_only() -> None:
     event = MagicMock()
     res = gaming.dice("6", event)
     assert res is None
@@ -78,7 +78,7 @@ def test_dice_num_only():
         ("a,b,c", "a"),
     ],
 )
-def test_choose(text, out):
+def test_choose(text, out) -> None:
     random.seed(1)
     event = MagicMock()
     assert gaming.choose(text, event) == out
@@ -107,7 +107,7 @@ def test_choose(text, out):
         ),
     ],
 )
-def test_coin(text, out, seed):
+def test_coin(text, out, seed) -> None:
     random.seed(seed)
     event = MagicMock()
     res = gaming.coin(text, event.notice, event.action)

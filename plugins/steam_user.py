@@ -28,7 +28,7 @@ def convert_id32(id_64):
     return "".join(out)
 
 
-def convert_id3(id_64):
+def convert_id3(id_64) -> str:
     """
     Takes a Steam ID_64 formatted ID and returns a ID_3 formatted ID
     """
@@ -82,13 +82,13 @@ def get_data(user):
 
 
 @hook.on_start()
-def set_headers(bot):
+def set_headers(bot) -> None:
     """Runs on initial plugin load and sets the HTTP headers for this plugin."""
     headers["User-Agent"] = bot.user_agent
 
 
 @hook.command("steamid", "sid", "steamuser", "su")
-def steamid(text, reply):
+def steamid(text, reply) -> str:
     """<username> - gets the steam ID of <username>. Uses steamcommunity.com/id/<nickname>."""
 
     try:

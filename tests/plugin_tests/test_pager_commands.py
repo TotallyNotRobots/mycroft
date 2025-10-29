@@ -1,13 +1,16 @@
 import importlib
+from unittest.mock import MagicMock
 
 import pytest
 
+from cloudbot.event import CommandEvent
 from cloudbot.util.pager import CommandPager
 from plugins import profile
+from tests.util import wrap_hook_response
 
 
 class MockConn:
-    def __init__(self, name):
+    def __init__(self, name) -> None:
         self.name = name
 
 
@@ -19,7 +22,7 @@ class MockConn:
         ["sportscores", "morescore", "search_pages", "score"],
     ],
 )
-def test_page_commands(plugin_name, hook_name, pages_name, page_type):
+def test_page_commands(plugin_name, hook_name, pages_name, page_type) -> None:
     plugin = importlib.import_module(f"plugins.{plugin_name}")
 
     hook = getattr(plugin, hook_name)
@@ -68,23 +71,22 @@ def test_page_commands(plugin_name, hook_name, pages_name, page_type):
     assert hook("a", "#testchannel", conn) == [no_number]
 
 
-class CaptureCalls:
-    def __init__(self):
-        self.lines = []
-
-    def __call__(self, text):
-        self.lines.append(text)
-
-
-def test_profile_pager():
-    hook = profile.moreprofile
-
+def test_profile_pager() -> None:
     pages = profile.cat_pages
 
     def call(text, chan, nick):
-        notice = CaptureCalls()
-        hook(text, chan, nick, notice=notice)
-        return notice.lines
+        conn = MagicMock()
+        event = CommandEvent(
+            nick=nick,
+            channel=chan,
+            text=text,
+            triggered_command="moreprofile",
+            cmd_prefix=".",
+            hook=MagicMock(),
+            conn=conn,
+            bot=conn.bot,
+        )
+        return wrap_hook_response(profile.moreprofile, event)
 
     no_grabs = "There are no category pages to show."
     done = (
@@ -94,32 +96,65 @@ def test_profile_pager():
     out_of_range = "Please specify a valid page number between 1 and 2."
     no_number = "Please specify an integer value."
 
-    assert call("", "#testchannel", "testuser") == [no_grabs]
+    assert call("", "#testchannel", "testuser") == [
+        ("message", ("testuser", no_grabs))
+    ]
 
     pages["#testchannel1"]["testuser1"] = CommandPager(["a", "b", "c"])
 
-    assert call("", "#testchannel", "testuser") == [no_grabs]
+    assert call("", "#testchannel", "testuser") == [
+        ("message", ("testuser", no_grabs))
+    ]
 
     pages["#testchannel"]["testuser1"] = CommandPager(["a", "b", "c"])
 
-    assert call("", "#testchannel", "testuser") == [no_grabs]
+    assert call("", "#testchannel", "testuser") == [
+        ("message", ("testuser", no_grabs))
+    ]
 
     pages["#testchannel1"]["testuser"] = CommandPager(["a", "b", "c"])
 
-    assert call("", "#testchannel", "testuser") == [no_grabs]
+    assert call("", "#testchannel", "testuser") == [
+        ("message", ("testuser", no_grabs))
+    ]
 
     pages["#testchannel"]["testuser"] = CommandPager(["a", "b", "c"])
 
-    assert call("", "#testchannel", "testuser") == ["a", "b (page 1/2)"]
-    assert call("", "#testchannel", "testuser") == ["c (page 2/2)"]
-    assert call("", "#testchannel", "testuser") == [done]
+    assert call("", "#testchannel", "testuser") == [
+        ("message", ("testuser", "a")),
+        ("message", ("testuser", "b (page 1/2)")),
+    ]
+    assert call("", "#testchannel", "testuser") == [
+        ("message", ("testuser", "c (page 2/2)"))
+    ]
+    assert call("", "#testchannel", "testuser") == [
+        ("message", ("testuser", done))
+    ]
 
-    assert call("-3", "#testchannel", "testuser") == [out_of_range]
-    assert call("-2", "#testchannel", "testuser") == ["a", "b (page 1/2)"]
-    assert call("-1", "#testchannel", "testuser") == ["c (page 2/2)"]
-    assert call("0", "#testchannel", "testuser") == [out_of_range]
-    assert call("1", "#testchannel", "testuser") == ["a", "b (page 1/2)"]
-    assert call("2", "#testchannel", "testuser") == ["c (page 2/2)"]
-    assert call("3", "#testchannel", "testuser") == [out_of_range]
+    assert call("-3", "#testchannel", "testuser") == [
+        ("message", ("testuser", out_of_range))
+    ]
+    assert call("-2", "#testchannel", "testuser") == [
+        ("message", ("testuser", "a")),
+        ("message", ("testuser", "b (page 1/2)")),
+    ]
+    assert call("-1", "#testchannel", "testuser") == [
+        ("message", ("testuser", "c (page 2/2)"))
+    ]
+    assert call("0", "#testchannel", "testuser") == [
+        ("message", ("testuser", out_of_range))
+    ]
+    assert call("1", "#testchannel", "testuser") == [
+        ("message", ("testuser", "a")),
+        ("message", ("testuser", "b (page 1/2)")),
+    ]
+    assert call("2", "#testchannel", "testuser") == [
+        ("message", ("testuser", "c (page 2/2)"))
+    ]
+    assert call("3", "#testchannel", "testuser") == [
+        ("message", ("testuser", out_of_range))
+    ]
 
-    assert call("a", "#testchannel", "testuser") == [no_number]
+    assert call("a", "#testchannel", "testuser") == [
+        ("message", ("testuser", no_number))
+    ]

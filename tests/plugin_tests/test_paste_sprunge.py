@@ -4,7 +4,7 @@ from cloudbot.util import web
 from plugins.pastebins import sprunge
 
 
-def test_register():
+def test_register() -> None:
     sprunge.register()
 
     assert web.pastebins.get("sprunge") is not None
@@ -14,7 +14,7 @@ def test_register():
     assert web.pastebins.get("sprunge") is None
 
 
-def test_paste(mock_requests):
+def test_paste(mock_requests) -> None:
     sprunge.register()
 
     paster = web.pastebins["sprunge"]
@@ -26,7 +26,7 @@ def test_paste(mock_requests):
     sprunge.unregister()
 
 
-def test_data_params(mock_requests):
+def test_data_params(mock_requests) -> None:
     sprunge.register()
 
     body = None
@@ -43,7 +43,7 @@ def test_data_params(mock_requests):
     sprunge.unregister()
 
 
-def test_paste_bytes(mock_requests):
+def test_paste_bytes(mock_requests) -> None:
     sprunge.register()
 
     paster = web.pastebins["sprunge"]
@@ -55,7 +55,7 @@ def test_paste_bytes(mock_requests):
     sprunge.unregister()
 
 
-def test_paste_error(mock_requests):
+def test_paste_error(mock_requests) -> None:
     sprunge.register()
 
     paster = web.pastebins["sprunge"]

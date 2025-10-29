@@ -13,7 +13,7 @@ class Hook:
     rather extended.
     """
 
-    def __init__(self, _type, plugin, func_hook):
+    def __init__(self, _type, plugin, func_hook) -> None:
         """ """
         self.type = _type
         self.plugin = plugin
@@ -63,10 +63,10 @@ class Hook:
             )
 
     @property
-    def description(self):
+    def description(self) -> str:
         return f"{self.plugin.title}:{self.function_name}"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         parts = [
             ("type", self.type),
             ("plugin", self.plugin.title),
@@ -78,7 +78,7 @@ class Hook:
 
 
 class CommandHook(Hook):
-    def __init__(self, plugin, cmd_hook):
+    def __init__(self, plugin, cmd_hook) -> None:
         auto_help = cmd_hook.kwargs.pop("autohelp", True)
 
         super().__init__("command", plugin, cmd_hook)
@@ -93,15 +93,15 @@ class CommandHook(Hook):
         self.aliases.insert(0, self.name)
         self.doc = cmd_hook.doc
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Command[name: {self.name}, aliases: {self.aliases[1:]}, {Hook.__repr__(self)}]"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"command {'/'.join(self.aliases)} from {self.plugin.file_name}"
 
 
 class RegexHook(Hook):
-    def __init__(self, plugin, regex_hook):
+    def __init__(self, plugin, regex_hook) -> None:
         run_on_cmd = regex_hook.kwargs.pop("run_on_cmd", False)
         only_no_match = regex_hook.kwargs.pop("only_no_match", False)
 
@@ -112,15 +112,15 @@ class RegexHook(Hook):
 
         self.regexes = regex_hook.regexes
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Regex[regexes: [{', '.join(regex.pattern for regex in self.regexes)}], {Hook.__repr__(self)}]"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"regex {self.function_name} from {self.plugin.file_name}"
 
 
 class PeriodicHook(Hook):
-    def __init__(self, plugin, periodic_hook):
+    def __init__(self, plugin, periodic_hook) -> None:
         interval = periodic_hook.interval
         initial_interval = periodic_hook.kwargs.pop(
             "initial_interval", interval
@@ -131,155 +131,155 @@ class PeriodicHook(Hook):
         self.interval = interval
         self.initial_interval = initial_interval
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Periodic[interval: [{self.interval}], {Hook.__repr__(self)}]"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"periodic hook ({self.interval} seconds) {self.function_name} from {self.plugin.file_name}"
 
 
 class RawHook(Hook):
-    def __init__(self, plugin, irc_raw_hook):
+    def __init__(self, plugin, irc_raw_hook) -> None:
         super().__init__("irc_raw", plugin, irc_raw_hook)
 
         self.triggers = irc_raw_hook.triggers
 
-    def is_catch_all(self):
+    def is_catch_all(self) -> bool:
         return "*" in self.triggers
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Raw[triggers: {list(self.triggers)}, {Hook.__repr__(self)}]"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"irc raw {self.function_name} ({','.join(self.triggers)}) from {self.plugin.file_name}"
 
 
 class SieveHook(Hook):
-    def __init__(self, plugin, sieve_hook):
+    def __init__(self, plugin, sieve_hook) -> None:
         """ """
         super().__init__("sieve", plugin, sieve_hook)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Sieve[{Hook.__repr__(self)}]"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"sieve {self.function_name} from {self.plugin.file_name}"
 
 
 class EventHook(Hook):
-    def __init__(self, plugin, event_hook):
+    def __init__(self, plugin, event_hook) -> None:
         super().__init__("event", plugin, event_hook)
 
         self.types = event_hook.types
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Event[types: {list(self.types)}, {Hook.__repr__(self)}]"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"event {self.function_name} ({','.join(str(t) for t in self.types)}) from {self.plugin.file_name}"
 
 
 class OnStartHook(Hook):
-    def __init__(self, plugin, on_start_hook):
+    def __init__(self, plugin, on_start_hook) -> None:
         """ """
         super().__init__("on_start", plugin, on_start_hook)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"On_start[{Hook.__repr__(self)}]"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"on_start {self.function_name} from {self.plugin.file_name}"
 
 
 class OnStopHook(Hook):
-    def __init__(self, plugin, on_stop_hook):
+    def __init__(self, plugin, on_stop_hook) -> None:
         super().__init__("on_stop", plugin, on_stop_hook)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"On_stop[{Hook.__repr__(self)}]"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"on_stop {self.function_name} from {self.plugin.file_name}"
 
 
 class CapHook(Hook):
-    def __init__(self, _type, plugin, base_hook):
+    def __init__(self, _type, plugin, base_hook) -> None:
         super().__init__(f"on_cap_{_type}", plugin, base_hook)
 
         self.caps = base_hook.caps
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.type}[{self.caps} {super()!r}]"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.type} {self.function_name} from {self.plugin.file_name}"
 
 
 class OnCapAvaliableHook(CapHook):
-    def __init__(self, plugin, base_hook):
+    def __init__(self, plugin, base_hook) -> None:
         super().__init__("available", plugin, base_hook)
 
 
 class OnCapAckHook(CapHook):
-    def __init__(self, plugin, base_hook):
+    def __init__(self, plugin, base_hook) -> None:
         super().__init__("ack", plugin, base_hook)
 
 
 class OnConnectHook(Hook):
-    def __init__(self, plugin, sieve_hook):
+    def __init__(self, plugin, sieve_hook) -> None:
         """ """
         super().__init__("on_connect", plugin, sieve_hook)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.type}[{super()!r}]"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.type} {self.function_name} from {self.plugin.file_name}"
 
 
 class IrcOutHook(Hook):
-    def __init__(self, plugin, out_hook):
+    def __init__(self, plugin, out_hook) -> None:
         super().__init__("irc_out", plugin, out_hook)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Irc_Out[{Hook.__repr__(self)}]"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"irc_out {self.function_name} from {self.plugin.file_name}"
 
 
 class PostHookHook(Hook):
-    def __init__(self, plugin, out_hook):
+    def __init__(self, plugin, out_hook) -> None:
         super().__init__("post_hook", plugin, out_hook)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Post_hook[{Hook.__repr__(self)}]"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"post_hook {self.function_name} from {self.plugin.file_name}"
 
 
 class ConfigHook(Hook):
-    def __init__(self, plugin, out_hook):
+    def __init__(self, plugin, out_hook) -> None:
         super().__init__("config", plugin, out_hook)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"ConfigHook[{Hook.__repr__(self)}]"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Config hook {self.function_name} from {self.plugin.file_name}"
 
 
 class PermHook(Hook):
-    def __init__(self, plugin, perm_hook):
+    def __init__(self, plugin, perm_hook) -> None:
         super().__init__("perm_check", plugin, perm_hook)
 
         self.perms = perm_hook.perms
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"PermHook[{Hook.__repr__(self)}]"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"perm hook {self.function_name} from {self.plugin.file_name}"
 
 

@@ -26,12 +26,12 @@ def parse_url(url):
 
 
 @hook.on_start()
-def load_shortcuts(bot):
+def load_shortcuts(bot) -> None:
     shortcuts["cloudbot"] = parse_url(bot.repo_link)
 
 
 @hook.command("ghissue", "issue")
-def issue_cmd(text, event):
+def issue_cmd(text, event) -> str:
     """<username|repo> [number] - gets issue [number]'s summary, or the open issue count if no issue is specified"""
     args = text.split()
     first = args[0]

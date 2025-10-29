@@ -34,7 +34,7 @@ qtable = Table(
 
 
 @hook.on_start()
-def migrate_table(db: Session, logger):
+def migrate_table(db: Session, logger) -> None:
     old_table = Table(
         "quote",
         database.metadata,
@@ -84,13 +84,13 @@ def migrate_table(db: Session, logger):
     database.metadata.remove(old_table)
 
 
-def format_quote(q, num, n_quotes):
+def format_quote(q, num, n_quotes) -> str:
     """Returns a formatted string of a quote"""
     _, nick, msg = q
     return f"[{num}/{n_quotes}] <{nick[:1]}\u200b{nick[1:]}> {msg}"
 
 
-def add_quote(db, chan, target, sender, message):
+def add_quote(db, chan, target, sender, message) -> str:
     """Adds a quote to a nick, returns message string"""
     try:
         query = qtable.insert().values(

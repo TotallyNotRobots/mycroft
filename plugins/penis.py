@@ -30,7 +30,7 @@ bodypart = [
 
 
 @hook.command("penis", "bepis", autohelp=False)
-def penis(text, message):
+def penis(text, message) -> None:
     """[nick] - much dongs, very ween, add a user nick as an argument for slightly different 'output'"""
     if not text:
         message(

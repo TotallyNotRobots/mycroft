@@ -7,7 +7,7 @@ from cloudbot.util import web
 from plugins import shorten
 
 
-def test_shorten(mock_requests):
+def test_shorten(mock_requests) -> None:
     reply = MagicMock()
     with pytest.raises(web.ServiceError):
         shorten.shorten("https://example.com", reply)
@@ -24,7 +24,7 @@ def test_shorten(mock_requests):
     )
 
 
-def test_expand(mock_requests):
+def test_expand(mock_requests) -> None:
     reply = MagicMock()
 
     with pytest.raises(web.ServiceError):
@@ -40,7 +40,7 @@ def test_expand(mock_requests):
     )
 
 
-def test_isgd(mock_requests):
+def test_isgd(mock_requests) -> None:
     reply = MagicMock()
 
     with pytest.raises(web.ServiceError):
@@ -64,7 +64,7 @@ def test_isgd(mock_requests):
     assert shorten.isgd("https://example.com", reply) == "https://is.gd/foobar"
 
 
-def test_googl(mock_requests):
+def test_googl(mock_requests) -> None:
     reply = MagicMock()
 
     with pytest.raises(web.ServiceError):
@@ -92,7 +92,7 @@ def test_googl(mock_requests):
     )
 
 
-def test_gitio(mock_requests):
+def test_gitio(mock_requests) -> None:
     reply = MagicMock()
 
     with pytest.raises(web.ServiceError):

@@ -63,7 +63,7 @@ def translate(text, dic):
 
 
 @hook.on_start()
-def load_text(bot):
+def load_text(bot) -> None:
     leet_text.clear()
     with open((bot.data_path / "leet.json"), encoding="utf-8") as f:
         leet_text.update(json.load(f))
@@ -163,7 +163,7 @@ def base64_decode(text, notice):
 
 
 @hook.command("isbase64", "checkbase64")
-def base64_check(text):
+def base64_check(text) -> str:
     """<string> - Checks if <string> is a valid base64 encoded string"""
     try:
         base64.b64decode(text.encode())
@@ -191,7 +191,7 @@ def escape(text):
 
 
 @hook.command()
-def length(text):
+def length(text) -> str:
     """<string> - Gets the length of <string>"""
     return f"The length of that string is {len(text)} characters."
 

@@ -20,11 +20,11 @@ def reset_api():
 
 
 @pytest.fixture()
-def enable_api():
+def enable_api() -> None:
     tvdb.api.set_token("foobar")
 
 
-def test_holder_of_optional():
+def test_holder_of_optional() -> None:
     holder: tvdb.Holder[int] = tvdb.Holder()
     with pytest.raises(tvdb.MissingItem):
         holder.get()
@@ -39,7 +39,7 @@ def test_holder_of_optional():
     assert holder.exists()
 
 
-def test_token(mock_requests, reset_api, mock_api_keys):
+def test_token(mock_requests, reset_api, mock_api_keys) -> None:
     mock_requests.add(
         "POST", "https://api.thetvdb.com/login", json={"token": "foobar3"}
     )
@@ -47,7 +47,7 @@ def test_token(mock_requests, reset_api, mock_api_keys):
     assert tvdb.api.jwt_token == "foobar3"
 
 
-def test_refresh(mock_requests, reset_api, mock_api_keys, enable_api):
+def test_refresh(mock_requests, reset_api, mock_api_keys, enable_api) -> None:
     mock_requests.add(
         "GET",
         "https://api.thetvdb.com/refresh_token",
@@ -57,7 +57,9 @@ def test_refresh(mock_requests, reset_api, mock_api_keys, enable_api):
     assert tvdb.api.jwt_token == "foobar1"
 
 
-def test_refresh_expired(mock_requests, reset_api, mock_api_keys, enable_api):
+def test_refresh_expired(
+    mock_requests, reset_api, mock_api_keys, enable_api
+) -> None:
     mock_requests.add(
         "GET", "https://api.thetvdb.com/refresh_token", status=401
     )
@@ -70,7 +72,7 @@ def test_refresh_expired(mock_requests, reset_api, mock_api_keys, enable_api):
 
 def test_refresh_other_error(
     mock_requests, reset_api, mock_api_keys, enable_api
-):
+) -> None:
     mock_requests.add(
         "GET", "https://api.thetvdb.com/refresh_token", status=502
     )
@@ -78,7 +80,7 @@ def test_refresh_other_error(
         tvdb.api.refresh_token(MagicMock(config=bot.config))
 
 
-def generate_pages(mock_requests, url, count=5, per_page=5):
+def generate_pages(mock_requests, url, count=5, per_page=5) -> None:
     for i in range(1, count + 1):
         links = {
             "previous": i - 1,
@@ -104,7 +106,7 @@ def generate_pages(mock_requests, url, count=5, per_page=5):
         )
 
 
-def test_paging(mock_requests, reset_api, enable_api):
+def test_paging(mock_requests, reset_api, enable_api) -> None:
     generate_pages(mock_requests, "https://api.thetvdb.com/series/42/episodes")
     eps = list(tvdb.api.get_episodes("42"))
     assert eps == [
@@ -136,7 +138,7 @@ def test_paging(mock_requests, reset_api, enable_api):
     ]
 
 
-def test_paging_reverse(mock_requests, reset_api, enable_api):
+def test_paging_reverse(mock_requests, reset_api, enable_api) -> None:
     generate_pages(mock_requests, "https://api.thetvdb.com/series/42/episodes")
     eps = list(tvdb.api.get_episodes("42", reverse=False))
     assert eps == [
@@ -186,11 +188,11 @@ class _Base(ABC):
         )
         return wrap_hook_response(self.get_func(), event, results=results)
 
-    def test_api_off(self):
+    def test_api_off(self) -> None:
         res = self.call("Foo")
         assert res == [("return", "TVDB API not enabled.")]
 
-    def test_404(self, mock_requests, enable_api):
+    def test_404(self, mock_requests, enable_api) -> None:
         mock_requests.add(
             "GET",
             "https://api.thetvdb.com/search/series",
@@ -201,7 +203,7 @@ class _Base(ABC):
         res = self.call("Foo")
         assert res == [("return", "Unable to find series")]
 
-    def test_other_errors(self, mock_requests, enable_api):
+    def test_other_errors(self, mock_requests, enable_api) -> None:
         mock_requests.add(
             "GET",
             "https://api.thetvdb.com/search/series",
@@ -229,7 +231,7 @@ class _Base(ABC):
     def shows_new_eps(self):
         raise NotImplementedError
 
-    def test_no_episodes(self, mock_requests, enable_api):
+    def test_no_episodes(self, mock_requests, enable_api) -> None:
         mock_requests.add(
             "GET",
             "https://api.thetvdb.com/search/series",
@@ -258,7 +260,7 @@ class _Base(ABC):
         res = self.call("Foo")
         assert res == self.get_no_ep_msg()
 
-    def test_no_episodes_404(self, mock_requests, enable_api):
+    def test_no_episodes_404(self, mock_requests, enable_api) -> None:
         mock_requests.add(
             "GET",
             "https://api.thetvdb.com/search/series",
@@ -289,7 +291,7 @@ class _Base(ABC):
 
         assert results == self.get_no_ep_msg()
 
-    def test_ep_other_error(self, mock_requests, enable_api):
+    def test_ep_other_error(self, mock_requests, enable_api) -> None:
         mock_requests.add(
             "GET",
             "https://api.thetvdb.com/search/series",
@@ -322,7 +324,7 @@ class _Base(ABC):
             ("message", ("#foo", "(nick) Failed to contact thetvdb.com"))
         ]
 
-    def test_only_old_eps(self, mock_requests, enable_api):
+    def test_only_old_eps(self, mock_requests, enable_api) -> None:
         mock_requests.add(
             "GET",
             "https://api.thetvdb.com/search/series",
@@ -367,7 +369,7 @@ class _Base(ABC):
                 ("return", "There are no new episodes scheduled for Foo: Bar.")
             ]
 
-    def test_only_new_eps(self, mock_requests, enable_api):
+    def test_only_new_eps(self, mock_requests, enable_api) -> None:
         mock_requests.add(
             "GET",
             "https://api.thetvdb.com/search/series",
@@ -415,7 +417,7 @@ class _Base(ABC):
                 )
             ]
 
-    def test_only_new_eps_tba(self, mock_requests, enable_api):
+    def test_only_new_eps_tba(self, mock_requests, enable_api) -> None:
         mock_requests.add(
             "GET",
             "https://api.thetvdb.com/search/series",
@@ -484,7 +486,7 @@ class _Base(ABC):
                 )
             ]
 
-    def test_series_ended(self, mock_requests, enable_api):
+    def test_series_ended(self, mock_requests, enable_api) -> None:
         mock_requests.add(
             "GET",
             "https://api.thetvdb.com/search/series",
@@ -528,7 +530,7 @@ class _Base(ABC):
                 )
             ]
 
-    def test_only_new_eps_tba_no_name(self, mock_requests, enable_api):
+    def test_only_new_eps_tba_no_name(self, mock_requests, enable_api) -> None:
         mock_requests.add(
             "GET",
             "https://api.thetvdb.com/search/series",
@@ -579,10 +581,10 @@ class _Base(ABC):
 
 
 class TestNext(_Base):
-    def shows_old_eps(self):
+    def shows_old_eps(self) -> bool:
         return False
 
-    def shows_new_eps(self):
+    def shows_new_eps(self) -> bool:
         return True
 
     def get_no_ep_msg(self):
@@ -593,10 +595,10 @@ class TestNext(_Base):
 
 
 class TestPrev(_Base):
-    def shows_old_eps(self):
+    def shows_old_eps(self) -> bool:
         return True
 
-    def shows_new_eps(self):
+    def shows_new_eps(self) -> bool:
         return False
 
     def get_no_ep_msg(self):

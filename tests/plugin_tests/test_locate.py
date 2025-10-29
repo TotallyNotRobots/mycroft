@@ -24,11 +24,11 @@ from tests.util import wrap_hook_response
         ("foobar", None),
     ],
 )
-def test_check_status(status, out):
+def test_check_status(status, out) -> None:
     assert locate.check_status(status) == out
 
 
-def test_locate_no_bias(mock_requests, mock_bot):
+def test_locate_no_bias(mock_requests, mock_bot) -> None:
     mock_bot.config.update(
         {
             "api_keys": {
@@ -114,7 +114,7 @@ def test_locate_no_bias(mock_requests, mock_bot):
     ]
 
 
-def test_locate_with_bias(mock_requests, mock_bot):
+def test_locate_with_bias(mock_requests, mock_bot) -> None:
     mock_bot.config.update(
         {
             "api_keys": {

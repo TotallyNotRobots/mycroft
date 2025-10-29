@@ -34,28 +34,28 @@ no_api = "This command requires an API key from wordnik.com."
 
 
 class WordnikAPIError(Exception):
-    def __init__(self, message):
+    def __init__(self, message) -> None:
         super().__init__(message)
         self.message = message
 
-    def user_msg(self):
+    def user_msg(self) -> str:
         return (
             f"There was a problem contacting the Wordnik API ({self.message})"
         )
 
 
 class NoAPIKey(WordnikAPIError):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(no_api)
 
 
 class WordNotFound(WordnikAPIError):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("Word not found")
 
 
 class NoValidResults(WordnikAPIError):
-    def __init__(self, term, results):
+    def __init__(self, term, results) -> None:
         super().__init__(f"No valid results found for {term!r}")
         self.term = term
         self.results = results
@@ -197,12 +197,12 @@ class WordLookupRequest:
 
 
 class DefinitionsLookupRequest(WordLookupRequest):
-    def __init__(self, word):
+    def __init__(self, word) -> None:
         super().__init__(word, "definitions", required_fields=("text",))
 
 
 class ExamplesLookupRequest(WordLookupRequest):
-    def __init__(self, word):
+    def __init__(self, word) -> None:
         super().__init__(word, "examples")
         self.result_limit = 10
 
@@ -213,17 +213,17 @@ class ExamplesLookupRequest(WordLookupRequest):
 
 
 class PronounciationLookupRequest(WordLookupRequest):
-    def __init__(self, word):
+    def __init__(self, word) -> None:
         super().__init__(word, "pronunciations", required_fields=("raw",))
 
 
 class AudioLookupRequest(WordLookupRequest):
-    def __init__(self, word):
+    def __init__(self, word) -> None:
         super().__init__(word, "audio", required_fields=("fileUrl",))
 
 
 class RelatedLookupRequest(WordLookupRequest):
-    def __init__(self, word, rel_type):
+    def __init__(self, word, rel_type) -> None:
         super().__init__(word, "relatedWords", required_fields=("words",))
         self.extra_params["relationshipTypes"] = rel_type
 

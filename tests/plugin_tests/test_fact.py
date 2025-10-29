@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, call, patch
 from plugins import fact
 
 
-def test_fact():
+def test_fact() -> None:
     random.seed(0)
     with patch("cloudbot.util.http.get_json") as mocked:
         mocked.return_value = {"text": "foobar"}

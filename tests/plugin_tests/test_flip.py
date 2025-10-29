@@ -51,7 +51,7 @@ from plugins import flip
         ),
     ],
 )
-def test_flip(text, chan, calls):
+def test_flip(text, chan, calls) -> None:
     random.seed(0)
     event = MagicMock()
     assert flip.flip(text, event.message, chan) is None
@@ -90,21 +90,21 @@ def test_flip(text, chan, calls):
         ),
     ],
 )
-def test_table(text, calls):
+def test_table(text, calls) -> None:
     random.seed(0)
     event = MagicMock()
     assert flip.table(text, event.message) is None
     assert event.mock_calls == calls
 
 
-def test_fix_flipped():
+def test_fix_flipped() -> None:
     event = MagicMock()
     flip.table_status["#foo"] = True
     assert flip.fix("table", event.message, "#foo") is None
     assert event.mock_calls == [call.message(flip.FIXED_TABLE)]
 
 
-def test_fix():
+def test_fix() -> None:
     event = MagicMock()
     assert flip.fix("table", event.message, "#foo") is None
     assert event.mock_calls == [
@@ -114,7 +114,7 @@ def test_fix():
     ]
 
 
-def test_fix_other():
+def test_fix_other() -> None:
     random.seed(0)
     event = MagicMock()
     assert flip.fix("foo", event.message, "#foo") is None

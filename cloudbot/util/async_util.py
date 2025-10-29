@@ -4,19 +4,36 @@ Wraps various asyncio functions
 
 import asyncio
 import inspect
+from collections.abc import Callable, Coroutine, Mapping
+from concurrent.futures import Executor
+from typing import Any, TypeVar
+
+from typing_extensions import ParamSpec, TypeIs
 
 from cloudbot.util.func_utils import call_with_args
 
+_P = ParamSpec("_P")
+_T = TypeVar("_T")
 
-async def run_func_with_args(loop, func, arg_data, executor=None):
+
+def iscoroutinefunction(
+    func: Callable[_P, Coroutine[Any, Any, _T]] | Callable[_P, _T],
+) -> TypeIs[Callable[_P, Coroutine[Any, Any, _T]]]:
+    return inspect.iscoroutinefunction(func)
+
+
+async def run_func_with_args(
+    loop: asyncio.AbstractEventLoop,
+    func: Callable[..., Coroutine[Any, Any, _T]] | Callable[..., _T],
+    arg_data: Mapping[str, Any],
+    executor: Executor | None = None,
+) -> _T:
     if asyncio.iscoroutine(func):
         raise TypeError(
             "A coroutine function or a normal, non-async callable are required"
         )
 
-    if inspect.iscoroutinefunction(func):
-        coro = call_with_args(func, arg_data)
-    else:
-        coro = loop.run_in_executor(executor, call_with_args, func, arg_data)
+    if iscoroutinefunction(func):
+        return await call_with_args(func, arg_data)
 
-    return await coro
+    return await loop.run_in_executor(executor, call_with_args, func, arg_data)

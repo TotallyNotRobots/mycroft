@@ -6,7 +6,7 @@ fortunes: list[str] = []
 
 
 @hook.on_start()
-def load_fortunes(bot):
+def load_fortunes(bot) -> None:
     path = bot.data_path / "fortunes.txt"
     fortunes.clear()
     with open(path, encoding="utf-8") as f:

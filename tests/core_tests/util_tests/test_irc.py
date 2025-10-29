@@ -1,7 +1,7 @@
 from cloudbot.util import irc
 
 
-def test_mode_parse():
+def test_mode_parse() -> None:
     mode_info = {
         "a": irc.ChannelMode(character="a", type=irc.ModeType.A),
         "d": irc.StatusMode.make("^", "d", 3),
@@ -14,7 +14,7 @@ def test_mode_parse():
     ]
 
 
-def test_mode_parse_missing_mode():
+def test_mode_parse_missing_mode() -> None:
     mode_info = {
         "a": irc.ChannelMode(character="a", type=irc.ModeType.A),
         "d": irc.StatusMode.make("^", "d", 3),

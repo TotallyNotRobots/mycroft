@@ -11,7 +11,7 @@ search_pages: dict[str, dict[str, CommandPager]] = defaultdict(dict)
 class Game:
     __slots__ = ("cmds", "name")
 
-    def __init__(self, *cmds, name=None):
+    def __init__(self, *cmds, name=None) -> None:
         self.cmds = cmds
         if name is None:
             name = cmds[0]
@@ -86,7 +86,7 @@ def score_hook(game):
     return func
 
 
-def init_hooks():
+def init_hooks() -> None:
     for game in GAMES:
         func = score_hook(game)
         globals()[func.__name__] = hook.command(*game.cmds, autohelp=False)(

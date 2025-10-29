@@ -18,7 +18,7 @@ session = requests.Session()
 
 
 @hook.on_start()
-def check_certs(bot: CloudBot):
+def check_certs(bot: CloudBot) -> None:
     try:
         with requests.get(search_url):
             pass
@@ -57,7 +57,7 @@ def dogpileimage(text):
 
 
 @hook.command("dp", "g", "dogpile")
-def dogpile(text):
+def dogpile(text) -> str:
     """<query> - Uses the dogpile search engine to find shit on the web."""
     soup = query("web", text)
     results = soup.find_all("div", {"class": "web-bing__result"})

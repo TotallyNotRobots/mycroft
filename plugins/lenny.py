@@ -7,7 +7,7 @@ lenny_data: dict[str, list[str]] = {}
 
 
 @hook.on_start()
-def load_faces(bot):
+def load_faces(bot) -> None:
     lenny_data.clear()
     data_file = bot.data_path / "lenny.json"
     with data_file.open(encoding="utf-8") as f:
@@ -15,12 +15,12 @@ def load_faces(bot):
 
 
 @hook.command(autohelp=False)
-def lenny(message):
+def lenny(message) -> None:
     """- why the shit not lennyface"""
     message(random.choice(lenny_data["lenny"]))
 
 
 @hook.command(autohelp=False)
-def flenny(message):
+def flenny(message) -> None:
     """- flenny is watching."""
     message(random.choice(lenny_data["flenny"]))

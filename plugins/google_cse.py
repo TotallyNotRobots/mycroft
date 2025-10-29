@@ -21,7 +21,7 @@ API_CS = "https://www.googleapis.com/customsearch/v1"
 
 
 @hook.command("gse")
-def gse(text):
+def gse(text) -> str:
     """<query> - Returns first Google search result for <query>."""
     dev_key = bot.config.get_api_key("google_dev_key")
     cx = bot.config.get_api_key("google_cse_id")
@@ -51,7 +51,7 @@ def gse(text):
 
 
 @hook.command("gseis", "image")
-def gse_gis(text):
+def gse_gis(text) -> str:
     """<query> - Returns first Google Images result for <query>."""
     dev_key = bot.config.get_api_key("google_dev_key")
     cx = bot.config.get_api_key("google_cse_id")

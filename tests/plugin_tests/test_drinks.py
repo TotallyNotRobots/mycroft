@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, call
 from plugins import drinks
 
 
-def test_drinks_no_recipe(patch_try_shorten):
+def test_drinks_no_recipe(patch_try_shorten) -> None:
     drinks.drink_data.clear()
     drinks.drink_data.append(
         {"title": "foobar", "url": "foo.bar", "ingredients": ["foo", "bar"]}

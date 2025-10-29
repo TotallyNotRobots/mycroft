@@ -236,7 +236,7 @@ def get_raw_log_stream(server):
 
 
 @hook.irc_raw("*", singlethread=True)
-def log_raw(event):
+def log_raw(event) -> None:
     logging_config = event.bot.config.get("logging", {})
     if not logging_config.get("raw_file_log", False):
         return
@@ -247,7 +247,7 @@ def log_raw(event):
 
 
 @hook.irc_raw("*", singlethread=True)
-def log(event):
+def log(event) -> None:
     logging_config = event.bot.config.get("logging", {})
     if not logging_config.get("file_log", False):
         return
@@ -267,14 +267,14 @@ def log(event):
 
 # Log console separately to prevent lag
 @hook.irc_raw("*")
-async def console_log(bot, event):
+async def console_log(bot, event) -> None:
     text = format_event(event)
     if text is not None:
         logger.info(text)
 
 
 @hook.command("flushlog", permissions=["botcontrol"])
-def flush_log():
+def flush_log() -> None:
     """- Flush all log streams"""
     for _, stream in stream_cache.values():
         stream.flush()
@@ -283,7 +283,7 @@ def flush_log():
 
 
 @hook.on_stop()
-def close_logs():
+def close_logs() -> None:
     for _, stream in stream_cache.values():
         stream.flush()
         stream.close()

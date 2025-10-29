@@ -17,7 +17,7 @@ def get_potential_commands(bot, cmd_name):
 @hook.command("help", autohelp=False)
 def help_command(
     text, chan, bot, notice, message, has_permission, triggered_prefix
-):
+) -> None:
     """[command] - gives help for [command], or lists all available commands if no command is specified"""
     if text:
         searching_for = text.lower().strip()
@@ -85,7 +85,7 @@ def help_command(
 
 
 @hook.command()
-async def cmdinfo(text, bot, notice):
+async def cmdinfo(text, bot, notice) -> None:
     """<command> - Gets various information about a command"""
     name = text.split()[0]
     cmds = list(get_potential_commands(bot, name))

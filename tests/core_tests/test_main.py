@@ -7,8 +7,8 @@ from cloudbot.__main__ import async_main
 
 
 @pytest.mark.asyncio
-async def test_main():
-    async def run():
+async def test_main() -> None:
+    async def run() -> bool:
         return False
 
     with (patch("cloudbot.__main__.CloudBot") as mocked_bot,):

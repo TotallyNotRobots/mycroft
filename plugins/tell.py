@@ -37,11 +37,11 @@ class TellMessage(database.Base):
     time_sent = Column(DateTime)
     time_read = Column(DateTime)
 
-    def format_for_message(self):
+    def format_for_message(self) -> str:
         reltime = timeformat.time_since(self.time_sent)
         return f"{self.sender} sent you a message {reltime} ago: {self.message}"
 
-    def mark_read(self, now=None):
+    def mark_read(self, now=None) -> None:
         if now is None:
             now = datetime.now()
 
@@ -107,7 +107,7 @@ def migrate_tables(db):
 
 
 @hook.on_start()
-def load_cache(db):
+def load_cache(db) -> None:
     new_cache = []
     for conn, target in db.execute(
         select(TellMessage.conn, TellMessage.target).where(
@@ -121,7 +121,7 @@ def load_cache(db):
 
 
 @hook.on_start()
-def load_disabled(db):
+def load_disabled(db) -> None:
     new_cache = defaultdict(set)
     for row in db.execute(disable_table.select()):
         new_cache[row.conn].add(row.target.lower())
@@ -131,7 +131,7 @@ def load_disabled(db):
 
 
 @hook.on_start()
-def load_ignores(db):
+def load_ignores(db) -> None:
     new_cache = ignore_cache.copy()
     new_cache.clear()
     for row in db.execute(ignore_table.select()):
@@ -141,15 +141,15 @@ def load_ignores(db):
     ignore_cache.update(new_cache)
 
 
-def is_disable(conn, target):
+def is_disable(conn, target) -> bool:
     return target.lower() in disable_cache[conn.name.lower()]
 
 
-def ignore_exists(conn, nick, mask):
+def ignore_exists(conn, nick, mask) -> bool:
     return mask in ignore_cache[conn.name.lower()][nick.lower()]
 
 
-def can_send_to_user(conn, sender, target):
+def can_send_to_user(conn, sender, target) -> bool:
     if target.lower() in disable_cache[conn.name.lower()]:
         return False
 
@@ -160,7 +160,7 @@ def can_send_to_user(conn, sender, target):
     return True
 
 
-def add_disable(db, conn, setter, target, now=None):
+def add_disable(db, conn, setter, target, now=None) -> None:
     if now is None:
         now = datetime.now()
 
@@ -176,7 +176,7 @@ def add_disable(db, conn, setter, target, now=None):
     load_disabled(db)
 
 
-def del_disable(db, conn, target):
+def del_disable(db, conn, target) -> None:
     db.execute(
         disable_table.delete().where(
             and_(
@@ -196,7 +196,7 @@ def list_disabled(db, conn):
         yield (row.conn, row.target, row.setter, row.set_at.ctime())
 
 
-def add_ignore(db, conn, nick, mask, now=None):
+def add_ignore(db, conn, nick, mask, now=None) -> None:
     if now is None:
         now = datetime.now()
 
@@ -212,7 +212,7 @@ def add_ignore(db, conn, nick, mask, now=None):
     load_ignores(db)
 
 
-def del_ignore(db, conn, nick, mask):
+def del_ignore(db, conn, nick, mask) -> None:
     db.execute(
         ignore_table.delete().where(
             and_(
@@ -253,7 +253,7 @@ def count_unread(db, server, target):
     return db.execute(query).fetchone()[0]
 
 
-def read_all_tells(db, server, target):
+def read_all_tells(db, server, target) -> None:
     query = (
         update(TellMessage)
         .where(TellMessage.conn == server.lower())
@@ -266,7 +266,7 @@ def read_all_tells(db, server, target):
     load_cache(db)
 
 
-def add_tell(db, server, sender, target, message):
+def add_tell(db, server, sender, target, message) -> None:
     new_tell = TellMessage(
         conn=server.lower(),
         sender=sender.lower(),
@@ -279,7 +279,7 @@ def add_tell(db, server, sender, target, message):
     load_cache(db)
 
 
-def tell_check(conn, nick):
+def tell_check(conn, nick) -> bool:
     for _conn, _target in tell_cache:
         if (conn, nick.lower()) == (_conn, _target):
             return True
@@ -288,7 +288,7 @@ def tell_check(conn, nick):
 
 
 @hook.event([EventType.message, EventType.action], singlethread=True)
-def tellinput(conn, db, nick, notice, content):
+def tellinput(conn, db, nick, notice, content) -> None:
     if "showtells" in content.lower():
         return
 
@@ -314,7 +314,7 @@ def tellinput(conn, db, nick, notice, content):
 
 
 @hook.command(autohelp=False)
-def showtells(nick, notice, db, conn):
+def showtells(nick, notice, db, conn) -> None:
     """- View all pending tell messages (sent in a notice)."""
 
     tells = get_unread(db, conn.name, nick)
@@ -330,7 +330,7 @@ def showtells(nick, notice, db, conn):
 
 
 @hook.command("tell")
-def tell_cmd(text, nick, db, conn, mask, event):
+def tell_cmd(text, nick, db, conn, mask, event) -> None:
     """<nick> <message> - Relay <message> to <nick> when <nick> is around."""
     query = text.split(" ", 1)
 
@@ -424,7 +424,7 @@ def list_tell_disabled(conn, db):
 
 
 @hook.command("tellignore")
-def tell_ignore(db, conn, nick, text, notice):
+def tell_ignore(db, conn, nick, text, notice) -> None:
     """<mask> - Disallow users matching <mask> from sending you tells"""
     mask = text.split()[0].lower()
     if ignore_exists(conn, nick, mask):
@@ -436,7 +436,7 @@ def tell_ignore(db, conn, nick, text, notice):
 
 
 @hook.command("tellunignore")
-def tell_unignore(db, conn, nick, text, notice):
+def tell_unignore(db, conn, nick, text, notice) -> None:
     """<mask> - Remove a tell ignore"""
     mask = text.split()[0].lower()
     if not ignore_exists(conn, nick, mask):
@@ -450,7 +450,7 @@ def tell_unignore(db, conn, nick, text, notice):
 @hook.command(
     "listtellignores", permissions=["botcontrol", "ignore"], autohelp=False
 )
-def list_tell_ignores(conn, nick):
+def list_tell_ignores(conn, nick) -> str:
     """- Returns the current list of masks who may not send you tells"""
     ignores = list(list_ignores(conn, nick))
     if not ignores:

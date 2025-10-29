@@ -30,7 +30,7 @@ ignore_cache: list[tuple[str, str, str]] = []
 
 
 @hook.on_start()
-def load_cache(db):
+def load_cache(db) -> None:
     new_cache = []
     for row in db.execute(table.select()):
         conn = row.connection
@@ -51,14 +51,14 @@ def find_ignore(conn, chan, mask):
     return None
 
 
-def ignore_in_cache(conn, chan, mask):
+def ignore_in_cache(conn, chan, mask) -> bool:
     if find_ignore(conn, chan, mask):
         return True
 
     return False
 
 
-def add_ignore(db, conn, chan, mask):
+def add_ignore(db, conn, chan, mask) -> None:
     if ignore_in_cache(conn, chan, mask):
         return
 
@@ -67,7 +67,7 @@ def add_ignore(db, conn, chan, mask):
     load_cache(db)
 
 
-def remove_ignore(db, conn, chan, mask):
+def remove_ignore(db, conn, chan, mask) -> bool:
     item = find_ignore(conn, chan, mask)
     if not item:
         return False
@@ -85,7 +85,7 @@ def remove_ignore(db, conn, chan, mask):
     return True
 
 
-def is_ignored(conn, chan, mask):
+def is_ignored(conn, chan, mask) -> bool:
     chan_key = (conn.casefold(), chan.casefold())
     mask_cf = mask.casefold()
     for _conn, _chan, _mask in ignore_cache:
@@ -144,7 +144,7 @@ def get_user(conn, text):
 
 
 @hook.command(permissions=["ignore", "chanop"])
-def ignore(text, db, chan, conn, notice, admin_log, nick):
+def ignore(text, db, chan, conn, notice, admin_log, nick) -> None:
     """<nick|mask> - ignores all input from <nick|mask> in this channel."""
     target = get_user(conn, text)
 
@@ -157,7 +157,7 @@ def ignore(text, db, chan, conn, notice, admin_log, nick):
 
 
 @hook.command(permissions=["ignore", "chanop"])
-def unignore(text, db, chan, conn, notice, nick, admin_log):
+def unignore(text, db, chan, conn, notice, nick, admin_log) -> None:
     """<nick|mask> - un-ignores all input from <nick|mask> in this channel."""
     target = get_user(conn, text)
 
@@ -190,7 +190,7 @@ def listignores(db, conn, chan):
 
 
 @hook.command(permissions=["botcontrol"])
-def global_ignore(text, db, conn, notice, nick, admin_log):
+def global_ignore(text, db, conn, notice, nick, admin_log) -> None:
     """<nick|mask> - ignores all input from <nick|mask> in ALL channels."""
     target = get_user(conn, text)
 
@@ -205,7 +205,7 @@ def global_ignore(text, db, conn, notice, nick, admin_log):
 
 
 @hook.command(permissions=["botcontrol"])
-def global_unignore(text, db, conn, notice, nick, admin_log):
+def global_unignore(text, db, conn, notice, nick, admin_log) -> None:
     """<nick|mask> - un-ignores all input from <nick|mask> in ALL channels."""
     target = get_user(conn, text)
 

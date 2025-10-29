@@ -13,7 +13,7 @@ ed_url = "http://encyclopediadramatica.se/"
 
 
 @hook.command()
-def drama(text, reply):
+def drama(text, reply) -> str:
     """<phrase> - gets the first paragraph of the Encyclopedia Dramatica article on <phrase>"""
 
     search_response = requests.get(

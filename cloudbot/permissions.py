@@ -313,7 +313,7 @@ class PermissionManager:
 
         return masks_removed
 
-    def add_user_to_group(self, user_mask: str, group_id: str):
+    def add_user_to_group(self, user_mask: str, group_id: str) -> bool:
         """
         Adds user to group. Returns whether this actually did anything.
         """

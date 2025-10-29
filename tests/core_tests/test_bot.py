@@ -1,6 +1,7 @@
 import asyncio
 from collections.abc import Callable
 from itertools import product
+from typing import Any
 from unittest.mock import MagicMock, call, patch
 
 import pytest
@@ -48,14 +49,16 @@ async def test_get_connection_configs_with_dupes(
         }
 
 
-def test_no_instance_config(unset_bot):
+def test_no_instance_config(unset_bot) -> None:
     cloudbot.bot.bot.set(None)
     with pytest.raises(ValueError):
         _ = cloudbot.bot.bot.config
 
 
 @pytest.mark.asyncio()
-async def test_migrate_db(mock_db, mock_bot_factory, mock_requests, tmp_path):
+async def test_migrate_db(
+    mock_db, mock_bot_factory, mock_requests, tmp_path
+) -> None:
     old_db_url = f"sqlite:///{tmp_path / 'database1.db'!s}"
     old_db = MockDB(old_db_url, True)
     table = Table(
@@ -110,7 +113,7 @@ async def test_migrate_db(mock_db, mock_bot_factory, mock_requests, tmp_path):
 
 
 @pytest.mark.asyncio()
-async def test_connect_clients(mock_bot_factory):
+async def test_connect_clients(mock_bot_factory) -> None:
     bot = mock_bot_factory()
     conn = MockConn()
     bot.connections = {"foo": conn}
@@ -125,7 +128,7 @@ async def test_connect_clients(mock_bot_factory):
 
 
 @pytest.mark.asyncio()
-async def test_start_plugin_reload(tmp_path):
+async def test_start_plugin_reload(tmp_path) -> None:
     bot = MagicMock(
         old_db=None,
         do_migrate_db=False,
@@ -147,9 +150,9 @@ async def test_start_plugin_reload(tmp_path):
 
 
 class MockConn:
-    def __init__(self, nick=None):
+    def __init__(self, nick=None) -> None:
         self.nick = nick
-        self.config = {}
+        self.config: dict[str, Any] = {}
         self.reload = MagicMock()
         self.try_connect = MagicMock()
         self.notice = MagicMock()
@@ -174,7 +177,7 @@ class TestProcessing:
         run_hooks = []
 
         @hook.irc_raw("*")
-        async def coro(hook):
+        async def coro(hook) -> None:
             run_hooks.append(hook)
 
         full_hook = RawHook(plugin, hook._get_hook(coro, "irc_raw"))
@@ -206,11 +209,11 @@ class TestProcessing:
         run_hooks = []
 
         @hook.irc_raw("*", action=Action.HALTTYPE, priority=Priority.HIGH)
-        async def coro(hook):
+        async def coro(hook) -> None:
             run_hooks.append(hook)
 
         @hook.irc_raw("*")
-        async def coro1(hook):  # pragma: no cover
+        async def coro1(hook) -> None:  # pragma: no cover
             run_hooks.append(hook)
 
         full_hook = RawHook(plugin, hook._get_hook(coro, "irc_raw"))
@@ -244,7 +247,7 @@ class TestProcessing:
         run_hooks = []
 
         @hook.command("foo")
-        async def coro(hook):
+        async def coro(hook) -> None:
             run_hooks.append(hook)
 
         full_hook = CommandHook(plugin, hook._get_hook(coro, "command"))
@@ -278,7 +281,7 @@ class TestProcessing:
         run_hooks = []
 
         @hook.command("foob", "fooc")
-        async def coro(hook):  # pragma: no cover
+        async def coro(hook) -> None:  # pragma: no cover
             run_hooks.append(hook)
 
         full_hook = CommandHook(plugin, hook._get_hook(coro, "command"))
@@ -314,7 +317,7 @@ class TestProcessing:
         run_hooks = []
 
         @hook.event(EventType.message)
-        async def coro(hook):
+        async def coro(hook) -> None:
             run_hooks.append(hook)
 
         full_event_hook = EventHook(plugin, hook._get_hook(coro, "event"))
@@ -351,11 +354,11 @@ class TestProcessing:
         @hook.event(
             EventType.message, action=Action.HALTTYPE, priority=Priority.HIGH
         )
-        async def coro(hook):
+        async def coro(hook) -> None:
             run_hooks.append(hook)
 
         @hook.event(EventType.message)
-        async def coro1(hook):  # pragma: no cover
+        async def coro1(hook) -> None:  # pragma: no cover
             run_hooks.append(hook)
 
         full_event_hook = EventHook(plugin, hook._get_hook(coro, "event"))
@@ -396,7 +399,7 @@ class TestProcessing:
         run_hooks = []
 
         @hook.irc_raw("PRIVMSG")
-        async def coro(hook):
+        async def coro(hook) -> None:
             run_hooks.append(hook)
 
         full_hook = RawHook(plugin, hook._get_hook(coro, "irc_raw"))
@@ -410,7 +413,7 @@ class TestProcessing:
         )
 
     @pytest.mark.asyncio()
-    async def test_irc_raw_block(self, mock_bot_factory):
+    async def test_irc_raw_block(self, mock_bot_factory) -> None:
         bot = mock_bot_factory()
         conn = MockConn(nick="bot")
         event = Event(
@@ -427,11 +430,11 @@ class TestProcessing:
         run_hooks = []
 
         @hook.irc_raw("PRIVMSG", priority=Priority.HIGH, action=Action.HALTTYPE)
-        async def coro(hook):
+        async def coro(hook) -> None:
             run_hooks.append(hook)
 
         @hook.irc_raw("PRIVMSG", priority=Priority.NORMAL)
-        async def coro1(hook):  # pragma: no cover
+        async def coro1(hook) -> None:  # pragma: no cover
             run_hooks.append(hook)
 
         full_hook = RawHook(plugin, hook._get_hook(coro, "irc_raw"))
@@ -449,7 +452,7 @@ class TestProcessing:
 
 
 @pytest.mark.asyncio()
-async def test_reload_config(mock_bot_factory):
+async def test_reload_config(mock_bot_factory) -> None:
     bot = mock_bot_factory()
     conn = MockConn()
     bot.connections = {"foo": conn}
@@ -458,7 +461,7 @@ async def test_reload_config(mock_bot_factory):
 
     @hook.config()
     @hook.config()
-    async def coro(hook):
+    async def coro(hook) -> None:
         runs.append(hook)
 
     plugin = MagicMock()
@@ -481,11 +484,11 @@ async def test_reload_config(mock_bot_factory):
         ("c+onn ection", "conn_ection"),
     ),
 )
-def test_clean_name(text, result):
+def test_clean_name(text, result) -> None:
     assert clean_name(text) == result
 
 
-def test_get_cmd_regex():
+def test_get_cmd_regex() -> None:
     event = Event(channel="TestUser", nick="TestUser", conn=MockConn("Bot"))
     regex = get_cmd_regex(event)
     assert (
@@ -510,7 +513,7 @@ def patch_config(config):
 
 
 def config_mock(config):
-    def _load_config(self):
+    def _load_config(self) -> None:
         self.update(config)
 
     return _load_config
@@ -520,7 +523,9 @@ def config_mock(config):
 @pytest.mark.parametrize(
     "config_enabled,plugin_enabled", list(product([True, False], [True, False]))
 )
-async def test_reloaders(tmp_path, config_enabled, plugin_enabled, unset_bot):
+async def test_reloaders(
+    tmp_path, config_enabled, plugin_enabled, unset_bot
+) -> None:
     with patch_config(
         {
             "connections": [],
@@ -537,7 +542,7 @@ async def test_reloaders(tmp_path, config_enabled, plugin_enabled, unset_bot):
 
 
 @pytest.mark.asyncio
-async def test_set_error(tmp_path, unset_bot):
+async def test_set_error(tmp_path, unset_bot) -> None:
     with patch_config(
         {
             "connections": [],
@@ -551,7 +556,7 @@ async def test_set_error(tmp_path, unset_bot):
 
 
 @pytest.mark.asyncio
-async def test_load_clients(tmp_path, unset_bot, mock_db):
+async def test_load_clients(tmp_path, unset_bot, mock_db) -> None:
     with (
         patch_config(
             {

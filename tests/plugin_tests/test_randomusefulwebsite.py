@@ -1,7 +1,7 @@
 from plugins import randomusefulwebsites
 
 
-def test_random_useful_site(mock_requests):
+def test_random_useful_site(mock_requests) -> None:
     mock_requests.add(
         "HEAD",
         "http://www.discuvver.com/jump2.php",

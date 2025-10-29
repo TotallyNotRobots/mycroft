@@ -23,11 +23,13 @@ class ChannelData:
         self,
         chan_interval=datetime.timedelta(seconds=10),
         user_interval=datetime.timedelta(minutes=5),
-    ):
+    ) -> None:
         self.user_interval = user_interval
         self.chan_interval = chan_interval
         self.next_send = datetime.datetime.min
-        self.user_times = defaultdict(lambda: datetime.datetime.min)
+        self.user_times: dict[str, datetime.datetime] = defaultdict(
+            lambda: datetime.datetime.min
+        )
 
     def can_send(self, nick: str, join_time: datetime.datetime) -> bool:
         if join_time < self.next_send:
@@ -49,7 +51,7 @@ herald_cache: dict[str, dict[str, str]] = defaultdict(dict)
 
 
 @hook.on_start()
-def load_cache(db):
+def load_cache(db) -> None:
     new_cache = herald_cache.copy()
     new_cache.clear()
     for row in db.execute(table.select()):
@@ -113,7 +115,7 @@ def herald(text, nick, chan, db, reply):
 @hook.command(
     permissions=["botcontrol", "snoonetstaff", "deleteherald", "chanop"]
 )
-def deleteherald(text, chan, db, reply):
+def deleteherald(text, chan, db, reply) -> None:
     """<nickname> - Delete [nickname]'s herald."""
 
     nick = text.strip()
@@ -140,7 +142,7 @@ def should_send(conn, chan, nick, join_time) -> bool:
 
 
 @hook.irc_raw("JOIN", singlethread=True)
-def welcome(nick, message, bot, chan, conn):
+def welcome(nick, message, bot, chan, conn) -> None:
     decoy = re.compile(
         "[\xd2o\u25cbO0\xf6\xf8\xf3\u022f\xf4\u0151\u014f\u1d0f\u014d\u03bf][<>\uff1c]"
     )

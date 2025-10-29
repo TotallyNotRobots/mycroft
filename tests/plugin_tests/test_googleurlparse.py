@@ -9,7 +9,7 @@ from plugins import googleurlparse
         ("www.google.com/url?thing&url=example.com", "example.com"),
     ],
 )
-def test_google_url(text, url):
+def test_google_url(text, url) -> None:
     match = googleurlparse.spamurl.search(text)
     assert match
     assert googleurlparse.google_url(match) == url

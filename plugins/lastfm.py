@@ -21,7 +21,7 @@ table = Table(
 )
 
 
-def format_user(user):
+def format_user(user) -> str:
     """
     >>> format_user('someuser')
     's\u200bomeuser'
@@ -72,7 +72,7 @@ last_cache: dict[str, str] = {}
 
 
 @hook.on_start()
-def load_cache(db):
+def load_cache(db) -> None:
     new_cache = {}
     for row in db.execute(table.select()):
         new_cache[row.nick] = row.acc

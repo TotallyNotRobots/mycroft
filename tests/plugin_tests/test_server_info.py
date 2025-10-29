@@ -4,7 +4,7 @@ from cloudbot.util.irc import ChannelMode, ModeType, StatusMode
 from plugins.core import server_info
 
 
-def test_parse_isupport():
+def test_parse_isupport() -> None:
     conn = MagicMock(memory={})
     server_info.clear_isupport(conn)
     tokens = [

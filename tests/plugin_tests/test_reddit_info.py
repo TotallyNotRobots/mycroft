@@ -23,7 +23,7 @@ from tests.util import HookResult, wrap_hook_response
         ),
     ],
 )
-def test_post_re_match(text, post_id):
+def test_post_re_match(text, post_id) -> None:
     match = reddit_info.post_re.search(text)
     assert match and (match.group(1) == post_id)
 
@@ -37,7 +37,7 @@ def test_post_re_match(text, post_id):
         "fakereddit.com/r/foo/comments/bar",
     ],
 )
-def test_post_re_no_match(text):
+def test_post_re_no_match(text) -> None:
     assert not reddit_info.post_re.search(text)
 
 
@@ -54,7 +54,7 @@ def test_post_re_no_match(text):
         ("/r/test/", "test"),
     ],
 )
-def test_get_sub(text, output):
+def test_get_sub(text, output) -> None:
     assert reddit_info.get_sub(text) == output
 
 
@@ -81,11 +81,11 @@ def test_get_sub(text, output):
         ("/u/user", "user"),
     ],
 )
-def test_get_user(text, output):
+def test_get_user(text, output) -> None:
     assert reddit_info.get_user(text) == output
 
 
-def test_reddit_no_posts(mock_requests):
+def test_reddit_no_posts(mock_requests) -> None:
     mock_requests.add(
         "GET",
         "https://reddit.com/r/foobar/.json",
@@ -99,7 +99,7 @@ def test_reddit_no_posts(mock_requests):
     assert response == "There do not appear to be any posts to show."
 
 
-def test_reddit_random_post(mock_requests):
+def test_reddit_random_post(mock_requests) -> None:
     mock_requests.add(
         "GET",
         "https://reddit.com/r/foobar/.json",
@@ -246,7 +246,7 @@ def test_reddit_random_post(mock_requests):
     ]
 
 
-def test_reddit_random_post_sub_not_found(mock_requests: RequestsMock):
+def test_reddit_random_post_sub_not_found(mock_requests: RequestsMock) -> None:
     mock_requests.add(
         "GET",
         "https://reddit.com/r/foobar/.json",
@@ -282,7 +282,7 @@ def test_reddit_random_post_sub_not_found(mock_requests: RequestsMock):
     ]
 
 
-def test_karma(mock_requests):
+def test_karma(mock_requests) -> None:
     mock_requests.add(
         "GET",
         "https://reddit.com/user/foo/about.json",
@@ -381,7 +381,7 @@ def test_karma(mock_requests):
     ]
 
 
-def test_cake_day(mock_requests):
+def test_cake_day(mock_requests) -> None:
     mock_requests.add(
         "GET",
         "https://reddit.com/user/foo/about.json",

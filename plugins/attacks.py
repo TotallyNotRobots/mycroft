@@ -35,7 +35,7 @@ class BasicAttack:
         file=None,
         response=RespType.ACTION,
         require_target=True,
-    ):
+    ) -> None:
         self.name = name
         self.action = action or name
         self.doc = doc
@@ -140,14 +140,14 @@ ATTACKS = (
 )
 
 
-def load_data(path, data_dict):
+def load_data(path, data_dict) -> None:
     data_dict.clear()
     with path.open(encoding="utf-8") as f:
         data_dict.update(json.load(f))
 
 
 @hook.on_start()
-def load_attacks(bot):
+def load_attacks(bot) -> None:
     attack_data.clear()
     data_dir = bot.data_path / "attacks"
     for data_file in ATTACKS:
@@ -202,7 +202,7 @@ def basic_attack(attack):
     return func
 
 
-def create_basic_hooks():
+def create_basic_hooks() -> None:
     for attack in ATTACKS:
         globals()[attack.name] = hook.command(
             *attack.commands, autohelp=attack.require_target

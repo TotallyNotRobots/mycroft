@@ -5,6 +5,7 @@ import re
 import warnings
 from collections.abc import Callable, Sequence
 from enum import Enum, IntEnum, unique
+from re import Pattern
 from typing import Any, TypeVar, overload
 
 from typing_extensions import ParamSpec
@@ -38,21 +39,21 @@ class Action(Enum):
 
 
 class _Hook:
-    def __init__(self, function, _type):
+    def __init__(self, function, _type) -> None:
         self.function = function
         self.type = _type
-        self.kwargs = {}
+        self.kwargs: dict[str, Any] = {}
 
-    def _add_hook(self, kwargs):
+    def _add_hook(self, kwargs) -> None:
         # update kwargs, overwriting duplicates
         self.kwargs.update(kwargs)
 
 
 class _CommandHook(_Hook):
-    def __init__(self, function):
+    def __init__(self, function) -> None:
         _Hook.__init__(self, function, "command")
-        self.aliases = set()
-        self.main_alias = None
+        self.aliases = set[str]()
+        self.main_alias: str | None = None
 
         if function.__doc__:
             # Split on the first entirely blank line
@@ -81,11 +82,11 @@ class _CommandHook(_Hook):
 
 
 class _RegexHook(_Hook):
-    def __init__(self, function):
+    def __init__(self, function) -> None:
         _Hook.__init__(self, function, "regex")
-        self.regexes = []
+        self.regexes: list[Pattern[str]] = []
 
-    def add_hook(self, regex_param, kwargs):
+    def add_hook(self, regex_param, kwargs) -> None:
         self._add_hook(kwargs)
         # add all regex_parameters to valid regexes
         if isinstance(regex_param, str):
@@ -108,11 +109,11 @@ class _RegexHook(_Hook):
 
 
 class _RawHook(_Hook):
-    def __init__(self, function):
+    def __init__(self, function) -> None:
         _Hook.__init__(self, function, "irc_raw")
-        self.triggers = set()
+        self.triggers = set[str]()
 
-    def add_hook(self, trigger_param, kwargs):
+    def add_hook(self, trigger_param, kwargs) -> None:
         self._add_hook(kwargs)
 
         if isinstance(trigger_param, str):
@@ -123,11 +124,11 @@ class _RawHook(_Hook):
 
 
 class _PeriodicHook(_Hook):
-    def __init__(self, function):
+    def __init__(self, function) -> None:
         _Hook.__init__(self, function, "periodic")
         self.interval = 60.0
 
-    def add_hook(self, interval, kwargs):
+    def add_hook(self, interval, kwargs) -> None:
         self._add_hook(kwargs)
 
         if interval:
@@ -135,11 +136,11 @@ class _PeriodicHook(_Hook):
 
 
 class _EventHook(_Hook):
-    def __init__(self, function):
+    def __init__(self, function) -> None:
         _Hook.__init__(self, function, "event")
-        self.types = set()
+        self.types = set[EventType]()
 
-    def add_hook(self, trigger_param, kwargs):
+    def add_hook(self, trigger_param, kwargs) -> None:
         self._add_hook(kwargs)
 
         if isinstance(trigger_param, EventType):
@@ -150,26 +151,26 @@ class _EventHook(_Hook):
 
 
 class _CapHook(_Hook):
-    def __init__(self, func, _type):
+    def __init__(self, func, _type) -> None:
         super().__init__(func, f"on_cap_{_type}")
-        self.caps = set()
+        self.caps = set[str]()
 
-    def add_hook(self, caps, kwargs):
+    def add_hook(self, caps, kwargs) -> None:
         self._add_hook(kwargs)
         self.caps.update(caps)
 
 
 class _PermissionHook(_Hook):
-    def __init__(self, func):
+    def __init__(self, func) -> None:
         super().__init__(func, "perm_check")
-        self.perms = set()
+        self.perms = set[str]()
 
-    def add_hook(self, perms, kwargs):
+    def add_hook(self, perms, kwargs) -> None:
         self._add_hook(kwargs)
         self.perms.update(perms)
 
 
-def _add_hook(func, hook):
+def _add_hook(func, hook) -> None:
     if not hasattr(func, HOOK_ATTR):
         setattr(func, HOOK_ATTR, {})
     else:
@@ -186,7 +187,7 @@ def _get_hook(func, hook_type):
     return None
 
 
-def _hook_warn():
+def _hook_warn() -> None:
     warnings.warn(
         "Direct decorators are deprecated", DeprecationWarning, stacklevel=3
     )

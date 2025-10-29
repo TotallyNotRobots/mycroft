@@ -29,7 +29,7 @@ matcher = BadwordMatcher()
 
 @hook.on_start()
 @hook.command("loadbad", permissions=["badwords"], autohelp=False)
-def load_bad(db):
+def load_bad(db) -> None:
     """- Should run on start of bot to load the existing words into the regex"""
     words = []
     new_cache = defaultdict(list)
@@ -49,7 +49,7 @@ def load_bad(db):
 
 
 @hook.command("addbad", permissions=["badwords"])
-def add_bad(text, nick, db):
+def add_bad(text, nick, db) -> str:
     """<word> <channel> - adds a bad word to the auto kick list must specify a channel with each word"""
     splt = text.lower().split(None, 1)
     word, channel = splt
@@ -75,7 +75,7 @@ def add_bad(text, nick, db):
 
 
 @hook.command("rmbad", "delbad", permissions=["badwords"])
-def del_bad(text, db):
+def del_bad(text, db) -> str:
     """<word> <channel> - removes the specified word from the specified channels bad word list"""
     splt = text.lower().split(None, 1)
     word, channel = splt
@@ -104,7 +104,7 @@ def list_bad(text):
 
 
 @hook.event([EventType.message, EventType.action], singlethread=True)
-def check_badwords(conn, message, chan, content, nick):
+def check_badwords(conn, message, chan, content, nick) -> None:
     if not matcher.regex:
         return
 

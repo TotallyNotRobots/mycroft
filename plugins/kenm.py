@@ -6,7 +6,7 @@ kenm_data: list[str] = []
 
 
 @hook.on_start()
-def load_kenm(bot):
+def load_kenm(bot) -> None:
     kenm_data.clear()
     with open((bot.data_path / "kenm.txt"), encoding="utf-8") as f:
         kenm_data.extend(
@@ -15,6 +15,6 @@ def load_kenm(bot):
 
 
 @hook.command("kenm", autohelp=False)
-def kenm(message):
+def kenm(message) -> None:
     """- Wisdom from Ken M."""
     message(random.choice(kenm_data))
