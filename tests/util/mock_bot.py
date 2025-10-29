@@ -27,7 +27,7 @@ class MockBot(AbstractBot):
         self.data_dir = str(self.data_path)
         self.plugin_dir = self.base_dir / "plugins"
         if loop:
-            self.stopped_future: Awaitable[bool] = loop.create_future()
+            self.stopped_future: Awaitable[bool] | None = loop.create_future()
         else:
             self.stopped_future = None
 

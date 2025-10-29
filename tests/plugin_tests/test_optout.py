@@ -84,10 +84,11 @@ def test_get_first_matching_optout(mock_db) -> None:
 
     optout.load_cache(mock_db.session())
 
-    assert (
-        optout.get_first_matching_optout("my_net", "#my_chan", "my.hook").allow
-        is True
+    first_match = optout.get_first_matching_optout(
+        "my_net", "#my_chan", "my.hook"
     )
+    assert first_match is not None
+    assert first_match.allow is True
 
 
 def test_optout_match() -> None:
@@ -171,9 +172,9 @@ def test_exact_override() -> None:
         opts.sort(reverse=True)
 
     with patch.dict(optout.optout_cache, clear=True, values=optouts):
-        assert (
-            optout.get_first_matching_optout(net, channel, hook).allow is True
-        )
+        first_match = optout.get_first_matching_optout(net, channel, hook)
+        assert first_match is not None
+        assert first_match.allow is True
 
 
 @pytest.mark.asyncio
@@ -320,10 +321,11 @@ def test_match_optout() -> None:
             )
             is None
         )
-        assert (
-            optout.get_first_matching_optout("net", "#foobar", "my.hook").allow
-            is True
+        first_match = optout.get_first_matching_optout(
+            "net", "#foobar", "my.hook"
         )
+        assert first_match is not None
+        assert first_match.allow is True
 
 
 def test_format() -> None:

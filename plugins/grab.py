@@ -218,6 +218,9 @@ def grabsearch(text, chan, conn):
     pager = paginated_list(grabs, pager_cls=CommandPager)
     search_pages[conn.name][chan] = pager
     page = pager.next()
+    if page is None:
+        return "No results"
+
     if len(pager) > 1:
         page[-1] += " .moregrab"
 

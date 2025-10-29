@@ -2,7 +2,7 @@ import signal
 import sys
 import threading
 import traceback
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from cloudbot import hook
 from cloudbot.util import web
@@ -12,7 +12,9 @@ try:  # pragma: no cover
     import pympler.muppy
     import pympler.summary
     import pympler.tracker
-    from pympler.tracker import SummaryTracker
+
+    if TYPE_CHECKING:
+        from pympler.tracker import SummaryTracker
 except ImportError:
     pympler = None
 
@@ -114,7 +116,7 @@ def pympler_summary() -> str:
 @hook.command("pymdiff", autohelp=False, permissions=["botcontrol"])
 def pympler_diff() -> str:
     """- Print object diff data to the console"""
-    if pympler is None:
+    if tr is None:
         return "pympler not installed / not enabled"
     tr.print_diff()
     return "Printed to console"

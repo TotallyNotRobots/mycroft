@@ -107,7 +107,7 @@ namespace_packages = true
 python_version = "3.10"
 warn_unused_configs = true
 strict = false
-strict_optional = false
+strict_optional = true
 ignore_missing_imports = true
 check_untyped_defs = true
 show_error_codes = true
@@ -142,7 +142,6 @@ enable_error_code = [
 [[tool.mypy.overrides]]
 module = 'cloudbot.*'
 warn_return_any = true
-strict_optional = true
 
 [[tool.mypy.overrides]]
 module = 'cloudbot.config'
@@ -151,11 +150,9 @@ disallow_untyped_defs = true
 [[tool.mypy.overrides]]
 module = 'cloudbot.util.*'
 warn_return_any = true
-strict_optional = true
 
 [[tool.mypy.overrides]]
 module = 'plugins.cryptocurrency'
-strict_optional = true
 warn_return_any = true
 
 [tool.pydantic-mypy]

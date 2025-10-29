@@ -50,4 +50,8 @@ def test_get_soup() -> None:
     """
     with patch("cloudbot.util.http.get", lambda *a, **k: test_data):
         soup = http.get_soup("http://example.com")
-        assert soup.find("div", {"class": "thing"}).p.text == "foobar"
+        tag = soup.find("div", {"class": "thing"})
+        assert tag is not None
+        subtag = tag.p
+        assert subtag is not None
+        assert subtag.text == "foobar"

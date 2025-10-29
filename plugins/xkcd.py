@@ -53,8 +53,11 @@ def xkcd_search(term):
     if not result:
         return "No results found!"
 
-    url = result.find("div", {"class": "tinylink"}).text
-    xkcd_id = url[:-1].split("/")[-1]
+    tinylink = result.find("div", {"class": "tinylink"})
+    if tinylink is None:
+        raise ValueError("Can't find tinylink in page")
+
+    xkcd_id = tinylink.get_text()[:-1].split("/")[-1]
     return xkcd_info(xkcd_id, url=True)
 
 

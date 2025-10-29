@@ -16,7 +16,7 @@ from numbers import Number
 from operator import attrgetter
 from typing import Any
 
-from irclib.parser import MessageTag, Prefix, TagList
+from irclib.parser import Prefix, TagList
 
 import cloudbot.bot
 from cloudbot import hook
@@ -583,7 +583,7 @@ def handle_tags(conn: IrcClient, nick: str, irc_tags: TagList) -> None:
     users = get_users(conn)
 
     if irc_tags:
-        account_tag: MessageTag = irc_tags.get("account")
+        account_tag = irc_tags.get("account")
         if account_tag:
             user_data = users.getuser(nick)
             user_data.account = account_tag.value

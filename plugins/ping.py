@@ -58,8 +58,14 @@ def ping(text, reply) -> str:
 
     if IS_WINDOWS:
         m = re.search(win_ping_regex, pingcmd)
+        if m is None:
+            return "Failed to match results"
+
         r = int(m.group(2)) - int(m.group(1))
         return f"min: {m.group(1)}ms, max: {m.group(2)}ms, average: {m.group(3)}ms, range: {r}ms, count: {count}"
 
     m = re.search(unix_ping_regex, pingcmd)
+    if m is None:
+        return "Failed to match results"
+
     return f"min: {m.group(1)}ms, max: {m.group(3)}ms, average: {m.group(2)}ms, range: {m.group(4)}ms, count: {count}"

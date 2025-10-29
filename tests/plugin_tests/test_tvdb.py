@@ -31,7 +31,7 @@ def test_holder_of_optional() -> None:
     holder.set(1)
     assert holder.get() == 1
 
-    holder2 = tvdb.Holder.of_optional(None)
+    holder2 = tvdb.Holder[int].of_optional(None)
     assert not holder2.exists()
 
     holder = tvdb.Holder.of_optional(1)

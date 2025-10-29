@@ -223,7 +223,7 @@ async def optout(text, event, chan, db, conn):
 
     pattern = args.pop(0)
 
-    allowed = False
+    allowed: bool = False
     if args:
         allow = args.pop(0)
         try:
