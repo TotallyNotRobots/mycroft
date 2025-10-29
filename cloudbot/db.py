@@ -5,8 +5,7 @@ import alembic.command
 import alembic.config
 
 import cloudbot
-from cloudbot.bot import CloudBot
-from cloudbot.bot import bot as bot_instance
+from cloudbot.bot import CloudBot, bot_instance
 from cloudbot.util import database
 
 

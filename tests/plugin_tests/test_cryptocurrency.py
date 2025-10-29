@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 import pytest
 from responses import Response
 
-from cloudbot.bot import bot
+from cloudbot.bot import bot_instance
 from cloudbot.event import CommandEvent
 from plugins import cryptocurrency
 from tests.util import HookResult, wrap_hook_response
@@ -34,7 +34,7 @@ def init_response(
     price=50000000000.0,
 ) -> None:
     if check_api_key:
-        b = bot.get()
+        b = bot_instance.get()
         assert b is not None
         cryptocurrency.init_api(b)
 
@@ -158,7 +158,7 @@ def init_response(
 
 
 def test_api(mock_requests, mock_api_keys) -> None:
-    bot.config["plugins"] = {}
+    mock_api_keys.config["plugins"] = {}
     init_response(mock_requests, check_api_key=True)
 
     result = cryptocurrency.api.get_quote("BTC", "USD")

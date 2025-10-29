@@ -8,7 +8,6 @@ from requests.auth import HTTPBasicAuth
 from yarl import URL
 
 from cloudbot import hook
-from cloudbot.bot import bot
 
 spotify_re = re.compile(
     r"(spotify:(track|album|artist|user):([a-zA-Z0-9]+))", re.I
@@ -163,7 +162,7 @@ def _format_search(text, _type, reply):
 
 
 @hook.on_start()
-def set_keys() -> None:
+def set_keys(bot) -> None:
     api.set_keys(
         bot.config.get_api_key("spotify_client_id"),
         bot.config.get_api_key("spotify_client_secret"),

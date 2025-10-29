@@ -8,7 +8,7 @@ import requests
 from requests import Response
 
 from cloudbot import hook
-from cloudbot.bot import bot
+from cloudbot.bot import bot_instance
 from cloudbot.util import colors, timeformat
 from cloudbot.util.formatting import pluralize_suffix
 
@@ -81,7 +81,7 @@ def do_request(
     params: ParamMap | None = None,
     **kwargs: ParamValues,
 ) -> requests.Response:
-    api_key = bot.config.get_api_key("google_dev_key")
+    api_key = bot_instance.config.get_api_key("google_dev_key")
     if not api_key:
         raise NoApiKeyError()
 

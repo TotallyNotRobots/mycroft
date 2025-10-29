@@ -7,7 +7,7 @@ import requests
 from sqlalchemy import Column, PrimaryKeyConstraint, String, Table
 
 from cloudbot import hook
-from cloudbot.bot import bot
+from cloudbot.bot import bot_instance
 from cloudbot.util import database, timeformat, web
 
 api_url = "http://ws.audioscrobbler.com/2.0/?format=json"
@@ -87,7 +87,7 @@ def get_account(nick, text=None):
 
 
 def api_request(method, **params):
-    api_key = bot.config.get_api_key("lastfm")
+    api_key = bot_instance.config.get_api_key("lastfm")
     params.update({"method": method, "api_key": api_key})
     request = requests.get(api_url, params=params)
 
@@ -184,7 +184,7 @@ def check_key_and_user(nick, text):
     :param text: The text passed to the command, possibly a different username to use
     :return: The parsed username and any error message that occurred
     """
-    api_key = bot.config.get_api_key("lastfm")
+    api_key = bot_instance.config.get_api_key("lastfm")
     if not api_key:
         return None, "Error: No API key set."
 
@@ -225,7 +225,7 @@ def _topartists(text, nick, period=None, limit=10):
 
 
 @hook.command("lastfm", "last", "np", "l", autohelp=False)
-def lastfm(event, db, text, nick):
+def lastfm(event, db, text, nick, bot):
     """[user] [dontsave] - displays the now playing (or last played) track of LastFM user [user]"""
     api_key = bot.config.get_api_key("lastfm")
     if not api_key:
@@ -325,7 +325,7 @@ def lastfm(event, db, text, nick):
 
 
 @hook.command("plays")
-def getuserartistplaycount(event, text, nick):
+def getuserartistplaycount(event, text, nick, bot):
     """[artist] - displays the current user's playcount for [artist]. You must have your username saved."""
     api_key = bot.config.get_api_key("lastfm")
     if not api_key:
@@ -352,7 +352,7 @@ def getuserartistplaycount(event, text, nick):
 
 
 @hook.command("band", "la")
-def displaybandinfo(text):
+def displaybandinfo(text, bot):
     """[artist] - displays information about [artist]."""
     api_key = bot.config.get_api_key("lastfm")
     if not api_key:
@@ -374,7 +374,7 @@ def displaybandinfo(text):
 
 
 @hook.command("lastfmcompare", "compare", "lc")
-def lastfmcompare(text, nick):
+def lastfmcompare(text, nick, bot):
     """<user1> [user2] - displays the now playing (or last played) track of LastFM user [user]"""
     api_key = bot.config.get_api_key("lastfm")
     if not api_key:

@@ -11,7 +11,7 @@ from collections.abc import Sequence
 import sqlalchemy as sa
 from alembic import op
 
-from cloudbot import bot
+from cloudbot.bot import bot_instance
 from cloudbot.util.database import Session
 
 # revision identifiers, used by Alembic.
@@ -105,7 +105,9 @@ def upgrade() -> None:
         [
             {"connection": conn, "name": row.name, "config": row.config}
             for row in session.execute(sa.select(old_group_table)).all()
-            for conn in bot.bot.get().get_connection_configs().keys()
+            for conn in bot_instance.get_or_raise()
+            .get_connection_configs()
+            .keys()
         ],
     )
     op.bulk_insert(
@@ -118,7 +120,9 @@ def upgrade() -> None:
                 "config": row.config,
             }
             for row in session.execute(sa.select(old_perm_table)).all()
-            for conn in bot.bot.get().get_connection_configs().keys()
+            for conn in bot_instance.get_or_raise()
+            .get_connection_configs()
+            .keys()
         ],
     )
     op.bulk_insert(
@@ -131,7 +135,9 @@ def upgrade() -> None:
                 "config": row.config,
             }
             for row in session.execute(sa.select(old_member_table)).all()
-            for conn in bot.bot.get().get_connection_configs().keys()
+            for conn in bot_instance.get_or_raise()
+            .get_connection_configs()
+            .keys()
         ],
     )
     op.drop_table(old_perm_table.name)

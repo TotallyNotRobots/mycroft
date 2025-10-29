@@ -16,13 +16,12 @@ import requests
 
 import cloudbot
 from cloudbot import hook
-from cloudbot.bot import bot
 
 API_SB = "https://sb-ssl.google.com/safebrowsing/api/lookup"
 
 
 @hook.command()
-def issafe(text):
+def issafe(text, bot):
     """<website> - Checks the website against Google's Safe Browsing List."""
     if urlparse(text).scheme not in ["https", "http"]:
         return "Check your URL (it should be a complete URI)."

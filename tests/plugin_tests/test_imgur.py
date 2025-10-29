@@ -8,7 +8,7 @@ from plugins import imgur
 
 def test_imgur_no_api(mock_requests: RequestsMock, mock_api_keys) -> None:
     mock_api_keys.config.get_api_key.return_value = None
-    imgur.set_api()
+    imgur.set_api(mock_api_keys)
     response = imgur.imgur("aries")
 
     assert response == "No imgur API details"
@@ -28,7 +28,7 @@ def test_imgur_no_results(mock_requests: RequestsMock, mock_api_keys) -> None:
         json=[],
     )
 
-    imgur.set_api()
+    imgur.set_api(mock_api_keys)
     response = imgur.imgur("foobar")
 
     assert response == "No results found."
@@ -73,7 +73,7 @@ def test_imgur_meme(mock_requests: RequestsMock, mock_api_keys) -> None:
         ],
     )
 
-    imgur.set_api()
+    imgur.set_api(mock_api_keys)
     response = imgur.imgur("foobar")
 
     assert response == '[\2nsfw\2] "\2foo\2 - foo" - foo.bar'

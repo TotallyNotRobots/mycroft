@@ -9,7 +9,7 @@ from typing import Any, cast
 import requests
 
 from cloudbot import hook
-from cloudbot.bot import bot
+from cloudbot.bot import bot_instance
 from cloudbot.util import colors, web
 from cloudbot.util.http import GetParams
 
@@ -84,7 +84,7 @@ def raise_error(data):
 def api_request(endpoint: str, params=(), **kwargs) -> list[dict[str, Any]]:
     kwargs.update(params)
 
-    api_key = bot.config.get_api_key("wordnik")
+    api_key = bot_instance.config.get_api_key("wordnik")
     if not api_key:
         raise NoAPIKey()
 
