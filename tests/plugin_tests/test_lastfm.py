@@ -7,7 +7,6 @@ from requests import HTTPError
 from responses import RequestsMock
 from responses.matchers import query_param_matcher
 
-from cloudbot.bot import bot
 from cloudbot.event import CommandEvent
 from plugins import lastfm
 from tests.util import wrap_hook_response
@@ -27,7 +26,7 @@ def test_get_account(mock_db, mock_requests) -> None:
 
 @pytest.mark.asyncio
 async def test_api(mock_bot_factory, unset_bot) -> None:
-    bot.set(mock_bot_factory(config={"api_keys": {"lastfm": "hunter20"}}))
+    _ = mock_bot_factory(config={"api_keys": {"lastfm": "hunter20"}})
 
     with RequestsMock() as reqs:
         with pytest.raises(requests.ConnectionError):
@@ -230,7 +229,7 @@ class TestCheckKeyAndUser:
         assert err == expected
 
     def test_no_key(self, mock_api_keys, mock_requests, mock_db) -> None:
-        bot.config.get_api_key.return_value = None  # type: ignore
+        mock_api_keys.config.get_api_key.return_value = None
         res, err = lastfm.check_key_and_user("foo", "baz")
         assert res is None
         assert err == "Error: No API key set."

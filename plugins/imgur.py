@@ -6,7 +6,6 @@ from re import Match
 from imgurpython import ImgurClient
 
 from cloudbot import hook
-from cloudbot.bot import bot
 from cloudbot.util import web
 
 # imgurpython has an issue where it does not allow anonymous album creation
@@ -24,7 +23,7 @@ class APIContainer:
 container = APIContainer()
 
 
-def make_api():
+def make_api(bot):
     client_id = bot.config.get_api_key("imgur_client_id")
     client_secret = bot.config.get_api_key("imgur_client_secret")
 
@@ -36,8 +35,8 @@ def make_api():
 
 
 @hook.on_start()
-def set_api() -> None:
-    container.api = make_api()
+def set_api(bot) -> None:
+    container.api = make_api(bot)
 
 
 def get_items(text):

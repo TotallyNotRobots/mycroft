@@ -2,13 +2,12 @@ import requests
 from requests import HTTPError
 
 from cloudbot import hook
-from cloudbot.bot import bot
 
 api_url = "http://api.brewerydb.com/v2/search?format=json"
 
 
 @hook.command("brew")
-def brew(text, reply):
+def brew(text, reply, bot):
     """<query> - returns the first brewerydb search result for <query>"""
     api_key = bot.config.get_api_key("brewerydb")
     if not api_key:

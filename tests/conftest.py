@@ -13,7 +13,7 @@ from sqlalchemy import orm as sa_orm
 from sqlalchemy.orm import close_all_sessions
 
 import cloudbot
-from cloudbot.bot import bot
+from cloudbot.bot import bot_instance
 from cloudbot.util import database
 from cloudbot.util.database import Session
 from tests.util.mock_bot import MockBot
@@ -82,7 +82,7 @@ def mock_bot_factory(tmp_path, unset_bot):
         kwargs["loop"] = loop
         kwargs.setdefault("base_dir", tmp_path)
         _bot = MockBot(**kwargs)
-        bot.set(_bot)
+        bot_instance.set(_bot)
         instances.append(_bot)
         return _bot
 
@@ -116,12 +116,12 @@ def freeze_time():
 def mock_api_keys():
     mock_bot = MagicMock()
     try:
-        bot.set(mock_bot)
+        bot_instance.set(mock_bot)
         # pylint: disable=no-member
         mock_bot.config.get_api_key.return_value = "APIKEY"
         yield mock_bot
     finally:
-        bot.set(None)
+        bot_instance.set(None)
 
 
 @pytest.fixture()
@@ -129,7 +129,7 @@ def unset_bot():
     try:
         yield
     finally:
-        bot.set(None)
+        bot_instance.set(None)
 
 
 @pytest.fixture()

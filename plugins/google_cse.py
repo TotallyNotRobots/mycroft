@@ -14,14 +14,13 @@ License:
 import requests
 
 from cloudbot import hook
-from cloudbot.bot import bot
 from cloudbot.util import filesize, formatting
 
 API_CS = "https://www.googleapis.com/customsearch/v1"
 
 
 @hook.command("gse")
-def gse(text) -> str:
+def gse(text, bot) -> str:
     """<query> - Returns first Google search result for <query>."""
     dev_key = bot.config.get_api_key("google_dev_key")
     cx = bot.config.get_api_key("google_cse_id")
@@ -51,7 +50,7 @@ def gse(text) -> str:
 
 
 @hook.command("gseis", "image")
-def gse_gis(text) -> str:
+def gse_gis(text, bot) -> str:
     """<query> - Returns first Google Images result for <query>."""
     dev_key = bot.config.get_api_key("google_dev_key")
     cx = bot.config.get_api_key("google_cse_id")

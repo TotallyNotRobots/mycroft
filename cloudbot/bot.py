@@ -27,6 +27,13 @@ from cloudbot.reloader import ConfigReloader, PluginReloader
 from cloudbot.util import CLIENT_ATTR, database, formatting
 from cloudbot.util.mapping import KeyFoldDict
 
+__all__ = [
+    "bot",
+    "bot_instance",
+    "AbstractBot",
+    "CloudBot",
+]
+
 logger = logging.getLogger("cloudbot")
 
 
@@ -64,9 +71,21 @@ class AbstractBot:
         raise NotImplementedError
 
 
+class GlobalBotNotSet(ValueError):
+    def __init__(self):
+        super().__init__("Not bot instance available")
+
+
 class BotInstanceHolder:
     def __init__(self) -> None:
         self._instance: AbstractBot | None = None
+
+    def get_or_raise(self) -> AbstractBot:
+        instance = self.get()
+        if instance is None:
+            raise GlobalBotNotSet
+
+        return instance
 
     def get(self) -> AbstractBot | None:
         return self._instance
@@ -76,15 +95,23 @@ class BotInstanceHolder:
 
     @property
     def config(self) -> Config:
-        instance = self.get()
-        if not instance:
-            raise ValueError("No bot instance available")
-
-        return instance.config
+        return self.get_or_raise().config
 
 
 # Store a global instance of the bot to allow easier access to global data
-bot = BotInstanceHolder()
+bot_instance = BotInstanceHolder()
+bot: BotInstanceHolder
+
+
+def __getattr__(item: str):
+    if item == "bot":
+        warnings.warn(
+            "'bot' module-level value is deprecated, use 'bot_instance' instead.",
+            DeprecationWarning,
+        )
+        return bot_instance
+
+    raise AttributeError(item)
 
 
 def clean_name(n):
@@ -129,10 +156,10 @@ class CloudBot(AbstractBot):
         base_dir: Path | None = None,
         create_connections: bool = True,
     ) -> None:
-        if bot.get():
+        if bot_instance.get():
             raise ValueError("There seems to already be a bot running!")
 
-        bot.set(self)
+        bot_instance.set(self)
         # basic variables
         self.base_dir = base_dir or Path().resolve()
         self.plugin_dir = self.base_dir / "plugins"

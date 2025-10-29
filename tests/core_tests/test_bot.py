@@ -50,9 +50,14 @@ async def test_get_connection_configs_with_dupes(
 
 
 def test_no_instance_config(unset_bot) -> None:
-    cloudbot.bot.bot.set(None)
+    cloudbot.bot.bot_instance.set(None)
     with pytest.raises(ValueError):
-        _ = cloudbot.bot.bot.config
+        _ = cloudbot.bot.bot_instance.config
+
+
+def test_deprecated_bot_var(unset_bot) -> None:
+    with pytest.deprecated_call():
+        _ = cloudbot.bot.bot.get()
 
 
 @pytest.mark.asyncio()

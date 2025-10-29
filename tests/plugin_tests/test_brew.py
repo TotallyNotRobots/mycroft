@@ -4,15 +4,14 @@ from unittest.mock import MagicMock
 import pytest
 from responses.matchers import query_param_matcher
 
-from cloudbot.bot import bot
 from plugins import brew
 
 
 @pytest.mark.asyncio
 async def test_no_key(mock_bot_factory, mock_requests, unset_bot) -> None:
-    bot.set(mock_bot_factory(config={"api_keys": {}}))
+    bot = mock_bot_factory(config={"api_keys": {}})
     reply = MagicMock()
-    result = brew.brew("some text", reply)
+    result = brew.brew("some text", reply, bot)
 
     reply.assert_not_called()
 
@@ -21,7 +20,7 @@ async def test_no_key(mock_bot_factory, mock_requests, unset_bot) -> None:
 
 @pytest.mark.asyncio
 async def test_empty_body(mock_bot_factory, mock_requests, unset_bot) -> None:
-    bot.set(mock_bot_factory(config={"api_keys": {"brewerydb": "APIKEY"}}))
+    bot = mock_bot_factory(config={"api_keys": {"brewerydb": "APIKEY"}})
     mock_requests.add(
         "GET",
         "http://api.brewerydb.com/v2/search",
@@ -40,7 +39,7 @@ async def test_empty_body(mock_bot_factory, mock_requests, unset_bot) -> None:
     )
 
     reply = MagicMock()
-    result = brew.brew("some text", reply)
+    result = brew.brew("some text", reply, bot)
 
     reply.assert_not_called()
 
@@ -49,7 +48,7 @@ async def test_empty_body(mock_bot_factory, mock_requests, unset_bot) -> None:
 
 @pytest.mark.asyncio
 async def test_no_results(mock_bot_factory, mock_requests, unset_bot) -> None:
-    bot.set(mock_bot_factory(config={"api_keys": {"brewerydb": "APIKEY"}}))
+    bot = mock_bot_factory(config={"api_keys": {"brewerydb": "APIKEY"}})
     mock_requests.add(
         "GET",
         "http://api.brewerydb.com/v2/search",
@@ -68,7 +67,7 @@ async def test_no_results(mock_bot_factory, mock_requests, unset_bot) -> None:
     )
 
     reply = MagicMock()
-    result = brew.brew("some text", reply)
+    result = brew.brew("some text", reply, bot)
 
     reply.assert_not_called()
 
@@ -114,7 +113,7 @@ async def test_results(
     website,
     out,
 ) -> None:
-    bot.set(mock_bot_factory(config={"api_keys": {"brewerydb": "APIKEY"}}))
+    bot = mock_bot_factory(config={"api_keys": {"brewerydb": "APIKEY"}})
     brewery = {"name": "foo"}
     if website:
         brewery["website"] = website
@@ -152,7 +151,7 @@ async def test_results(
     )
 
     reply = MagicMock()
-    result = brew.brew("some text", reply)
+    result = brew.brew("some text", reply, bot)
 
     reply.assert_not_called()
 

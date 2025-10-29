@@ -5,7 +5,6 @@ import pytest
 import requests
 from responses.matchers import query_param_matcher
 
-from cloudbot.bot import bot
 from cloudbot.event import CommandEvent
 from plugins import tvdb
 from tests.util import HookResult, wrap_hook_response
@@ -43,7 +42,7 @@ def test_token(mock_requests, reset_api, mock_api_keys) -> None:
     mock_requests.add(
         "POST", "https://api.thetvdb.com/login", json={"token": "foobar3"}
     )
-    tvdb.api.refresh_token(MagicMock(config=bot.config))
+    tvdb.api.refresh_token(mock_api_keys)
     assert tvdb.api.jwt_token == "foobar3"
 
 
@@ -53,7 +52,7 @@ def test_refresh(mock_requests, reset_api, mock_api_keys, enable_api) -> None:
         "https://api.thetvdb.com/refresh_token",
         json={"token": "foobar1"},
     )
-    tvdb.refresh(MagicMock(config=bot.config))
+    tvdb.refresh(mock_api_keys)
     assert tvdb.api.jwt_token == "foobar1"
 
 
@@ -66,7 +65,7 @@ def test_refresh_expired(
     mock_requests.add(
         "POST", "https://api.thetvdb.com/login", json={"token": "foobar2"}
     )
-    tvdb.api.refresh_token(MagicMock(config=bot.config))
+    tvdb.api.refresh_token(mock_api_keys)
     assert tvdb.api.jwt_token == "foobar2"
 
 
@@ -77,7 +76,7 @@ def test_refresh_other_error(
         "GET", "https://api.thetvdb.com/refresh_token", status=502
     )
     with pytest.raises(requests.HTTPError):
-        tvdb.api.refresh_token(MagicMock(config=bot.config))
+        tvdb.api.refresh_token(mock_api_keys)
 
 
 def generate_pages(mock_requests, url, count=5, per_page=5) -> None:

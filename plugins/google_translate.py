@@ -1,13 +1,13 @@
 import requests
 
 from cloudbot import hook
-from cloudbot.bot import bot
+from cloudbot.bot import bot_instance
 
 max_length = 100
 
 
 def goog_trans(text, source, target) -> str:
-    api_key = bot.config.get_api_key("google_dev_key")
+    api_key = bot_instance.config.get_api_key("google_dev_key")
     url = "https://www.googleapis.com/language/translate/v2"
 
     if len(text) > max_length:
@@ -49,7 +49,7 @@ def match_language(fragment):
 
 
 @hook.command("google_translate")
-def translate(text):
+def translate(text, bot):
     """[source language [target language]] <sentence> - translates <sentence> from source language (default autodetect)
     to target language (default English) using Google Translate"""
     api_key = bot.config.get_api_key("google_dev_key")
