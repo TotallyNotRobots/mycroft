@@ -112,7 +112,9 @@ class IrcClient(Client):
     An implementation of Client for IRC.
     """
 
-    def __init__(self, bot, _type, name, nick, *, channels=None, config=None):
+    def __init__(
+        self, bot, _type, name, nick, *, channels=None, config=None
+    ) -> None:
         """ """
         super().__init__(
             bot, _type, name, nick, channels=channels, config=config
@@ -181,7 +183,7 @@ class IrcClient(Client):
 
         return default
 
-    def make_ssl_context(self, conn_config):
+    def make_ssl_context(self, conn_config) -> ssl.SSLContext | None:
         if self.use_ssl:
             ssl_context = ssl.create_default_context()
             client_cert = conn_config.get("client_cert")
@@ -202,13 +204,13 @@ class IrcClient(Client):
 
         return ssl_context
 
-    def describe_server(self):
+    def describe_server(self) -> str:
         if self.use_ssl:
             return f"+{self.server}:{self.port}"
 
         return f"{self.server}:{self.port}"
 
-    async def auto_reconnect(self):
+    async def auto_reconnect(self) -> None:
         """
         This method should be called by code that attempts to automatically reconnect to a server
 
@@ -267,7 +269,7 @@ class IrcClient(Client):
         finally:
             self._connecting = False
 
-    async def _connect(self, timeout=None):
+    async def _connect(self, timeout=None) -> None:
         # connect to the clients server
         if self.connected:
             logger.info("[%s] Reconnecting", self.name)
@@ -304,7 +306,7 @@ class IrcClient(Client):
         # TODO stop connecting if a connect hook fails?
         await asyncio.gather(*tasks)
 
-    def quit(self, reason=None, set_inactive=True):
+    def quit(self, reason=None, set_inactive=True) -> None:
         if set_inactive:
             self._active = False
 
@@ -314,16 +316,16 @@ class IrcClient(Client):
             else:
                 self.cmd("QUIT")
 
-    def close(self):
+    def close(self) -> None:
         self.quit()
         if self._protocol:
             self._protocol.close()
 
-    def message(self, target, *messages):
+    def message(self, target, *messages) -> None:
         for text in messages:
             self.cmd("PRIVMSG", target, text)
 
-    def admin_log(self, text, console=True):
+    def admin_log(self, text, console=True) -> None:
         log_chan = self.config.get("log_channel")
         if log_chan:
             self.message(log_chan, text)
@@ -331,16 +333,16 @@ class IrcClient(Client):
         if console:
             logger.info("[%s|admin] %s", self.name, text)
 
-    def action(self, target, text):
+    def action(self, target, text) -> None:
         self.ctcp(target, "ACTION", text)
 
-    def notice(self, target, text):
+    def notice(self, target, text) -> None:
         self.cmd("NOTICE", target, text)
 
-    def set_nick(self, nick):
+    def set_nick(self, nick) -> None:
         self.cmd("NICK", nick)
 
-    def join(self, channel, key=None):
+    def join(self, channel, key=None) -> None:
         key = self.get_channel_key(channel, key)
         if key:
             self.cmd("JOIN", channel, key)
@@ -350,24 +352,24 @@ class IrcClient(Client):
         if channel not in self.channels:
             self.channels.append(channel)
 
-    def part(self, channel):
+    def part(self, channel) -> None:
         self.cmd("PART", channel)
         if channel in self.channels:
             self.channels.remove(channel)
 
-    def set_pass(self, password):
+    def set_pass(self, password) -> None:
         if not password:
             return
         self.cmd("PASS", password)
 
-    def ctcp(self, target, ctcp_type, text):
+    def ctcp(self, target, ctcp_type, text) -> None:
         """
         Makes the bot send a PRIVMSG CTCP of type <ctcp_type> to the target
         """
         out = f"\x01{ctcp_type} {text}\x01"
         self.cmd("PRIVMSG", target, out)
 
-    def cmd(self, command, *params):
+    def cmd(self, command, *params) -> None:
         """
         Sends a raw IRC command of type <command> with params <params>
         :param command: The IRC command to send
@@ -432,7 +434,7 @@ class _IrcProtocol(asyncio.Protocol):
         # Future that waits until we are connected
         self._connected_future = self.loop.create_future()
 
-    def connection_made(self, transport):
+    def connection_made(self, transport) -> None:
         self._transport = transport
         self._connecting = False
         self._connected = True
@@ -440,14 +442,14 @@ class _IrcProtocol(asyncio.Protocol):
         # we don't need the _connected_future, everything uses it will check _connected first.
         del self._connected_future
 
-    def connection_lost(self, exc):
+    def connection_lost(self, exc) -> None:
         self._connected = False
         if exc:
             logger.error("[%s] Connection lost: %s", self.conn.name, exc)
 
         asyncio.ensure_future(self.conn.auto_reconnect(), loop=self.loop)
 
-    def close(self):
+    def close(self) -> None:
         self._connecting = False
         self._connected = False
         if self._transport:
@@ -515,7 +517,7 @@ class _IrcProtocol(asyncio.Protocol):
 
         self._transport.write(line)
 
-    def data_received(self, data):
+    def data_received(self, data) -> None:
         self._input_buffer += data
 
         while b"\r\n" in self._input_buffer:

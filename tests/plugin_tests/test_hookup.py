@@ -10,7 +10,7 @@ from tests.util.mock_db import MockDB
 
 
 @pytest.mark.asyncio
-async def test_load_data(mock_bot_factory):
+async def test_load_data(mock_bot_factory) -> None:
     bot = mock_bot_factory(
         base_dir=Path(__file__).parent.parent.parent.resolve()
     )
@@ -18,13 +18,13 @@ async def test_load_data(mock_bot_factory):
     assert hookup.hookups
 
 
-def test_hookup_no_seen(mock_db: MockDB, temp_metadata):
+def test_hookup_no_seen(mock_db: MockDB, temp_metadata) -> None:
     db = mock_db.session()
     res = hookup.hookup(db, "#chan")
     assert res is None
 
 
-def test_hookup_no_data(mock_db: MockDB, temp_metadata):
+def test_hookup_no_data(mock_db: MockDB, temp_metadata) -> None:
     database.metadata._add_table(seen.table.name, seen.table.schema, seen.table)
     seen.table.create(mock_db.engine)
     db = mock_db.session()
@@ -32,7 +32,7 @@ def test_hookup_no_data(mock_db: MockDB, temp_metadata):
     assert res == "something went wrong"
 
 
-def test_hookup_one_user(mock_db: MockDB, freeze_time):
+def test_hookup_one_user(mock_db: MockDB, freeze_time) -> None:
     database.metadata._add_table(seen.table.name, seen.table.schema, seen.table)
     seen.table.create(mock_db.engine)
 
@@ -56,7 +56,7 @@ def test_hookup_one_user(mock_db: MockDB, freeze_time):
     assert res == "something went wrong"
 
 
-def test_hookup_basic(mock_db: MockDB, freeze_time):
+def test_hookup_basic(mock_db: MockDB, freeze_time) -> None:
     hookup.hookups = {
         "templates": [
             "{user1} : {user2}",
@@ -96,7 +96,7 @@ def test_hookup_basic(mock_db: MockDB, freeze_time):
     assert res == "testnick2 : testnick"
 
 
-def test_hookup_active_time(mock_db: MockDB, freeze_time):
+def test_hookup_active_time(mock_db: MockDB, freeze_time) -> None:
     database.metadata._add_table(seen.table.name, seen.table.schema, seen.table)
     seen.table.create(mock_db.engine)
     mock_db.load_data(

@@ -6,13 +6,13 @@ from plugins import chatbot
 
 
 @pytest.mark.asyncio
-async def test_make_api(mock_bot_factory):
+async def test_make_api(mock_bot_factory) -> None:
     bot = mock_bot_factory(config={"api_keys": {"cleverbot": "testapikey"}})
     chatbot.make_api(bot)
     assert chatbot.container.api.key == "testapikey"
 
 
-def test_chitchat():
+def test_chitchat() -> None:
     chatbot.container.api = None
 
     assert (

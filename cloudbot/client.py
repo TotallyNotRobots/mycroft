@@ -22,7 +22,7 @@ def client(_type):
 
 
 class ClientConnectError(Exception):
-    def __init__(self, client_name, server):
+    def __init__(self, client_name, server) -> None:
         super().__init__(
             f"Unable to connect to client {client_name} with server {server}"
         )
@@ -85,13 +85,13 @@ class Client:
     def describe_server(self):
         raise NotImplementedError
 
-    async def auto_reconnect(self):
+    async def auto_reconnect(self) -> None:
         if not self._active:
             return
 
         await self.try_connect()
 
-    async def try_connect(self):
+    async def try_connect(self) -> None:
         timeout = 30
         while self.active and not self.connected:
             try:
@@ -186,8 +186,8 @@ class Client:
         return self._active
 
     @active.setter
-    def active(self, value):
+    def active(self, value) -> None:
         self._active = value
 
-    def reload(self):
+    def reload(self) -> None:
         self.permissions.reload()

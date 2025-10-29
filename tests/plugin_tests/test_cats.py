@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 from plugins import cats
 
 
-def test_cats(mock_requests):
+def test_cats(mock_requests) -> None:
     mock_requests.add(
         "GET",
         "https://catfact.ninja/fact?max_length=100",
@@ -16,7 +16,7 @@ def test_cats(mock_requests):
     assert reply.mock_calls == []
 
 
-def test_catgifs(mock_requests):
+def test_catgifs(mock_requests) -> None:
     url = "https://foobar/"
     mock_requests.add("GET", url)
     mock_requests.add(

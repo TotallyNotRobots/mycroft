@@ -29,7 +29,7 @@ profile_cache: dict[str, dict[str, dict[str, str]]] = {}
 
 
 @hook.on_start()
-def load_cache(db):
+def load_cache(db) -> None:
     new_cache = profile_cache.copy()
     new_cache.clear()
     for row in db.execute(table.select().order_by(table.c.category)):
@@ -52,7 +52,7 @@ def format_profile(nick, category, text):
 
 # modified from grab.py
 @hook.command("moreprofile", autohelp=False)
-def moreprofile(text, chan, nick, notice):
+def moreprofile(text, chan, nick, notice) -> None:
     """[page] - If a category search has lots of results the results are paginated. If the most recent search is
     paginated the pages are stored for retrieval. If no argument is given the next page will be returned else a page
     number can be specified."""

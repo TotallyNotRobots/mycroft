@@ -56,7 +56,7 @@ def patch_hook(wrapped):
     def _func(*args, **kwargs):
         _original_init = Hook.__init__
 
-        def patch_hook_init(self, _type, plugin, func_hook):
+        def patch_hook_init(self, _type, plugin, func_hook) -> None:
             _original_init(self, _type, plugin, func_hook)
             self.func_hook = func_hook
 
@@ -99,7 +99,7 @@ def get_plugins():
     return PLUGINS
 
 
-def pytest_generate_tests(metafunc):
+def pytest_generate_tests(metafunc) -> None:
     if "plugin" in metafunc.fixturenames:  # pragma: no cover
         plugins = get_plugins()
         metafunc.parametrize(
@@ -141,7 +141,7 @@ HOOK_ATTR_TYPES: dict[str, type | tuple[type, ...]] = {
         "[text] - Thing with [text]",
     ],
 )
-def test_doc_re_matches(text):
+def test_doc_re_matches(text) -> None:
     assert DOC_RE.match(text)
 
 
@@ -155,11 +155,11 @@ def test_doc_re_matches(text):
         "-Baz",
     ],
 )
-def test_doc_re_no_match(text):
+def test_doc_re_no_match(text) -> None:
     assert not DOC_RE.match(text)
 
 
-def test_hook_kwargs(hook):
+def test_hook_kwargs(hook) -> None:
     assert (
         not hook.func_hook.kwargs
     ), f"Unknown arguments '{hook.func_hook.kwargs}' passed during registration of hook '{hook.function_name}'"
@@ -175,7 +175,7 @@ def test_hook_kwargs(hook):
             ), f"Unexpected type '{type(attr).__name__}' for hook attribute '{name}'"
 
 
-def test_hook_doc(hook):
+def test_hook_doc(hook) -> None:
     if hook.type == "command":
         assert hook.doc
 
@@ -192,7 +192,7 @@ def test_hook_doc(hook):
                 found_blank = True
 
 
-def test_hook_args(hook, mock_bot):
+def test_hook_args(hook, mock_bot) -> None:
     bot = mock_bot
     if hook.type in (
         "irc_raw",
@@ -227,7 +227,7 @@ def test_hook_args(hook, mock_bot):
         ), f"Undefined parameter '{arg}' for hook function"
 
 
-def test_coroutine_hooks(hook):
+def test_coroutine_hooks(hook) -> None:
     if inspect.isgeneratorfunction(hook.function):  # pragma: no cover
         assert inspect.iscoroutinefunction(hook.function), (
             "Non-coroutine generator function used for a hook. This is most likely due to incorrect ordering of the "
@@ -259,9 +259,9 @@ def get_and_wrap_hook(func, hook_type):
     return _hook
 
 
-def test_hook_kwargs_warning():
+def test_hook_kwargs_warning() -> None:
     @irc_raw("*", a=1)
-    def hook_func():
+    def hook_func() -> None:
         pass  # pragma: no cover
 
     with patch("cloudbot.plugin_hooks.logger") as mocked_logger:
@@ -271,18 +271,18 @@ def test_hook_kwargs_warning():
         )
 
 
-def test_hook_catch_all():
+def test_hook_catch_all() -> None:
     @irc_raw("*")
-    def hook_func():
+    def hook_func() -> None:
         pass  # pragma: no cover
 
     _hook = get_and_wrap_hook(hook_func, "irc_raw")
     assert _hook.is_catch_all()
 
 
-def test_cmd_hook_str():
+def test_cmd_hook_str() -> None:
     @command("test")
-    def hook_func():
+    def hook_func() -> None:
         pass  # pragma: no cover
 
     _hook = get_and_wrap_hook(hook_func, "command")
@@ -290,9 +290,9 @@ def test_cmd_hook_str():
     assert str(_hook) == "command test from test.py"
 
 
-def test_re_hook_str():
+def test_re_hook_str() -> None:
     @regex("test")
-    def hook_func():
+    def hook_func() -> None:
         pass  # pragma: no cover
 
     _hook = get_and_wrap_hook(hook_func, "regex")
@@ -300,9 +300,9 @@ def test_re_hook_str():
     assert str(_hook) == "regex hook_func from test.py"
 
 
-def test_periodic_hook_str():
+def test_periodic_hook_str() -> None:
     @periodic(5)
-    def hook_func():
+    def hook_func() -> None:
         pass  # pragma: no cover
 
     _hook = get_and_wrap_hook(hook_func, "periodic")
@@ -310,9 +310,9 @@ def test_periodic_hook_str():
     assert str(_hook) == "periodic hook (5 seconds) hook_func from test.py"
 
 
-def test_raw_hook_str():
+def test_raw_hook_str() -> None:
     @irc_raw("PRIVMSG")
-    def hook_func():
+    def hook_func() -> None:
         pass  # pragma: no cover
 
     _hook = get_and_wrap_hook(hook_func, "irc_raw")
@@ -320,9 +320,9 @@ def test_raw_hook_str():
     assert str(_hook) == "irc raw hook_func (PRIVMSG) from test.py"
 
 
-def test_sieve_hook_str():
+def test_sieve_hook_str() -> None:
     @sieve()
-    def hook_func(a, b, c):
+    def hook_func(a, b, c) -> None:
         pass  # pragma: no cover
 
     _hook = get_and_wrap_hook(hook_func, "sieve")
@@ -330,9 +330,9 @@ def test_sieve_hook_str():
     assert str(_hook) == "sieve hook_func from test.py"
 
 
-def test_event_hook_str():
+def test_event_hook_str() -> None:
     @event(EventType.message)
-    def hook_func():
+    def hook_func() -> None:
         pass  # pragma: no cover
 
     _hook = get_and_wrap_hook(hook_func, "event")
@@ -340,9 +340,9 @@ def test_event_hook_str():
     assert str(_hook) == "event hook_func (EventType.message) from test.py"
 
 
-def test_config_hook():
+def test_config_hook() -> None:
     @config()
-    def hook_func():
+    def hook_func() -> None:
         pass  # pragma: no cover
 
     _hook = get_and_wrap_hook(hook_func, "config")
@@ -350,9 +350,9 @@ def test_config_hook():
     assert str(_hook) == "Config hook hook_func from test.py"
 
 
-def test_on_start_hook_str():
+def test_on_start_hook_str() -> None:
     @on_start()
-    def hook_func():
+    def hook_func() -> None:
         pass  # pragma: no cover
 
     _hook = get_and_wrap_hook(hook_func, "on_start")
@@ -360,9 +360,9 @@ def test_on_start_hook_str():
     assert str(_hook) == "on_start hook_func from test.py"
 
 
-def test_on_stop_hook_str():
+def test_on_stop_hook_str() -> None:
     @on_stop()
-    def hook_func():
+    def hook_func() -> None:
         pass  # pragma: no cover
 
     _hook = get_and_wrap_hook(hook_func, "on_stop")
@@ -370,9 +370,9 @@ def test_on_stop_hook_str():
     assert str(_hook) == "on_stop hook_func from test.py"
 
 
-def test_cap_avail_hook_str():
+def test_cap_avail_hook_str() -> None:
     @on_cap_available("test-cap")
-    def hook_func():
+    def hook_func() -> None:
         pass  # pragma: no cover
 
     _hook = get_and_wrap_hook(hook_func, "on_cap_available")
@@ -380,9 +380,9 @@ def test_cap_avail_hook_str():
     assert str(_hook) == "on_cap_available hook_func from test.py"
 
 
-def test_cap_ack_hook_str():
+def test_cap_ack_hook_str() -> None:
     @on_cap_ack("test-cap")
-    def hook_func():
+    def hook_func() -> None:
         pass  # pragma: no cover
 
     _hook = get_and_wrap_hook(hook_func, "on_cap_ack")
@@ -390,9 +390,9 @@ def test_cap_ack_hook_str():
     assert str(_hook) == "on_cap_ack hook_func from test.py"
 
 
-def test_connect_hook_str():
+def test_connect_hook_str() -> None:
     @on_connect()
-    def hook_func():
+    def hook_func() -> None:
         pass  # pragma: no cover
 
     _hook = get_and_wrap_hook(hook_func, "on_connect")
@@ -400,9 +400,9 @@ def test_connect_hook_str():
     assert str(_hook) == "on_connect hook_func from test.py"
 
 
-def test_irc_out_hook_str():
+def test_irc_out_hook_str() -> None:
     @irc_out()
-    def hook_func():
+    def hook_func() -> None:
         pass  # pragma: no cover
 
     _hook = get_and_wrap_hook(hook_func, "irc_out")
@@ -410,9 +410,9 @@ def test_irc_out_hook_str():
     assert str(_hook) == "irc_out hook_func from test.py"
 
 
-def test_post_hook_hook_str():
+def test_post_hook_hook_str() -> None:
     @post_hook()
-    def hook_func():
+    def hook_func() -> None:
         pass  # pragma: no cover
 
     _hook = get_and_wrap_hook(hook_func, "post_hook")
@@ -420,9 +420,9 @@ def test_post_hook_hook_str():
     assert str(_hook) == "post_hook hook_func from test.py"
 
 
-def test_perm_hook_str():
+def test_perm_hook_str() -> None:
     @permission()
-    def hook_func():
+    def hook_func() -> None:
         pass  # pragma: no cover
 
     _hook = get_and_wrap_hook(hook_func, "perm_check")

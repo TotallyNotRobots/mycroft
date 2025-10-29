@@ -23,7 +23,7 @@ def clear_cache():
 pytestmark = pytest.mark.usefixtures("clear_cache")
 
 
-def test_status_new(mock_db: MockDB):
+def test_status_new(mock_db: MockDB) -> None:
     regex_chans.table.create(mock_db.engine)
     with mock_db.session() as session:
         mock_db.load_data(regex_chans.table, [])
@@ -39,7 +39,7 @@ def test_status_new(mock_db: MockDB):
         assert regex_chans.status_cache == {("net", "#chan"): True}
 
 
-def test_status_existing(mock_db: MockDB):
+def test_status_existing(mock_db: MockDB) -> None:
     regex_chans.table.create(mock_db.engine)
     with mock_db.session() as session:
         mock_db.load_data(
@@ -58,7 +58,7 @@ def test_status_existing(mock_db: MockDB):
         assert regex_chans.status_cache == {("net", "#chan"): True}
 
 
-def test_delete_status(mock_db: MockDB):
+def test_delete_status(mock_db: MockDB) -> None:
     regex_chans.table.create(mock_db.engine)
     with mock_db.session() as session:
         mock_db.load_data(
@@ -75,7 +75,7 @@ def test_delete_status(mock_db: MockDB):
         assert regex_chans.status_cache == {}
 
 
-def test_listregex(mock_db: MockDB, mock_bot):
+def test_listregex(mock_db: MockDB, mock_bot) -> None:
     regex_chans.table.create(mock_db.engine)
     with mock_db.session() as session:
         mock_db.load_data(
@@ -111,7 +111,7 @@ def test_listregex(mock_db: MockDB, mock_bot):
 
 
 class TestRegexStatus:
-    def test_current_chan(self, mock_db: MockDB, mock_bot):
+    def test_current_chan(self, mock_db: MockDB, mock_bot) -> None:
         regex_chans.table.create(mock_db.engine)
         with mock_db.session() as session:
             mock_db.load_data(
@@ -153,7 +153,7 @@ class TestRegexStatus:
                 == "Regex status for #chan: DISABLED"
             )
 
-    def test_other_chan(self, mock_db: MockDB, mock_bot):
+    def test_other_chan(self, mock_db: MockDB, mock_bot) -> None:
         regex_chans.table.create(mock_db.engine)
         with mock_db.session() as session:
             mock_db.load_data(
@@ -195,7 +195,7 @@ class TestRegexStatus:
                 == "Regex status for #chan1: ENABLED"
             )
 
-    def test_other_chan_no_prefix(self, mock_db: MockDB, mock_bot):
+    def test_other_chan_no_prefix(self, mock_db: MockDB, mock_bot) -> None:
         regex_chans.table.create(mock_db.engine)
         with mock_db.session() as session:
             mock_db.load_data(
@@ -242,7 +242,7 @@ class TestRegexSieve:
     @pytest.mark.asyncio
     async def test_block_regex_hook(
         self, mock_bot_factory, mock_db: MockDB, caplog_bot
-    ):
+    ) -> None:
         mock_bot = mock_bot_factory(db=mock_db)
         regex_chans.table.create(mock_db.engine)
         with mock_db.session() as session:
@@ -317,7 +317,7 @@ class TestRegexSieve:
     @pytest.mark.asyncio
     async def test_allow_regex_hook(
         self, mock_bot_factory, mock_db: MockDB, caplog_bot
-    ):
+    ) -> None:
         mock_bot = mock_bot_factory(db=mock_db)
         regex_chans.table.create(mock_db.engine)
         with mock_db.session() as session:
@@ -392,7 +392,7 @@ class TestRegexSieve:
     @pytest.mark.asyncio
     async def test_no_block_other_hook(
         self, mock_bot_factory, mock_db: MockDB, caplog_bot
-    ):
+    ) -> None:
         mock_bot = mock_bot_factory(db=mock_db)
         regex_chans.table.create(mock_db.engine)
         with mock_db.session() as session:
@@ -462,7 +462,7 @@ class TestRegexSieve:
     @pytest.mark.asyncio
     async def test_allow_other_hook(
         self, mock_bot_factory, mock_db: MockDB, caplog_bot
-    ):
+    ) -> None:
         mock_bot = mock_bot_factory(db=mock_db)
         regex_chans.table.create(mock_db.engine)
         with mock_db.session() as session:
@@ -547,7 +547,7 @@ class SetStatusBase:
         return []
 
     @pytest.mark.asyncio
-    async def test_set(self, mock_db: MockDB, mock_bot_factory):
+    async def test_set(self, mock_db: MockDB, mock_bot_factory) -> None:
         mock_bot = mock_bot_factory(db=mock_db)
         regex_chans.table.create(mock_db.engine)
         mock_db.load_data(regex_chans.table, self.get_initial_db_data())
@@ -742,7 +742,7 @@ class TestResetRegex(SetStatusBase):
         return [{"connection": "net", "channel": "#chan", "status": "DISABLED"}]
 
 
-def test_bad_value(mock_db: MockDB, caplog_bot):
+def test_bad_value(mock_db: MockDB, caplog_bot) -> None:
     regex_chans.table.create(mock_db.engine)
     mock_db.load_data(
         regex_chans.table,

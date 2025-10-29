@@ -24,11 +24,11 @@ from tests.util.mock_db import MockDB
         ],
     ],
 )
-def test_top_list(prefix, items, result, mock_db):
+def test_top_list(prefix, items, result, mock_db) -> None:
     assert duckhunt.top_list(prefix, items.items()) == result
 
 
-def test_update_score(mock_db):
+def test_update_score(mock_db) -> None:
     duckhunt.table.create(mock_db.engine)
     mock_db.add_row(
         duckhunt.table,
@@ -47,7 +47,7 @@ def test_update_score(mock_db):
     assert mock_db.get_data(duckhunt.table) == [("net", "nick", 2, 3, "#chan")]
 
 
-def test_display_scores(mock_db):
+def test_display_scores(mock_db) -> None:
     duckhunt.table.create(mock_db.engine)
 
     session = mock_db.session()
@@ -137,7 +137,7 @@ def test_display_scores(mock_db):
     assert event.notice_doc.call_count == 1
 
 
-def test_ignore_integration(mock_db):
+def test_ignore_integration(mock_db) -> None:
     event = MagicMock()
     event.chan = "#chan"
     event.mask = "nick!user@host"
@@ -174,7 +174,7 @@ def test_ignore_integration(mock_db):
     assert tbl.masks == [event.host]
 
 
-def test_no_duck_kick_opt_out(mock_db):
+def test_no_duck_kick_opt_out(mock_db) -> None:
     duckhunt.status_table.create(mock_db.engine)
     with patch.object(duckhunt, "is_opt_out") as mocked:
         mocked.return_value = True
@@ -188,7 +188,7 @@ def test_no_duck_kick_opt_out(mock_db):
         assert event.mock_calls == []
 
 
-def test_stop_hunt_opt_out(mock_db):
+def test_stop_hunt_opt_out(mock_db) -> None:
     duckhunt.status_table.create(mock_db.engine)
     with patch.object(duckhunt, "is_opt_out") as mocked:
         mocked.return_value = True
@@ -200,7 +200,7 @@ def test_stop_hunt_opt_out(mock_db):
         assert mock_db.get_data(duckhunt.status_table) == []
 
 
-def test_start_hunt_opt_out(mock_db):
+def test_start_hunt_opt_out(mock_db) -> None:
     duckhunt.status_table.create(mock_db.engine)
     with patch.object(duckhunt, "is_opt_out") as mocked:
         mocked.return_value = True
@@ -214,7 +214,7 @@ def test_start_hunt_opt_out(mock_db):
         assert mock_db.get_data(duckhunt.status_table) == []
 
 
-def test_start_hunt(mock_db):
+def test_start_hunt(mock_db) -> None:
     duckhunt.status_table.create(mock_db.engine)
     db = mock_db.session()
     conn = MockConn()
@@ -233,7 +233,7 @@ def test_start_hunt(mock_db):
     ]
 
 
-def test_duck_migrate_no_data(mock_db):
+def test_duck_migrate_no_data(mock_db) -> None:
     duckhunt.table.create(mock_db.engine)
     conn = MockConn()
     event = MagicMock()
@@ -246,7 +246,7 @@ def test_duck_migrate_no_data(mock_db):
     assert mock_db.get_data(duckhunt.table) == []
 
 
-def test_duck_migrate(mock_db):
+def test_duck_migrate(mock_db) -> None:
     duckhunt.table.create(mock_db.engine)
     conn = MockConn()
     conn.name = "foo"
@@ -295,7 +295,7 @@ def test_duck_migrate(mock_db):
     assert res is None
 
 
-def test_duck_stats_user_single_chan(mock_db):
+def test_duck_stats_user_single_chan(mock_db) -> None:
     duckhunt.table.create(mock_db.engine)
     chan = "#foo"
     nick = "foobar"
@@ -321,7 +321,7 @@ def test_duck_stats_user_single_chan(mock_db):
     ]
 
 
-def test_duck_stats_no_data(mock_db):
+def test_duck_stats_no_data(mock_db) -> None:
     duckhunt.table.create(mock_db.engine)
     conn = MockConn()
     event = MagicMock()
@@ -336,14 +336,14 @@ def test_duck_stats_no_data(mock_db):
 
 
 class TestOptOut:
-    def test_opt_out(self, mock_db):
+    def test_opt_out(self, mock_db) -> None:
         duckhunt.optout.create(mock_db.engine)
         mock_db.add_row(duckhunt.optout, network="net", chan="#chan")
         duckhunt.load_optout(mock_db.session())
         assert duckhunt.is_opt_out("net", "#chan")
         assert not duckhunt.is_opt_out("net2", "#chan")
 
-    def test_set_opt_out_on(self, mock_db):
+    def test_set_opt_out_on(self, mock_db) -> None:
         duckhunt.table.create(mock_db.engine)
         duckhunt.optout.create(mock_db.engine)
         duckhunt.status_table.create(mock_db.engine)
@@ -358,7 +358,7 @@ class TestOptOut:
         assert res == "The duckhunt has been successfully disabled in #chan."
         assert mock_db.get_data(duckhunt.optout) == [("net", "#chan")]
 
-    def test_set_opt_out_off(self, mock_db):
+    def test_set_opt_out_off(self, mock_db) -> None:
         duckhunt.table.create(mock_db.engine)
         duckhunt.optout.create(mock_db.engine)
         duckhunt.status_table.create(mock_db.engine)
@@ -377,7 +377,7 @@ class TestOptOut:
 
 
 class TestStatus:
-    def test_load(self, mock_db):
+    def test_load(self, mock_db) -> None:
         duckhunt.game_status.clear()
         duckhunt.status_table.create(mock_db.engine)
         mock_db.add_row(
@@ -392,7 +392,7 @@ class TestStatus:
         assert state.game_on
         assert state.no_duck_kick
 
-    def test_save_and_load(self, mock_db):
+    def test_save_and_load(self, mock_db) -> None:
         duckhunt.game_status.clear()
         duckhunt.status_table.create(mock_db.engine)
         duckhunt.load_status(mock_db.session())
@@ -402,7 +402,7 @@ class TestStatus:
         assert state.game_on
         assert not state.no_duck_kick
 
-    def test_save_all(self, mock_db):
+    def test_save_all(self, mock_db) -> None:
         duckhunt.game_status.clear()
         duckhunt.status_table.create(mock_db.engine)
         duckhunt.load_status(mock_db.session())
@@ -414,7 +414,7 @@ class TestStatus:
             ("net", "#chan", False, True),
         ]
 
-    def test_save_on_exit(self, mock_db):
+    def test_save_on_exit(self, mock_db) -> None:
         duckhunt.game_status.clear()
         duckhunt.status_table.create(mock_db.engine)
         duckhunt.load_status(mock_db.session())
@@ -428,7 +428,7 @@ class TestStatus:
 
 
 class TestStartHunt:
-    def test_start_hunt(self, mock_db):
+    def test_start_hunt(self, mock_db) -> None:
         duckhunt.optout.create(mock_db.engine)
         duckhunt.load_optout(mock_db.session())
         duckhunt.game_status.clear()
@@ -450,7 +450,7 @@ class TestStartHunt:
 
 
 class TestStopHunt:
-    def test_stop_hunt(self, mock_db):
+    def test_stop_hunt(self, mock_db) -> None:
         duckhunt.optout.create(mock_db.engine)
         duckhunt.load_optout(mock_db.session())
         duckhunt.game_status.clear()
@@ -472,7 +472,7 @@ class TestStopHunt:
 
 
 class TestDuckKick:
-    def test_enable_duck_kick(self, mock_db):
+    def test_enable_duck_kick(self, mock_db) -> None:
         duckhunt.optout.create(mock_db.engine)
         duckhunt.load_optout(mock_db.session())
         duckhunt.game_status.clear()
@@ -499,7 +499,7 @@ class TestDuckKick:
         )
         assert notice_doc.mock_calls == []
 
-    def test_disable_duck_kick(self, mock_db):
+    def test_disable_duck_kick(self, mock_db) -> None:
         duckhunt.optout.create(mock_db.engine)
         duckhunt.load_optout(mock_db.session())
         duckhunt.game_status.clear()
@@ -525,7 +525,7 @@ class TestDuckKick:
 
 
 class TestAttack:
-    def test_shoot(self, mock_db, freeze_time):
+    def test_shoot(self, mock_db, freeze_time) -> None:
         duckhunt.table.create(mock_db.engine)
         duckhunt.optout.create(mock_db.engine)
         duckhunt.status_table.create(mock_db.engine)
@@ -557,7 +557,7 @@ class TestAttack:
             ("net", "nick", 1, 0, "#chan")
         ]
 
-    def test_befriend(self, mock_db, freeze_time):
+    def test_befriend(self, mock_db, freeze_time) -> None:
         duckhunt.table.create(mock_db.engine)
         duckhunt.optout.create(mock_db.engine)
         duckhunt.status_table.create(mock_db.engine)
@@ -591,7 +591,7 @@ class TestAttack:
             ("net", "nick", 0, 1, "#chan")
         ]
 
-    def test_miss(self, mock_db: MockDB, freeze_time):
+    def test_miss(self, mock_db: MockDB, freeze_time) -> None:
         random.seed(0)
         duckhunt.table.create(mock_db.engine)
         duckhunt.optout.create(mock_db.engine)
@@ -628,7 +628,7 @@ class TestAttack:
         assert mock_db.get_data(duckhunt.table) == []
         duckhunt.scripters.clear()
 
-    def test_miss_scripter(self, mock_db: MockDB, freeze_time):
+    def test_miss_scripter(self, mock_db: MockDB, freeze_time) -> None:
         random.seed(0)
         duckhunt.table.create(mock_db.engine)
         duckhunt.optout.create(mock_db.engine)

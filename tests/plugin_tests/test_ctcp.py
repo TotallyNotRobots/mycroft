@@ -18,7 +18,7 @@ from plugins.core import core_ctcp
         ("TIME", "\x01TIME Thu Aug 22 13:14:36 2019\x01"),
     ],
 )
-async def test_ctcp_handler(text, out, freeze_time):
+async def test_ctcp_handler(text, out, freeze_time) -> None:
     event = MagicMock()
     res = await core_ctcp.ctcp_version(event.notice, text)
     assert res is None

@@ -36,7 +36,7 @@ def make_api():
 
 
 @hook.on_start()
-def set_api():
+def set_api() -> None:
     container.api = make_api()
 
 

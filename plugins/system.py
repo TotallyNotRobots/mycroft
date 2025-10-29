@@ -14,7 +14,7 @@ except ImportError:
 
 
 @hook.command(autohelp=False)
-def about(text, conn, bot):
+def about(text, conn, bot) -> str:
     """- Gives information about CloudBot. Use .about license for licensing information"""
     if text.lower() in ("license", "gpl", "source"):
         return f"CloudBot Refresh is released under the GPL v3 license, get the source code at {bot.repo_link}"
@@ -23,7 +23,7 @@ def about(text, conn, bot):
 
 
 @hook.command(autohelp=False)
-def system(reply, message):
+def system(reply, message) -> None:
     """- Retrieves information about the host system."""
 
     # Get general system info
@@ -65,7 +65,7 @@ def system(reply, message):
 
 
 @hook.command("sauce", "source", autohelp=False)
-def sauce(bot):
+def sauce(bot) -> str:
     """- Returns a link to the source"""
     return (
         "Check out my source code! I am a fork of cloudbot: "

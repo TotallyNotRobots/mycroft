@@ -4,7 +4,7 @@ from plugins import mock as mock_plugin
 from tests.util.mock_conn import MockConn
 
 
-def test_mock_no_message():
+def test_mock_no_message() -> None:
     conn = MockConn()
     event = MagicMock()
     res = mock_plugin.mock("bar", "#foo", conn, event.message)
@@ -12,7 +12,7 @@ def test_mock_no_message():
     assert event.mock_calls == []
 
 
-def test_mock_no_matching_message():
+def test_mock_no_matching_message() -> None:
     conn = MockConn()
     event = MagicMock()
     chan = "#foo"
@@ -23,7 +23,7 @@ def test_mock_no_matching_message():
     assert event.mock_calls == []
 
 
-def test_mock():
+def test_mock() -> None:
     conn = MockConn()
     chan = "#foo"
     target = "bar"
@@ -34,7 +34,7 @@ def test_mock():
     assert event.mock_calls == [call.message("<bar> hElLo tHiS Is a tEsT")]
 
 
-def test_mock_action():
+def test_mock_action() -> None:
     conn = MockConn()
     chan = "#foo"
     target = "bar"

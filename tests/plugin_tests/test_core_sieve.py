@@ -204,7 +204,7 @@ def make_command_event(chan: str | None = "#foo") -> CommandEvent:
     return event
 
 
-def test_disabled():
+def test_disabled() -> None:
     event = make_command_event()
     event.conn.config["disabled_commands"] = [event.triggered_command]
     assert core_sieve.check_disabled(event.bot, event, event.hook) is None
@@ -214,6 +214,6 @@ def test_disabled():
     assert core_sieve.check_disabled(event.bot, event, event.hook) is event
 
 
-def test_disabled_non_command():
+def test_disabled_non_command() -> None:
     event = Event(hook=MagicMock(type="ievent"))
     assert core_sieve.check_disabled(event.bot, event, event.hook) is event

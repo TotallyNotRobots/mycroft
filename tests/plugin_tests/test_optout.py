@@ -8,7 +8,7 @@ from tests.util import wrap_hook_response_async
 from tests.util.mock_db import MockDB
 
 
-def test_conn_case():
+def test_conn_case() -> None:
     conn_list = optout.optout_cache["TestConnection"]
 
     assert optout.get_conn_optouts("TestConnection") is conn_list
@@ -22,7 +22,7 @@ def test_conn_case():
     assert optout.get_conn_optouts("testconnection1") is not conn_list
 
 
-def test_ignore_core():
+def test_ignore_core() -> None:
     bot = MagicMock()
     event = MagicMock()
     _hook = MagicMock()
@@ -42,7 +42,7 @@ def test_ignore_core():
         assert res is event
 
 
-def test_match():
+def test_match() -> None:
     bot = MagicMock()
     event = MagicMock()
     _hook = MagicMock()
@@ -62,7 +62,7 @@ def test_match():
         assert res is None
 
 
-def test_get_first_matching_optout(mock_db):
+def test_get_first_matching_optout(mock_db) -> None:
     optout.optout_table.create(mock_db.engine)
     mock_db.load_data(
         optout.optout_table,
@@ -90,29 +90,29 @@ def test_get_first_matching_optout(mock_db):
     )
 
 
-def test_optout_match():
+def test_optout_match() -> None:
     assert optout.OptOut(
         channel="#foo*", hook_pattern="foo.*", allow=True
     ).match("#foobar", "foo.bar")
 
 
-def test_optout_compare():
+def test_optout_compare() -> None:
     with pytest.raises(TypeError):
         assert (
             optout.OptOut(channel="#foo*", hook_pattern="foo.*", allow=True) > 5  # type: ignore[operator]
         )
 
 
-def test_optout_eq_other():
+def test_optout_eq_other() -> None:
     assert optout.OptOut(channel="#foo*", hook_pattern="foo.*", allow=True) != 5
 
 
-def test_optout_equals():
+def test_optout_equals() -> None:
     args = {"channel": "#foo", "hook_pattern": "foo", "allow": True}
     assert optout.OptOut(**args) == optout.OptOut(**args)
 
 
-def test_optout_sort():
+def test_optout_sort() -> None:
     optouts = [
         optout.OptOut(channel="#aaa", hook_pattern="test", allow=True),
         optout.OptOut(channel="#aaa", hook_pattern="test*", allow=True),
@@ -138,7 +138,7 @@ def test_optout_sort():
     ]
 
 
-def test_exact_override():
+def test_exact_override() -> None:
     net = "my_net"
     channel = "#foobar"
     hook = "my.hook"
@@ -177,7 +177,7 @@ def test_exact_override():
 
 
 @pytest.mark.asyncio
-async def test_check_channel_permissions():
+async def test_check_channel_permissions() -> None:
     event = MagicMock()
     event.chan = "#foo"
     event.check_permissions = AsyncMock(return_value=True)
@@ -187,7 +187,7 @@ async def test_check_channel_permissions():
     assert res
 
 
-def test_get_global_optouts():
+def test_get_global_optouts() -> None:
     optouts = {
         "net2": [
             optout.OptOut(
@@ -258,7 +258,7 @@ def test_get_global_optouts():
         ]
 
 
-def test_match_optout():
+def test_match_optout() -> None:
     optouts = {
         "net2": [
             optout.OptOut(
@@ -326,7 +326,7 @@ def test_match_optout():
         )
 
 
-def test_format():
+def test_format() -> None:
     optouts = [
         optout.OptOut(
             channel="#other",
@@ -407,7 +407,7 @@ class TestSetOptOut:
                 ("net", "#chan", "foo.*", False)
             ]
 
-    def test_add(self, mock_db: MockDB):
+    def test_add(self, mock_db: MockDB) -> None:
         with mock_db.session() as session:
             optout.optout_table.create(mock_db.engine)
             optout.load_cache(session)
@@ -417,7 +417,7 @@ class TestSetOptOut:
                 ("net", "#chan", "my.hook", True)
             ]
 
-    def test_update(self, mock_db: MockDB):
+    def test_update(self, mock_db: MockDB) -> None:
         with mock_db.session() as session:
             optout.optout_table.create(mock_db.engine)
             mock_db.load_data(
@@ -509,14 +509,14 @@ class TestDelOptOut:
                 ("net", "#chan1", "foo.*", False),
             ]
 
-    def test_del_no_match(self, mock_db: MockDB):
+    def test_del_no_match(self, mock_db: MockDB) -> None:
         with mock_db.session() as session:
             optout.optout_table.create(mock_db.engine)
             assert (
                 optout.del_optout(session, "net", "#chan", "my.hook") is False
             )
 
-    def test_del(self, mock_db: MockDB):
+    def test_del(self, mock_db: MockDB) -> None:
         with mock_db.session() as session:
             optout.optout_table.create(mock_db.engine)
             mock_db.load_data(
@@ -601,7 +601,7 @@ class TestClearOptOut:
                 ("net", "#chan1", "foo.*", False),
             ]
 
-    def test_clear_chan(self, mock_db: MockDB):
+    def test_clear_chan(self, mock_db: MockDB) -> None:
         with mock_db.session() as session:
             optout.optout_table.create(mock_db.engine)
             mock_db.load_data(
@@ -640,7 +640,7 @@ class TestClearOptOut:
 
             assert len(mock_db.get_data(optout.optout_table)) == 2
 
-    def test_clear_conn(self, mock_db: MockDB):
+    def test_clear_conn(self, mock_db: MockDB) -> None:
         with mock_db.session() as session:
             optout.optout_table.create(mock_db.engine)
             mock_db.load_data(

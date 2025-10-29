@@ -4,13 +4,13 @@ import logging
 import cloudbot
 
 
-def test_add_path(tmp_path):
+def test_add_path(tmp_path) -> None:
     cloudbot.logging_info.dir = tmp_path / "logs"
     path = cloudbot.logging_info.add_path("raw.log")
     assert path == str(tmp_path / "logs" / "raw.log")
 
 
-def test_setup(tmp_path):
+def test_setup(tmp_path) -> None:
     cloudbot._setup(tmp_path)
     logger = logging.getLogger("cloudbot")
     assert len(logger.handlers) == 1
@@ -19,7 +19,7 @@ def test_setup(tmp_path):
     assert logger.filters == []
 
 
-def test_setup_with_config(tmp_path):
+def test_setup_with_config(tmp_path) -> None:
     (tmp_path / "config.json").write_text("{}")
     cloudbot._setup(tmp_path)
     logger = logging.getLogger("cloudbot")
@@ -29,7 +29,7 @@ def test_setup_with_config(tmp_path):
     assert logger.filters == []
 
 
-def test_setup_with_config_console_debug(tmp_path):
+def test_setup_with_config_console_debug(tmp_path) -> None:
     (tmp_path / "config.json").write_text(
         json.dumps({"logging": {"console_debug": True}})
     )
@@ -41,7 +41,7 @@ def test_setup_with_config_console_debug(tmp_path):
     assert logger.filters == []
 
 
-def test_setup_with_config_console_log_info_false(tmp_path):
+def test_setup_with_config_console_log_info_false(tmp_path) -> None:
     (tmp_path / "config.json").write_text(
         json.dumps(
             {
@@ -59,7 +59,7 @@ def test_setup_with_config_console_log_info_false(tmp_path):
     assert logger.filters == []
 
 
-def test_setup_with_config_file_log(tmp_path):
+def test_setup_with_config_file_log(tmp_path) -> None:
     (tmp_path / "config.json").write_text(
         json.dumps(
             {
@@ -78,7 +78,7 @@ def test_setup_with_config_file_log(tmp_path):
     assert logger.filters == []
 
 
-def test_setup_with_config_file_debug(tmp_path):
+def test_setup_with_config_file_debug(tmp_path) -> None:
     (tmp_path / "config.json").write_text(
         json.dumps(
             {

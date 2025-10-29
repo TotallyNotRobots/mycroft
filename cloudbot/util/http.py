@@ -6,7 +6,8 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import warnings
-from typing import Union
+from collections.abc import Mapping
+from typing import Any, Union
 from urllib.parse import quote_plus as _quote_plus
 
 from bs4 import BeautifulSoup
@@ -50,7 +51,7 @@ def get_html(*args, **kwargs):
     return html.fromstring(get(*args, **kwargs))
 
 
-def parse_soup(text, features=None, **kwargs):
+def parse_soup(text, features=None, **kwargs) -> BeautifulSoup:
     """
     Parse HTML using BeautifulSoup
 
@@ -64,7 +65,7 @@ def parse_soup(text, features=None, **kwargs):
     return BeautifulSoup(text, features=features, **kwargs)
 
 
-def get_soup(*args, **kwargs):
+def get_soup(*args, **kwargs) -> BeautifulSoup:
     return parse_soup(get(*args, **kwargs))
 
 
@@ -165,7 +166,7 @@ def open(
     )
 
 
-def prepare_url(url, queries):
+def prepare_url(url: str, queries: Mapping[str, str]) -> str:
     """
     >>> str(unify_url(prepare_url("https://example.com?foo=bar", {'a': 1, 'b': 2})))
     'https://example.com/?a=1&b=2&foo=bar'
@@ -173,10 +174,10 @@ def prepare_url(url, queries):
     if queries:
         scheme, netloc, path, query, fragment = urllib.parse.urlsplit(url)
 
-        query = dict(urllib.parse.parse_qsl(query))
-        query.update(queries)
+        args = dict(urllib.parse.parse_qsl(query))
+        args.update(queries)
         query = urllib.parse.urlencode(
-            {to_utf8(key): to_utf8(value) for key, value in query.items()}
+            {to_utf8(key): to_utf8(value) for key, value in args.items()}
         )
 
         url = urllib.parse.urlunsplit((scheme, netloc, path, query, fragment))
@@ -184,7 +185,7 @@ def prepare_url(url, queries):
     return url
 
 
-def to_utf8(s):
+def to_utf8(s: Any) -> bytes:
     """
     >>> to_utf8('foo bar')
     b'foo bar'
@@ -210,7 +211,7 @@ def quote_plus(s):
     return _quote_plus(to_utf8(s))
 
 
-def unescape(s):
+def unescape(s: str):
     """
     >>> unescape('')
     ''
@@ -221,6 +222,7 @@ def unescape(s):
     """
     if not s.strip():
         return s
+
     return html.fromstring(s).text_content()
 
 

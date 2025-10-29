@@ -23,7 +23,7 @@ def get_data(num):
         return r.json()
 
 
-def save(i):
+def save(i) -> bool:
     data = get_data(i)
     if data is None:
         return False
@@ -35,7 +35,7 @@ def save(i):
     return True
 
 
-def main():
+def main() -> None:
     ids = [1, 10, 20, 50, 100, 500, 1000, 1500, 2000]
     for num in ids:
         save(num)

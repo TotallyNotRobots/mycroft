@@ -27,12 +27,12 @@ def do_search(query, results=None):
     return wrap_hook_response(wikipedia.wiki, cmd_event, results=results)
 
 
-def make_search_url(query):
+def make_search_url(query) -> str:
     query = query.replace(" ", "+")
     return f"http://en.wikipedia.org/w/api.php?action=query&format=json&list=search&redirect=1&srsearch={query}"
 
 
-def test_search(mock_requests):
+def test_search(mock_requests) -> None:
     err_results: list[HookResult] = []
     with pytest.raises(RequestException):
         do_search("some failed query", err_results)

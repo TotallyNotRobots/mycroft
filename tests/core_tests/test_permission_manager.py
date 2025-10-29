@@ -8,7 +8,7 @@ from cloudbot.permissions import (
 
 
 class MockConn:
-    def __init__(self, name, config):
+    def __init__(self, name, config) -> None:
         self.name = name
         self.config = config
 
@@ -22,7 +22,7 @@ def model_to_dict(obj):
     return out
 
 
-def test_manager_load(mock_db):
+def test_manager_load(mock_db) -> None:
     group_table = Group.__table__
     group_member_table = GroupMember.__table__
     permission_table = GroupPermission.__table__
@@ -88,7 +88,7 @@ def test_manager_load(mock_db):
     assert not manager.user_in_group(user, "admins")
 
 
-def test_add_user_to_group(mock_db):
+def test_add_user_to_group(mock_db) -> None:
     manager = PermissionManager(MockConn("testconn", {}))
     manager.add_user_to_group("*!*@host", "admins")
     manager.add_user_to_group("*!*@mask", "admins")
@@ -98,7 +98,7 @@ def test_add_user_to_group(mock_db):
     assert len(manager.get_group_users("admins")) == 2
 
 
-def test_db(mock_db):
+def test_db(mock_db) -> None:
     session = mock_db.session()
 
     group_table = Group.__table__
@@ -200,7 +200,7 @@ def test_db(mock_db):
     assert not manager.has_perm_mask("b", "foo", notice=True)
 
 
-def test_db_config_merge(mock_db):
+def test_db_config_merge(mock_db) -> None:
     session = mock_db.session()
 
     group_table = Group.__table__

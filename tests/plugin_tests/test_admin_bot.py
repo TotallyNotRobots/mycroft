@@ -25,7 +25,7 @@ from tests.util.mock_db import MockDB
         ("#foo", "#bar baz", ("#bar", "baz")),
     ],
 )
-def test_get_chan(chan, text, result):
+def test_get_chan(chan, text, result) -> None:
     assert admin_bot.get_chan(chan, text) == result
 
 
@@ -37,12 +37,12 @@ def test_get_chan(chan, text, result):
         ("foo baz", "#bar", ["foo", "baz"]),
     ],
 )
-def test_parse_targets(text, chan, out):
+def test_parse_targets(text, chan, out) -> None:
     assert admin_bot.parse_targets(text, chan) == out
 
 
 @pytest.mark.asyncio
-async def test_reload_config():
+async def test_reload_config() -> None:
     bot = MagicMock()
     loop = asyncio.get_running_loop()
     future = loop.create_future()
@@ -62,7 +62,7 @@ async def test_reload_config():
         ("channel", "#channel", None),
     ],
 )
-def test_join(input_text, chan, key):
+def test_join(input_text, chan, key) -> None:
     conn = MagicMock()
     conn.config = {}
     conn.bot = None
@@ -83,7 +83,7 @@ def test_join(input_text, chan, key):
     event.conn.join.assert_called_with(chan, key)
 
 
-def test_me():
+def test_me() -> None:
     event = MagicMock()
     event.chan = "#foo"
     event.nick = "bar"
@@ -102,7 +102,7 @@ def test_me():
     ]
 
 
-def test_remove_permission_user(mock_db):
+def test_remove_permission_user(mock_db) -> None:
     conn = MockConn(nick="testconn")
 
     session = mock_db.session()
@@ -177,7 +177,7 @@ def test_remove_permission_user(mock_db):
     ]
 
 
-def test_remove_permission_user_too_many_args(mock_db):
+def test_remove_permission_user_too_many_args(mock_db) -> None:
     conn = MockConn(nick="testconn")
 
     session = mock_db.session()
@@ -250,7 +250,7 @@ def test_remove_permission_user_too_many_args(mock_db):
     ]
 
 
-def test_remove_permission_user_too_few_args(mock_db):
+def test_remove_permission_user_too_few_args(mock_db) -> None:
     conn = MockConn(nick="testconn")
 
     session = mock_db.session()

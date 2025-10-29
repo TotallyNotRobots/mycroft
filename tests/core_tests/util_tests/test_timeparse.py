@@ -1,7 +1,7 @@
 from cloudbot.util import timeparse
 
 
-def test_time_parse():
+def test_time_parse() -> None:
     assert timeparse.time_parse("1:24") == 84
     assert timeparse.time_parse(":22") == 22
     assert timeparse.time_parse("1 minute, 24 secs") == 84

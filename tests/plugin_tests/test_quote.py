@@ -14,7 +14,7 @@ from cloudbot.util import database
 from plugins import quote
 
 
-def test_migrate(mock_db, freeze_time):
+def test_migrate(mock_db, freeze_time) -> None:
     db = mock_db.session()
     # quote.qtable.create(mock_db.engine)
     old_table = Table(
@@ -56,7 +56,7 @@ def test_migrate(mock_db, freeze_time):
     ]
 
 
-def test_migrate_no_old_table(mock_db, freeze_time):
+def test_migrate_no_old_table(mock_db, freeze_time) -> None:
     db = mock_db.session()
     # quote.qtable.create(mock_db.engine)
     old_table = Table(
@@ -80,7 +80,7 @@ def test_migrate_no_old_table(mock_db, freeze_time):
     assert logger.mock_calls == []
 
 
-def test_add_quote(mock_db, freeze_time):
+def test_add_quote(mock_db, freeze_time) -> None:
     db = mock_db.session()
     quote.qtable.create(bind=mock_db.engine)
     chan = "#foo"
@@ -93,7 +93,7 @@ def test_add_quote(mock_db, freeze_time):
     ]
 
 
-def test_add_quote_existing(mock_db, freeze_time):
+def test_add_quote_existing(mock_db, freeze_time) -> None:
     db = mock_db.session()
     quote.qtable.create(bind=mock_db.engine)
 
@@ -122,7 +122,7 @@ def test_add_quote_existing(mock_db, freeze_time):
     ]
 
 
-def test_quote_cmd_add(mock_db, freeze_time):
+def test_quote_cmd_add(mock_db, freeze_time) -> None:
     db = mock_db.session()
     quote.qtable.create(bind=mock_db.engine)
     chan = "#foo"
@@ -139,7 +139,7 @@ def test_quote_cmd_add(mock_db, freeze_time):
     assert event.mock_calls == [call.notice("Quote added.")]
 
 
-def test_quote_cmd_get_nick_random(mock_db, freeze_time):
+def test_quote_cmd_get_nick_random(mock_db, freeze_time) -> None:
     db = mock_db.session()
     quote.qtable.create(bind=mock_db.engine)
     chan = "#foo"
@@ -155,7 +155,7 @@ def test_quote_cmd_get_nick_random(mock_db, freeze_time):
     assert event.mock_calls == []
 
 
-def test_quote_cmd_get_chan_random(mock_db, freeze_time):
+def test_quote_cmd_get_chan_random(mock_db, freeze_time) -> None:
     db = mock_db.session()
     quote.qtable.create(bind=mock_db.engine)
     chan = "#foo"
@@ -170,7 +170,7 @@ def test_quote_cmd_get_chan_random(mock_db, freeze_time):
     assert event.mock_calls == []
 
 
-def test_quote_cmd_get_nick_chan_random(mock_db, freeze_time):
+def test_quote_cmd_get_nick_chan_random(mock_db, freeze_time) -> None:
     db = mock_db.session()
     quote.qtable.create(bind=mock_db.engine)
     chan = "#foo"

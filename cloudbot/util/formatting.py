@@ -120,21 +120,21 @@ class HTMLTextExtractor(HTMLParser):
     Takes HTML and provides cleaned and stripped text.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         HTMLParser.__init__(self)
-        self.result = []
+        self.result: list[str] = []
 
-    def handle_data(self, d):
+    def handle_data(self, d: str) -> None:
         self.result.append(d)
 
-    def get_text(self):
+    def get_text(self) -> str:
         return "".join(self.result)
 
 
 # Functions
 
 
-def strip_html(to_strip):
+def strip_html(to_strip: str) -> str:
     """
     Takes HTML and returns cleaned and stripped text.
     """
@@ -217,7 +217,7 @@ truncate_str = truncate
 strip_colors = strip_irc
 
 
-def chunk_str(content, length=420):
+def chunk_str(content: str, length: int = 420) -> list[str]:
     """
     Chunks a string into smaller strings of given length. Returns chunks.
     """
@@ -263,7 +263,7 @@ def pluralize_suffix(num=0, text="", suffix="s"):
 pluralise_suffix = pluralize_suffix
 
 
-def pluralize_select(count, single, plural):
+def pluralize_select(count, single, plural) -> str:
     return f"{count:,} {single if count == 1 else plural}"
 
 

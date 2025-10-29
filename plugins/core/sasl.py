@@ -13,7 +13,7 @@ def sasl_available(conn):
 
 
 @hook.on_cap_ack("sasl")
-async def sasl_ack(conn):
+async def sasl_ack(conn) -> None:
     sasl_auth = conn.config.get("sasl")
     if sasl_auth and sasl_auth.get("enabled", True):
         sasl_mech = sasl_auth.get("mechanism", "PLAIN").upper()
@@ -49,14 +49,14 @@ async def sasl_ack(conn):
 
 
 @hook.irc_raw(["AUTHENTICATE", "908"])
-async def auth(irc_command, conn, irc_paramlist):
+async def auth(irc_command, conn, irc_paramlist) -> None:
     future = conn.memory.get("sasl_auth_future")
     if future and not future.done():
         future.set_result((irc_command, irc_paramlist))
 
 
 @hook.irc_raw(["902", "903", "904", "905", "906", "907"])
-async def sasl_numerics(irc_command, conn):
+async def sasl_numerics(irc_command, conn) -> None:
     future = conn.memory.get("sasl_numeric_future")
     if future and not future.done():
         future.set_result(irc_command)

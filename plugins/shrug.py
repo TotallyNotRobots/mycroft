@@ -2,7 +2,7 @@ from cloudbot import hook
 
 
 @hook.command("shrug", autohelp=False)
-def shrug():
+def shrug() -> str:
     r"""- shrugs
 
     >>> shrug()

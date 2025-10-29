@@ -4,7 +4,7 @@ from cloudbot.util import timeformat
 from cloudbot.util.timeformat import format_time, time_since, time_until
 
 
-def test_time_split(freeze_time):
+def test_time_split(freeze_time) -> None:
     parsed = timeformat.TimeUnits.split_time(0)
     assert parsed.parts == [
         (0, timeformat.TimeUnits.YEAR),
@@ -36,7 +36,7 @@ def test_time_split(freeze_time):
     ]
 
 
-def test_format_time(freeze_time):
+def test_format_time(freeze_time) -> None:
     # basic
     assert format_time(120000) == "1 day, 9 hours and 20 minutes"
     assert format_time(120000, simple=True) == "1d 9h 20m"
@@ -53,7 +53,7 @@ def test_format_time(freeze_time):
     assert format_time(2) == "2 seconds"
 
 
-def test_timesince(freeze_time):
+def test_timesince(freeze_time) -> None:
     then = datetime(2010, 4, 12, 12, 30, 0)
     then_timestamp = 1271075400.0
     then_future = datetime(2012, 4, 12, 12, 30, 0)
@@ -77,7 +77,7 @@ def test_timesince(freeze_time):
     assert time_since(now - timedelta(seconds=2), now) == "2 seconds"
 
 
-def test_timeuntil(freeze_time):
+def test_timeuntil(freeze_time) -> None:
     now = datetime(2010, 4, 12, 12, 30, 0)
     future = datetime(2010, 5, 15, 1, 50, 0)
     # basic

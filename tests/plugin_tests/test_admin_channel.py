@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, call
 from plugins import admin_channel
 
 
-def test_ban_no_char():
+def test_ban_no_char() -> None:
     event = MagicMock(chan="#bar")
     event.conn.memory = {"server_info": {}}
     admin_channel.ban("foo", event)
@@ -14,7 +14,7 @@ def test_ban_no_char():
     ]
 
 
-def test_ban():
+def test_ban() -> None:
     event = MagicMock(chan="#bar", nick="test")
     event.conn.memory = {"server_info": {"channel_modes": "b"}}
     admin_channel.ban("foo", event)
@@ -25,7 +25,7 @@ def test_ban():
     ]
 
 
-def test_ban_other_chan():
+def test_ban_other_chan() -> None:
     event = MagicMock(chan="#bar", nick="test")
     event.conn.memory = {"server_info": {"channel_modes": "b"}}
     admin_channel.ban("#baz foo", event)
@@ -36,7 +36,7 @@ def test_ban_other_chan():
     ]
 
 
-def test_lock():
+def test_lock() -> None:
     event = MagicMock(chan="#bar", nick="test")
     event.conn.memory = {"server_info": {"channel_modes": "i"}}
     admin_channel.lock("", event)
@@ -47,7 +47,7 @@ def test_lock():
     ]
 
 
-def test_quiet():
+def test_quiet() -> None:
     event = MagicMock(chan="#bar", nick="test")
     event.conn.memory = {
         "server_info": {

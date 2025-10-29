@@ -6,7 +6,7 @@ from plugins.core import autojoin
 from tests.util.mock_conn import MockConn
 
 
-def test_add_chan(mock_db):
+def test_add_chan(mock_db) -> None:
     autojoin.chan_cache.clear()
     autojoin.table.create(mock_db.engine)
     db = mock_db.session()
@@ -17,7 +17,7 @@ def test_add_chan(mock_db):
     assert mock_db.get_data(autojoin.table) == [("testconn", "#foo")]
 
 
-def test_add_chan_again(mock_db):
+def test_add_chan_again(mock_db) -> None:
     autojoin.chan_cache.clear()
     autojoin.table.create(mock_db.engine)
     db = mock_db.session()
@@ -30,7 +30,7 @@ def test_add_chan_again(mock_db):
     assert mock_db.get_data(autojoin.table) == [("testconn", "#foo")]
 
 
-def test_add_chan_other_nick(mock_db):
+def test_add_chan_other_nick(mock_db) -> None:
     autojoin.chan_cache.clear()
     autojoin.table.create(mock_db.engine)
     db = mock_db.session()
@@ -41,7 +41,7 @@ def test_add_chan_other_nick(mock_db):
     assert mock_db.get_data(autojoin.table) == []
 
 
-def test_kick(mock_db):
+def test_kick(mock_db) -> None:
     autojoin.chan_cache.clear()
     autojoin.table.create(mock_db.engine)
     conn = MockConn()
@@ -54,7 +54,7 @@ def test_kick(mock_db):
     assert mock_db.get_data(autojoin.table) == []
 
 
-def test_kick_other(mock_db):
+def test_kick_other(mock_db) -> None:
     autojoin.chan_cache.clear()
     autojoin.table.create(mock_db.engine)
     conn = MockConn()
@@ -68,7 +68,7 @@ def test_kick_other(mock_db):
 
 
 @pytest.mark.asyncio()
-async def test_joins(mock_db):
+async def test_joins(mock_db) -> None:
     autojoin.chan_cache.clear()
     autojoin.table.create(mock_db.engine)
     conn = MockConn()

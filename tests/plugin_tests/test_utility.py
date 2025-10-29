@@ -1,4 +1,5 @@
 from pathlib import Path
+from unittest.mock import MagicMock, call
 
 import pytest
 import pytest_asyncio
@@ -13,21 +14,13 @@ ESCAPE_DATA = [
 ]
 
 
-class MockFunction:
-    def __init__(self):
-        self.args = []
-
-    def __call__(self, *args, **kwargs):
-        self.args.append((args, kwargs))
-
-
 @pytest.mark.parametrize(
     "a,b,match",
     [
         ("http://example.com/?a=1&b=1", "http://example.com/?b=1&a=1", True),
     ],
 )
-def test_compare_urls(a, b, match):
+def test_compare_urls(a, b, match) -> None:
     assert compare_urls(a, b) == match
 
 
@@ -43,7 +36,7 @@ def test_compare_urls(a, b, match):
         ],
     ],
 )
-def test_qrcode(data, url, patch_try_shorten):
+def test_qrcode(data, url, patch_try_shorten) -> None:
     assert compare_urls(utility.qrcode(data), url)
 
 
@@ -54,7 +47,7 @@ def test_qrcode(data, url, patch_try_shorten):
         ("\x0301,03foo\x0f", "foo"),
     ],
 )
-def test_strip(text, output):
+def test_strip(text, output) -> None:
     assert utility.strip(text) == output
 
 
@@ -64,7 +57,7 @@ def test_strip(text, output):
         ("foo", {"f": "br"}, "broo"),
     ],
 )
-def test_translate(text, replace, out):
+def test_translate(text, replace, out) -> None:
     assert utility.translate(text, replace) == out
 
 
@@ -75,7 +68,7 @@ def test_translate(text, replace, out):
         ("foo. bar. ", "Foo. Bar. "),
     ],
 )
-def test_capitalize(text, output):
+def test_capitalize(text, output) -> None:
     assert utility.capitalize(text) == output
 
 
@@ -89,7 +82,7 @@ def test_capitalize(text, output):
         ("FOO", "FOO"),
     ],
 )
-def test_upper(text, output):
+def test_upper(text, output) -> None:
     assert utility.upper(text) == output
 
 
@@ -103,7 +96,7 @@ def test_upper(text, output):
         ("FOO", "foo"),
     ],
 )
-def test_lower(text, output):
+def test_lower(text, output) -> None:
     assert utility.lower(text) == output
 
 
@@ -117,7 +110,7 @@ def test_lower(text, output):
         ("FOO", "Foo"),
     ],
 )
-def test_titlecase(text, output):
+def test_titlecase(text, output) -> None:
     assert utility.titlecase(text) == output
 
 
@@ -131,7 +124,7 @@ def test_titlecase(text, output):
         ("FOO", "foo"),
     ],
 )
-def test_swapcase(text, output):
+def test_swapcase(text, output) -> None:
     assert utility.swapcase(text) == output
 
 
@@ -145,7 +138,7 @@ def test_swapcase(text, output):
         ("FOO", "\uff26\uff2f\uff2f"),
     ],
 )
-def test_fullwidth(text, output):
+def test_fullwidth(text, output) -> None:
     assert utility.fullwidth(text) == output
 
 
@@ -159,7 +152,7 @@ def test_fullwidth(text, output):
         ("FOO", "SBB"),
     ],
 )
-def test_rot13_encode(text, output):
+def test_rot13_encode(text, output) -> None:
     assert utility.rot13_encode(text) == output
 
 
@@ -173,7 +166,7 @@ def test_rot13_encode(text, output):
         ("FOO", "Rk9P"),
     ],
 )
-def test_base64_encode(text, output):
+def test_base64_encode(text, output) -> None:
     assert utility.base64_encode(text) == output
 
 
@@ -193,13 +186,14 @@ def test_base64_encode(text, output):
         ],
     ],
 )
-def test_base64_decode(text, out):
-    mock_notice = MockFunction()
+def test_base64_decode(text, out) -> None:
+    mock_notice = MagicMock()
     ret = utility.base64_decode(text, mock_notice)
     if out is None:
         assert ret is None
-        assert len(mock_notice.args) == 1
-        assert mock_notice.args[0][0][0] == f"Invalid base64 string '{text}'"
+        assert mock_notice.mock_calls == [
+            call(f"Invalid base64 string '{text}'")
+        ]
     else:
         assert ret == out
 
@@ -211,7 +205,7 @@ def test_base64_decode(text, out):
         ("aaa=", True),
     ],
 )
-def test_base64_check(text, valid):
+def test_base64_check(text, valid) -> None:
     ret = utility.base64_check(text)
     if valid:
         assert ret == f"'{text}' is a valid base64 encoded string"
@@ -220,14 +214,14 @@ def test_base64_check(text, valid):
 
 
 @pytest.mark.parametrize("text,output", ESCAPE_DATA)
-def test_escape(text, output):
+def test_escape(text, output) -> None:
     assert utility.escape(text) == output
 
 
 @pytest.mark.parametrize(
     "text,output", [(out, text) for text, out in ESCAPE_DATA]
 )
-def test_unescape(text, output):
+def test_unescape(text, output) -> None:
     assert utility.unescape(text) == output
 
 
@@ -241,7 +235,7 @@ def test_unescape(text, output):
         ("FOO", "OOF"),
     ],
 )
-def test_reverse(text, output):
+def test_reverse(text, output) -> None:
     assert utility.reverse(text) == output
 
 
@@ -255,7 +249,7 @@ def test_reverse(text, output):
         ("FOO", 3),
     ],
 )
-def test_length(text, text_length):
+def test_length(text, text_length) -> None:
     assert (
         utility.length(text)
         == f"The length of that string is {text_length} characters."
@@ -269,7 +263,7 @@ def test_length(text, text_length):
         ("$(bold)foo$(clear)", "\x02foo\x0f"),
     ],
 )
-def test_color_parse(text, out):
+def test_color_parse(text, out) -> None:
     assert utility.color_parse(text) == out
 
 
@@ -280,7 +274,7 @@ def test_color_parse(text, out):
         ("foo bar", "\x0304f\x0307o\x0308o \x0303b\x0310a\x0312r"),
     ],
 )
-def test_rainbow(text, out):
+def test_rainbow(text, out) -> None:
     assert utility.rainbow(text) == out
 
 
@@ -290,7 +284,7 @@ def test_rainbow(text, out):
         ("foo bar baz", "\x0304foo \x0307bar \x0308baz"),
     ],
 )
-def test_wrainbow(text, out):
+def test_wrainbow(text, out) -> None:
     assert utility.wrainbow(text) == out
 
 
@@ -308,7 +302,7 @@ def test_wrainbow(text, out):
         ],
     ],
 )
-def test_hash_command(text, out):
+def test_hash_command(text, out) -> None:
     assert utility.hash_command(text) == out
 
 
@@ -326,7 +320,7 @@ async def leet_data(mock_bot_factory):
         "foo bar baz!",
     ],
 )
-def test_munge(text, leet_data):
+def test_munge(text, leet_data) -> None:
     assert utility.munge(text)
 
 
@@ -336,7 +330,7 @@ def test_munge(text, leet_data):
         "foo bar baz!",
     ],
 )
-def test_leet(text, leet_data):
+def test_leet(text, leet_data) -> None:
     assert utility.leet(text)
 
 
@@ -346,7 +340,7 @@ def test_leet(text, leet_data):
         "foo bar baz!",
     ],
 )
-def test_derpify(text):
+def test_derpify(text) -> None:
     assert utility.derpify(text)
 
 
@@ -363,7 +357,7 @@ def test_derpify(text):
         ],
     ],
 )
-def test_usa(text, out):
+def test_usa(text, out) -> None:
     assert utility.usa(text) == out
 
 
@@ -376,5 +370,5 @@ def test_usa(text, out):
         ),
     ],
 )
-def test_superscript(text, out):
+def test_superscript(text, out) -> None:
     assert utility.superscript(text) == out

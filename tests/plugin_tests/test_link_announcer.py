@@ -82,7 +82,7 @@ SEARCH = (
 )
 
 
-def test_urls():
+def test_urls() -> None:
     for url in MATCHES:
         assert link_announcer.url_re.fullmatch(url), url
 
@@ -91,7 +91,7 @@ def test_urls():
         assert not match, match.group()
 
 
-def test_search():
+def test_search() -> None:
     for text, out in SEARCH:
         match = link_announcer.url_re.search(text)
         assert match and match.group() == out
@@ -107,7 +107,7 @@ ENCODINGS = (
 )
 
 
-def test_encoding_parse():
+def test_encoding_parse() -> None:
     for text, enc in ENCODINGS:
         soup = BeautifulSoup(text, "lxml")
         encoding = link_announcer.get_encoding(soup)
@@ -152,7 +152,7 @@ TESTS = {
     ],
     ids=lambda case: str(getattr(case, "string", case))[:100],
 )
-def test_link_announce(match, test_str, res, mock_requests):
+def test_link_announce(match, test_str, res, mock_requests) -> None:
     mock_requests.add("GET", match.string, body=test_str)
     mck = MagicMock()
     logger = MagicMock()
@@ -167,7 +167,7 @@ def test_link_announce(match, test_str, res, mock_requests):
         mck.assert_not_called()
 
 
-def test_link_announce_404(mock_requests):
+def test_link_announce_404(mock_requests) -> None:
     url = "http://example.com"
     mock_requests.add("GET", url, status=404)
 
@@ -184,7 +184,7 @@ def test_link_announce_404(mock_requests):
     mck.assert_not_called()
 
 
-def test_read_timeout(mock_requests):
+def test_read_timeout(mock_requests) -> None:
     url = "http://example.com"
 
     def callback(resp):
@@ -241,7 +241,7 @@ def test_read_timeout(mock_requests):
         ),
     ],
 )
-def test_change_encoding(body, encoding):
+def test_change_encoding(body, encoding) -> None:
     # ISO-8859-1 is the default encoding requests would return if none is found
     assert (
         link_announcer.parse_content(body, "ISO-8859-1").original_encoding
@@ -249,7 +249,7 @@ def test_change_encoding(body, encoding):
     )
 
 
-def test_connection_error(mock_requests):
+def test_connection_error(mock_requests) -> None:
     url = "http://example.com"
 
     match = link_announcer.url_re.search(url)

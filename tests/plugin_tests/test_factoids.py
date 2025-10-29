@@ -10,7 +10,7 @@ from tests.util import wrap_hook_response_async
 
 
 @pytest.mark.asyncio
-async def test_add_fact(mock_db, mock_bot):
+async def test_add_fact(mock_db, mock_bot) -> None:
     factoids.table.create(mock_db.engine)
     factoids.load_cache(mock_db.session())
     hook = MagicMock()
@@ -47,7 +47,7 @@ async def test_add_fact(mock_db, mock_bot):
 
 
 @pytest.mark.asyncio
-async def test_update_fact(mock_db, mock_bot):
+async def test_update_fact(mock_db, mock_bot) -> None:
     factoids.table.create(mock_db.engine)
     mock_db.load_data(
         factoids.table,
@@ -90,7 +90,7 @@ async def test_update_fact(mock_db, mock_bot):
     ]
 
 
-def test_forget(mock_db, patch_paste):
+def test_forget(mock_db, patch_paste) -> None:
     patch_paste.return_value = "PASTEURL"
     factoids.table.create(mock_db.engine)
     chan = "#example"
@@ -117,7 +117,7 @@ def test_forget(mock_db, patch_paste):
     assert mock_db.get_data(factoids.table) == []
 
 
-def test_remove_fact_no_paste(mock_requests, mock_db):
+def test_remove_fact_no_paste(mock_requests, mock_db) -> None:
     factoids.table.create(mock_db.engine)
     factoids.load_cache(mock_db.session())
     event = MagicMock()
@@ -146,7 +146,7 @@ def test_remove_fact_no_paste(mock_requests, mock_db):
     ]
 
 
-def test_remove_fact(patch_paste, mock_db):
+def test_remove_fact(patch_paste, mock_db) -> None:
     factoids.table.create(mock_db.engine)
     factoids.load_cache(mock_db.session())
     event = MagicMock()
@@ -182,7 +182,7 @@ def test_remove_fact(patch_paste, mock_db):
     assert mock_db.get_data(factoids.table) == []
 
 
-def test_clear_facts(mock_db):
+def test_clear_facts(mock_db) -> None:
     factoids.table.create(mock_db.engine)
     mock_db.add_row(
         factoids.table, word="foo", data="bar", nick="user", chan="#example"
@@ -206,7 +206,7 @@ def test_clear_facts(mock_db):
     assert mock_db.get_data(factoids.table) == []
 
 
-def test_list_facts(mock_db):
+def test_list_facts(mock_db) -> None:
     factoids.table.create(mock_db.engine)
     event = MagicMock()
 

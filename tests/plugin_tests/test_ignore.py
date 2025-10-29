@@ -6,11 +6,11 @@ from plugins.core import ignore
 
 
 class MockConn:
-    def __init__(self, name):
+    def __init__(self, name) -> None:
         self.name = name
 
 
-def setup_db(mock_db):
+def setup_db(mock_db) -> None:
     ignore.table.create(mock_db.engine, checkfirst=True)
 
     sess = mock_db.session()
@@ -20,7 +20,7 @@ def setup_db(mock_db):
     ignore.load_cache(sess)
 
 
-def test_ignore(mock_db, patch_paste):
+def test_ignore(mock_db, patch_paste) -> None:
     setup_db(mock_db)
 
     sess = mock_db.session()
@@ -60,7 +60,7 @@ def test_ignore(mock_db, patch_paste):
     patch_paste.assert_called_with("*!*@evil.host\n")
 
 
-def test_remove_ignore(mock_db):
+def test_remove_ignore(mock_db) -> None:
     setup_db(mock_db)
 
     sess = mock_db.session()
@@ -76,7 +76,7 @@ def test_remove_ignore(mock_db):
     assert not ignore.is_ignored("testconn", "#chan", "nick!user@host")
 
 
-def test_ignore_case(mock_db):
+def test_ignore_case(mock_db) -> None:
     setup_db(mock_db)
 
     sess = mock_db.session()
@@ -93,7 +93,7 @@ def test_ignore_case(mock_db):
 
 
 @pytest.mark.asyncio
-async def test_ignore_sieve(mock_db):
+async def test_ignore_sieve(mock_db) -> None:
     setup_db(mock_db)
 
     sess = mock_db.session()
@@ -130,7 +130,7 @@ async def test_ignore_sieve(mock_db):
     assert (await ignore.ignore_sieve(bot, event, _hook)) is event
 
 
-def test_get_user():
+def test_get_user() -> None:
     conn = MagicMock()
 
     conn.memory = {}
@@ -145,7 +145,7 @@ def test_get_user():
     assert ignore.get_user(conn, "nick") == "*!*@host"
 
 
-def test_ignore_command(mock_db):
+def test_ignore_command(mock_db) -> None:
     setup_db(mock_db)
 
     sess = mock_db.session()
@@ -196,7 +196,7 @@ def test_ignore_command(mock_db):
     event.notice.assert_called_with("*!*@host is already globally ignored.")
 
 
-def test_unignore_command(mock_db):
+def test_unignore_command(mock_db) -> None:
     setup_db(mock_db)
 
     sess = mock_db.session()

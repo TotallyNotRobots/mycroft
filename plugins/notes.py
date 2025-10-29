@@ -55,7 +55,7 @@ def read_all_notes(db, server, user, show_deleted=False):
     return db.execute(query).fetchall()
 
 
-def delete_all_notes(db, server, user):
+def delete_all_notes(db, server, user) -> None:
     query = table.update().where(where_user(server, user)).values(deleted=True)
 
     db.execute(query)
@@ -71,7 +71,7 @@ def read_note(db, server, user, note_id):
     return db.execute(query).fetchone()
 
 
-def delete_note(db, server, user, note_id):
+def delete_note(db, server, user, note_id) -> None:
     query = (
         table.update()
         .where(where_user(server, user))
@@ -82,7 +82,7 @@ def delete_note(db, server, user, note_id):
     db.commit()
 
 
-def add_note(db, server, user, text):
+def add_note(db, server, user, text) -> None:
     id_query = select(func.max(table.c.note_id).label("maxid")).where(
         where_user(server, user)
     )
@@ -105,7 +105,7 @@ def add_note(db, server, user, text):
     db.commit()
 
 
-def format_note(data):
+def format_note(data) -> str:
     note_id, note_text, added = data
 
     # format timestamp
@@ -157,7 +157,7 @@ def parse_args(text):
     return args, cmd
 
 
-def cmd_clear(db, event):
+def cmd_clear(db, event) -> None:
     # user is deleting all notes
     delete_all_notes(db, event.conn.name, event.nick)
     event.notice("All notes deleted!")
@@ -212,7 +212,7 @@ def cmd_show(args, db, event):
     return text
 
 
-def cmd_get(args, db, event):
+def cmd_get(args, db, event) -> None:
     # user is getting a single note
     # show the note
     text = cmd_show(args, db, event)

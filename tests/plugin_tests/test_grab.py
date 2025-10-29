@@ -6,14 +6,14 @@ from plugins import grab
 from tests.util.mock_conn import MockConn
 
 
-def test_grab_add(mock_db):
+def test_grab_add(mock_db) -> None:
     db = mock_db.session()
     grab.table.create(bind=mock_db.engine)
     grab.grab_add("foo", 123, "foobar", "#foo", db)
     assert mock_db.get_data(grab.table) == [("foo", "123", "foobar", "#foo")]
 
 
-def test_grab_self(mock_db):
+def test_grab_self(mock_db) -> None:
     grab.table.create(bind=mock_db.engine)
     conn = MockConn()
     db = mock_db.session()
@@ -22,7 +22,7 @@ def test_grab_self(mock_db):
     assert res == "Didn't your mother teach you not to grab yourself?"
 
 
-def test_grab_no_data(mock_db):
+def test_grab_no_data(mock_db) -> None:
     grab.table.create(bind=mock_db.engine)
     conn = MockConn()
     db = mock_db.session()
@@ -30,7 +30,7 @@ def test_grab_no_data(mock_db):
     assert res == "I couldn't find anything from bar in recent history."
 
 
-def test_grab_duplicate(mock_db):
+def test_grab_duplicate(mock_db) -> None:
     grab.table.create(bind=mock_db.engine)
     nick = "foo"
     quote = "foo bar baz"
@@ -51,7 +51,7 @@ def test_grab_duplicate(mock_db):
     )
 
 
-def test_grab_error(mock_db, caplog_bot):
+def test_grab_error(mock_db, caplog_bot) -> None:
     nick = "foo"
     quote = "foo bar baz"
     chan = "#foo"
@@ -76,11 +76,11 @@ def test_grab_error(mock_db, caplog_bot):
         ("foo", "\1ACTION bar baz\1", "* f\u200boo bar baz"),
     ],
 )
-def test_format_grab(nick, quote, out):
+def test_format_grab(nick, quote, out) -> None:
     assert grab.format_grab(nick, quote) == out
 
 
-def test_grabrandom_no_data():
+def test_grabrandom_no_data() -> None:
     chan = "#foo"
     target_nick = "bar"
     grab.grab_cache.clear()
@@ -90,7 +90,7 @@ def test_grabrandom_no_data():
     assert event.mock_calls == []
 
 
-def test_grabrandom_no_data_no_text():
+def test_grabrandom_no_data_no_text() -> None:
     chan = "#foo"
     grab.grab_cache.clear()
     grab.grab_cache[chan] = {"foo": []}
@@ -100,7 +100,7 @@ def test_grabrandom_no_data_no_text():
     assert event.mock_calls == []
 
 
-def test_grabrandom_no_text():
+def test_grabrandom_no_text() -> None:
     chan = "#foo"
     grab.grab_cache.clear()
     grab.grab_cache[chan] = {"foo": ["bar baz"]}
@@ -110,7 +110,7 @@ def test_grabrandom_no_text():
     assert event.mock_calls == [call.message("<f\u200boo> bar baz")]
 
 
-def test_grabsearch():
+def test_grabsearch() -> None:
     chan = "#foo"
     grab.grab_cache.clear()
     grab.grab_cache[chan] = {"foo": ["bar baz"]}
@@ -121,7 +121,7 @@ def test_grabsearch():
     assert event.mock_calls == []
 
 
-def test_last_grab_none(mock_db):
+def test_last_grab_none(mock_db) -> None:
     chan = "#foo"
     text = "bar"
     grab.grab_cache.clear()
@@ -132,7 +132,7 @@ def test_last_grab_none(mock_db):
     assert event.mock_calls == []
 
 
-def test_last_grab_empty(mock_db):
+def test_last_grab_empty(mock_db) -> None:
     chan = "#foo"
     text = "bar"
     grab.grab_cache.clear()
@@ -143,7 +143,7 @@ def test_last_grab_empty(mock_db):
     assert event.mock_calls == []
 
 
-def test_last_grab(mock_db):
+def test_last_grab(mock_db) -> None:
     chan = "#foo"
     text = "bar"
     grab.grab_cache.clear()
@@ -154,7 +154,7 @@ def test_last_grab(mock_db):
     assert event.mock_calls == [call.message("<b\u200bar> bar baz", "#foo")]
 
 
-def test_grabsearch_nick():
+def test_grabsearch_nick() -> None:
     chan = "#foo"
     grab.grab_cache.clear()
     target_nick = "foo"

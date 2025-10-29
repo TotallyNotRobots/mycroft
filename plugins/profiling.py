@@ -85,7 +85,7 @@ async def threaddump_command():
 
 
 @hook.command("objtypes", autohelp=False, permissions=["botcontrol"])
-def show_types():
+def show_types() -> str:
     """- Print object type data to the console"""
     if objgraph is None:
         return "objgraph not installed"
@@ -94,7 +94,7 @@ def show_types():
 
 
 @hook.command("objgrowth", autohelp=False, permissions=["botcontrol"])
-def show_growth():
+def show_growth() -> str:
     """- Print object growth data to the console"""
     if objgraph is None:
         return "objgraph not installed"
@@ -103,7 +103,7 @@ def show_growth():
 
 
 @hook.command("pymsummary", autohelp=False, permissions=["botcontrol"])
-def pympler_summary():
+def pympler_summary() -> str:
     """- Print object summary data to the console"""
     if pympler is None:
         return "pympler not installed / not enabled"
@@ -114,7 +114,7 @@ def pympler_summary():
 
 
 @hook.command("pymdiff", autohelp=False, permissions=["botcontrol"])
-def pympler_diff():
+def pympler_diff() -> str:
     """- Print object diff data to the console"""
     if pympler is None:
         return "pympler not installed / not enabled"
@@ -126,7 +126,7 @@ def pympler_diff():
 if sys.platform == "linux":  # pragma: no cover
     # The handler is called with two arguments: the signal number and the current stack frame
     # These parameters should NOT be removed
-    def debug(sig, frame):
+    def debug(sig, frame) -> None:
         print(get_thread_dump())
 
     signal.signal(signal.SIGUSR1, debug)  # Register handler

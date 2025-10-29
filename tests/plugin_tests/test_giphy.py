@@ -1,7 +1,7 @@
 from plugins import giphy
 
 
-def test_giphy(mock_requests, mock_bot):
+def test_giphy(mock_requests, mock_bot) -> None:
     mock_requests.add(
         "GET",
         "http://api.giphy.com/v1/gifs/search?q=foo&limit=10&fmt=json",
@@ -11,7 +11,7 @@ def test_giphy(mock_requests, mock_bot):
     assert res == "foo.bar - (Powered by GIPHY)"
 
 
-def test_giphy_rating(mock_requests, mock_bot):
+def test_giphy_rating(mock_requests, mock_bot) -> None:
     mock_requests.add(
         "GET",
         "http://api.giphy.com/v1/gifs/search?q=foo&limit=10&fmt=json",
@@ -21,7 +21,7 @@ def test_giphy_rating(mock_requests, mock_bot):
     assert res == "foo.bar content rating: \x02PG\x02. (Powered by GIPHY)"
 
 
-def test_giphy_no_results(mock_requests, mock_bot):
+def test_giphy_no_results(mock_requests, mock_bot) -> None:
     mock_requests.add(
         "GET",
         "http://api.giphy.com/v1/gifs/search?q=foo&limit=10&fmt=json",

@@ -32,7 +32,7 @@ def temp_metadata():
 
 
 @pytest.fixture()
-def tmp_logs(tmp_path):
+def tmp_logs(tmp_path) -> None:
     cloudbot._setup(tmp_path)
 
 

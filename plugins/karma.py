@@ -32,7 +32,7 @@ karma_table = Table(
 
 
 @hook.on_start()
-def remove_non_channel_points(db):
+def remove_non_channel_points(db) -> None:
     """Temporary on_start hook to remove non-channel points"""
     db.execute(
         karma_table.delete().where(
@@ -42,7 +42,7 @@ def remove_non_channel_points(db):
     db.commit()
 
 
-def update_score(nick, chan, thing, score, db):
+def update_score(nick, chan, thing, score, db) -> None:
     if nick.casefold() == chan.casefold():
         # This is a PM, don't set points in a PM
         return
@@ -68,13 +68,13 @@ def update_score(nick, chan, thing, score, db):
 
 
 @hook.command("pp", "addpoint")
-def addpoint(text, nick, chan, db):
+def addpoint(text, nick, chan, db) -> None:
     """<thing> - adds a point to the <thing>"""
     update_score(nick, chan, text, 1, db)
 
 
 @hook.regex(karmaplus_re)
-def re_addpt(match, nick, chan, db, notice):
+def re_addpt(match, nick, chan, db, notice) -> None:
     """no useful help txt"""
     thing = match.group().split("++")[0]
     if thing:
@@ -86,7 +86,7 @@ def re_addpt(match, nick, chan, db, notice):
 
 
 @hook.command("mm", "rmpoint")
-def rmpoint(text, nick, chan, db):
+def rmpoint(text, nick, chan, db) -> None:
     """<thing> - subtracts a point from the <thing>"""
     update_score(nick, chan, text, -1, db)
 
@@ -137,7 +137,7 @@ def minuspts(nick, chan, db):
 
 
 @hook.regex(karmaminus_re)
-def re_rmpt(match, nick, chan, db, notice):
+def re_rmpt(match, nick, chan, db, notice) -> None:
     """no useful help txt"""
     thing = match.group().split("--")[0]
     if thing:
@@ -149,7 +149,7 @@ def re_rmpt(match, nick, chan, db, notice):
 
 
 @hook.command("points")
-def points_cmd(text, chan, db):
+def points_cmd(text, chan, db) -> str:
     """<thing> - will print the total points for <thing> in the channel."""
     score = 0
     thing = ""

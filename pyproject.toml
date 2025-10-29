@@ -149,6 +149,11 @@ module = 'cloudbot.config'
 disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
+module = 'cloudbot.util.*'
+warn_return_any = true
+strict_optional = true
+
+[[tool.mypy.overrides]]
 module = 'plugins.cryptocurrency'
 strict_optional = true
 warn_return_any = true

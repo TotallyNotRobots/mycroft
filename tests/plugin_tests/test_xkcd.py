@@ -22,7 +22,7 @@ def load_data(xkcd_id):
 
 
 @pytest.mark.parametrize("xkcd_id", list(get_files()))
-def test_info(xkcd_id, mock_requests):
+def test_info(xkcd_id, mock_requests) -> None:
     data = load_data(xkcd_id)
     mock_requests.add(
         "GET",
@@ -44,7 +44,7 @@ def test_info(xkcd_id, mock_requests):
     assert xkcd.xkcd_info(str(xkcd_id), True) == with_url
 
 
-def test_search(mock_requests):
+def test_search(mock_requests) -> None:
     mock_requests.add(
         "GET",
         "http://www.ohnorobot.com/?s=foo&Search=Search&comic=56&e=0&n=0&b=0&m=0&d=0&t=0",
@@ -69,7 +69,7 @@ def test_search(mock_requests):
     )
 
 
-def test_search_no_results(mock_requests):
+def test_search_no_results(mock_requests) -> None:
     mock_requests.add(
         "GET",
         "http://www.ohnorobot.com/?s=foo&Search=Search&comic=56&e=0&n=0&b=0&m=0&d=0&t=0",

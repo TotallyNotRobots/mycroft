@@ -16,7 +16,7 @@ def load_fmk(bot: CloudBot) -> None:
 
 
 @hook.command("fmk", autohelp=False)
-def fmk(text, message):
+def fmk(text, message) -> None:
     """[nick] - Fuck, Marry, Kill"""
     message(
         " {} FMK - {}, {}, {}".format(

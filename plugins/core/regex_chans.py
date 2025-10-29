@@ -33,7 +33,7 @@ logger = logging.getLogger("cloudbot")
 
 
 @hook.on_start()
-def load_cache(db):
+def load_cache(db) -> None:
     new_cache = {}
     for row in db.execute(table.select()):
         conn = row.connection
@@ -57,7 +57,7 @@ def load_cache(db):
     status_cache.update(new_cache)
 
 
-def set_status(db, conn, chan, status: bool):
+def set_status(db, conn, chan, status: bool) -> None:
     status_value = ENABLED if status else DISABLED
     if (conn, chan) in status_cache:
         # if we have a set value, update
@@ -79,7 +79,7 @@ def set_status(db, conn, chan, status: bool):
     load_cache(db)
 
 
-def delete_status(db, conn, chan):
+def delete_status(db, conn, chan) -> None:
     db.execute(
         table.delete()
         .where(table.c.connection == conn)
@@ -106,7 +106,7 @@ def parse_args(text: str, chan: str) -> str:
     return channel
 
 
-def change_status(db, event, status):
+def change_status(db, event, status) -> None:
     channel = parse_args(event.text, event.chan)
     action = "Enabling" if status else "Disabling"
     event.message(
@@ -159,7 +159,7 @@ def disableregex(db, event):
 
 
 @hook.command(autohelp=False, permissions=["botcontrol"])
-def resetregex(text, db, conn, chan, nick, message, notice):
+def resetregex(text, db, conn, chan, nick, message, notice) -> None:
     """[chan] - Reset regex hook status in [chan] (default: current channel)"""
     channel = parse_args(text, chan)
     message(

@@ -33,7 +33,7 @@ def mock_manager(mock_bot):
     yield mock_bot.plugin_manager
 
 
-def test_get_plugin(mock_manager):
+def test_get_plugin(mock_manager) -> None:
     assert mock_manager.get_plugin("plugins/test.py") is None
     assert mock_manager.find_plugin("test") is None
 
@@ -62,7 +62,7 @@ def test_get_plugin(mock_manager):
     assert mock_manager.find_plugin("test") is None
 
 
-def test_find_tables(mock_manager):
+def test_find_tables(mock_manager) -> None:
     file_path = mock_manager.bot.plugin_dir / "test.py"
     file_name = file_path.name
 
@@ -84,7 +84,7 @@ def test_find_tables(mock_manager):
     assert table_names == ["foo"]
 
 
-def test_can_load(mock_manager):
+def test_can_load(mock_manager) -> None:
     mock_manager.bot.config.clear()
 
     assert mock_manager.can_load("plugins.foo")
@@ -142,7 +142,9 @@ def test_can_load(mock_manager):
     assert mock_manager.can_load("plugins.foo")
 
 
-def test_plugin_load(mock_manager, patch_import_module, patch_import_reload):
+def test_plugin_load(
+    mock_manager, patch_import_module, patch_import_reload
+) -> None:
     patch_import_module.return_value = mod = MockModule()
     mock_manager.bot.loop.run_until_complete(
         mock_manager.load_plugin(mock_manager.bot.plugin_dir / "test.py")
@@ -174,7 +176,7 @@ def test_plugin_load(mock_manager, patch_import_module, patch_import_reload):
 @pytest.mark.asyncio
 async def test_get_plugin_tables_reentrant(
     mock_bot_factory: Callable[..., MockBot],
-):
+) -> None:
     mock_bot = mock_bot_factory(base_dir=Path.cwd().resolve())
     assert mock_bot.plugin_dir.exists()
     mock_manager = mock_bot.plugin_manager
@@ -187,14 +189,14 @@ class WeirdObject:
     This represents an object that returns a value for any attribute you ask for
     """
 
-    def __init__(self, func):
+    def __init__(self, func) -> None:
         self.func = func
 
     def __getattr__(self, item):
         return self.func(self, item)
 
 
-def _test_weird_obj(patch_import_module, mock_manager, weird_obj):
+def _test_weird_obj(patch_import_module, mock_manager, weird_obj) -> None:
     patch_import_module.return_value = MockModule(some_import=weird_obj)
 
     mock_manager.bot.loop.run_until_complete(
@@ -202,13 +204,13 @@ def _test_weird_obj(patch_import_module, mock_manager, weird_obj):
     )
 
 
-def test_plugin_with_objs_none_attr(mock_manager, patch_import_module):
+def test_plugin_with_objs_none_attr(mock_manager, patch_import_module) -> None:
     _test_weird_obj(
         patch_import_module, mock_manager, WeirdObject(lambda *args: None)
     )
 
 
-def test_plugin_with_objs_mock_attr(mock_manager, patch_import_module):
+def test_plugin_with_objs_mock_attr(mock_manager, patch_import_module) -> None:
     _test_weird_obj(
         patch_import_module,
         mock_manager,
@@ -216,13 +218,15 @@ def test_plugin_with_objs_mock_attr(mock_manager, patch_import_module):
     )
 
 
-def test_plugin_with_objs_dict_attr(mock_manager, patch_import_module):
+def test_plugin_with_objs_dict_attr(mock_manager, patch_import_module) -> None:
     _test_weird_obj(
         patch_import_module, mock_manager, WeirdObject(lambda *args: {})
     )
 
 
-def test_plugin_with_objs_full_dict_attr(mock_manager, patch_import_module):
+def test_plugin_with_objs_full_dict_attr(
+    mock_manager, patch_import_module
+) -> None:
     _test_weird_obj(
         patch_import_module,
         mock_manager,
@@ -236,7 +240,7 @@ def test_plugin_with_objs_full_dict_attr(mock_manager, patch_import_module):
 
 def test_plugin_load_disabled(
     mock_manager, patch_import_module, patch_import_reload
-):
+) -> None:
     patch_import_module.reset_mock()
     patch_import_reload.reset_mock()
     patch_import_module.return_value = MockModule()
@@ -274,7 +278,7 @@ class TestPluginLoad:
         patch_import_module,
         patch_import_reload,
         caplog_bot,
-    ):
+    ) -> None:
         plugin_a = MockModule()
         plugin_b = MockModule()
 
@@ -343,7 +347,7 @@ class TestPluginLoad:
         patch_import_module,
         patch_import_reload,
         caplog_bot,
-    ):
+    ) -> None:
         mod = MockModule()
 
         @hook.regex(re.compile(r"."))
@@ -387,7 +391,7 @@ class TestPluginLoad:
         patch_import_module,
         patch_import_reload,
         caplog_bot,
-    ):
+    ) -> None:
         mod = MockModule()
 
         @hook.periodic(60)
@@ -444,7 +448,7 @@ class TestPluginLoad:
 @pytest.mark.asyncio
 async def test_load_all(
     mock_manager, tmp_path, mock_bot, patch_import_module, patch_import_reload
-):
+) -> None:
     mod = MockModule()
 
     @hook.command("foo")
@@ -455,12 +459,12 @@ async def test_load_all(
     stopped = 0
 
     @hook.on_start()
-    def start():
+    def start() -> None:
         nonlocal started
         started += 1
 
     @hook.on_stop()
-    def stop():
+    def stop() -> None:
         nonlocal stopped
         stopped += 1
 
@@ -496,7 +500,7 @@ async def test_load_on_start_error(
     patch_import_module,
     patch_import_reload,
     caplog_bot,
-):
+) -> None:
     caplog_bot.set_level(logging.INFO)
     mod = MockModule()
 
@@ -534,7 +538,7 @@ async def test_load_config_hooks(
     patch_import_module,
     patch_import_reload,
     caplog_bot,
-):
+) -> None:
     mod = MockModule()
 
     @hook.config()
@@ -578,7 +582,7 @@ async def test_unload_raw_hooks(
     patch_import_module,
     patch_import_reload,
     caplog_bot,
-):
+) -> None:
     mod = MockModule()
 
     @hook.irc_raw("PRIVMSG")
@@ -619,7 +623,7 @@ async def test_unload_event_hooks(
     patch_import_module,
     patch_import_reload,
     caplog_bot,
-):
+) -> None:
     mod = MockModule()
 
     @hook.event(EventType.notice)
@@ -652,7 +656,7 @@ async def test_unload_event_hooks(
     ]
 
 
-def test_safe_resolve():
+def test_safe_resolve() -> None:
     base_path = Path("/some/path/that/doesn't/exist")
     path = plugin.safe_resolve(base_path)
     assert str(path) == str(base_path.absolute())
@@ -691,14 +695,14 @@ async def test_launch(
     single_thread,
     sieve_error,
     caplog_bot,
-):
+) -> None:
     caplog_bot.set_level(logging.INFO)
     called = False
     sieve_called = False
     post_called = 0
 
     @hook.command("test", do_sieve=do_sieve, singlethread=single_thread)
-    def foo_cb():
+    def foo_cb() -> None:
         nonlocal called
         called = True
 
@@ -716,7 +720,7 @@ async def test_launch(
         return None
 
     @hook.post_hook()
-    def post_hook(db):
+    def post_hook(db) -> None:
         nonlocal post_called
         post_called += 1
         assert db is not None
@@ -783,14 +787,14 @@ async def test_launch_async(
     single_thread,
     sieve_error,
     caplog_bot,
-):
+) -> None:
     caplog_bot.set_level(logging.INFO)
     called = False
     sieve_called = False
     post_called = 0
 
     @hook.command("test", do_sieve=do_sieve, singlethread=single_thread)
-    async def foo_cb():
+    async def foo_cb() -> None:
         nonlocal called
         called = True
 
@@ -807,7 +811,7 @@ async def test_launch_async(
         return None
 
     @hook.post_hook()
-    async def post_hook(db):
+    async def post_hook(db) -> None:
         nonlocal post_called
         post_called += 1
         assert db is not None
@@ -858,7 +862,9 @@ async def test_launch_async(
 
 
 @pytest.mark.asyncio
-async def test_create_tables(mock_bot_factory, caplog_bot, tmp_path, mock_db):
+async def test_create_tables(
+    mock_bot_factory, caplog_bot, tmp_path, mock_db
+) -> None:
     db = mock_db
     bot = mock_bot_factory(db=db)
     table = Table(

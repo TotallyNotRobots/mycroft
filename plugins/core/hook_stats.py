@@ -41,7 +41,7 @@ def get_stats(bot):
 
 
 @hook.post_hook(priority=Priority.HIGHEST)
-def stats_sieve(launched_event, error, bot, launched_hook):
+def stats_sieve(launched_event, error, bot, launched_hook) -> None:
     chan = launched_event.chan
     conn = launched_event.conn
     status = "success" if error is None else "failure"

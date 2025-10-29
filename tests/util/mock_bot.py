@@ -18,7 +18,7 @@ class MockBot(AbstractBot):
         loop=None,
         db: MockDB | None = None,
         base_dir=None,
-    ):
+    ) -> None:
         self.old_db = None
         self.do_db_migrate = False
         self.base_dir = base_dir
@@ -53,7 +53,7 @@ class MockBot(AbstractBot):
     def get_plugin_manager(self) -> PluginManager:
         return self._plugin_manager
 
-    def close(self):
+    def close(self) -> None:
         self.observer.stop()
 
     def migrate_db(self) -> None:

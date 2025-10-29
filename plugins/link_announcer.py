@@ -14,7 +14,7 @@ QUERY_CHARS = f"{PATH_SEG_CHARS}|/"
 FRAG_CHARS = QUERY_CHARS
 
 
-def no_parens(pattern):
+def no_parens(pattern) -> str:
     return rf"{pattern}|\(({pattern}|[\(\)])*\)"
 
 
@@ -104,7 +104,7 @@ def parse_content(content, encoding=None):
 @hook.regex(
     url_re, priority=Priority.LOW, action=Action.HALTTYPE, only_no_match=True
 )
-def print_url_title(message, match, logger):
+def print_url_title(message, match, logger) -> None:
     try:
         with requests.get(
             match.group(), headers=HEADERS, stream=True, timeout=3

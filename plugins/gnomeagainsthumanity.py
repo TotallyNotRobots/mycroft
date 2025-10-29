@@ -8,7 +8,7 @@ gnomecards: dict[str, list[str]] = {}
 
 
 @hook.on_start()
-def shuffle_deck(bot):
+def shuffle_deck(bot) -> None:
     gnomecards.clear()
     with open((bot.data_path / "gnomecards.json"), encoding="utf-8") as f:
         gnomecards.update(json.load(f))

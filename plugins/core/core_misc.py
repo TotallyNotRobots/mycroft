@@ -11,7 +11,7 @@ logger = logging.getLogger("cloudbot")
 
 # Auto-join on Invite (Configurable, defaults to True)
 @hook.irc_raw("INVITE")
-def invite(irc_paramlist, conn):
+def invite(irc_paramlist, conn) -> None:
     invite_join = conn.config.get("invite_join", True)
     chan = irc_paramlist[-1]
 
@@ -20,13 +20,13 @@ def invite(irc_paramlist, conn):
 
 
 @hook.irc_raw("JOIN")
-def on_join(chan, conn, nick):
+def on_join(chan, conn, nick) -> None:
     if conn.nick.casefold() == nick.casefold():
         conn.cmd("MODE", chan)
 
 
 @hook.irc_raw("324")
-def check_mode(irc_paramlist, conn, message):
+def check_mode(irc_paramlist, conn, message) -> None:
     # message(", ".join(irc_paramlist), "bloodygonzo")
     mode = irc_paramlist[2]
     require_reg = conn.config.get("require_registered_channels", False)
@@ -36,7 +36,7 @@ def check_mode(irc_paramlist, conn, message):
 
 
 @hook.irc_raw("MODE")
-def on_mode_change(conn, irc_paramlist, message):
+def on_mode_change(conn, irc_paramlist, message) -> None:
     require_reg = conn.config.get("require_registered_channels", False)
     chan = irc_paramlist[0]
     modes = irc_paramlist[1]
@@ -57,7 +57,7 @@ def on_mode_change(conn, irc_paramlist, message):
 
 # Identify to NickServ (or other service)
 @hook.irc_raw("004")
-async def onjoin(conn, bot):
+async def onjoin(conn, bot) -> None:
     logger.info(
         "[%s|misc] Bot is sending join commands for network.", conn.name
     )
@@ -122,7 +122,7 @@ async def onjoin(conn, bot):
 
 
 @hook.irc_raw("376")
-async def do_joins(conn):
+async def do_joins(conn) -> None:
     """
     Join config defined channels
 
@@ -157,13 +157,13 @@ async def do_joins(conn):
 
 
 @hook.irc_raw("433")
-def on_nick_in_use(conn, irc_paramlist):
+def on_nick_in_use(conn, irc_paramlist) -> None:
     conn.nick = f"{irc_paramlist[1]}_"
     conn.cmd("NICK", conn.nick)
 
 
 @hook.irc_raw("432", singlethread=True)
-async def on_invalid_nick(conn):
+async def on_invalid_nick(conn) -> None:
     nick = conn.config["nick"]
     conn.nick = nick
     conn.cmd("NICK", conn.nick)

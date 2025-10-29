@@ -18,7 +18,7 @@ from plugins import wordnik
         ("foobar", "Foobar/Wordnik"),
     ],
 )
-def test_attr_name(source, name):
+def test_attr_name(source, name) -> None:
     assert wordnik.format_attrib(source) == name
 
 
@@ -69,7 +69,7 @@ class WordTestBase:
     def get_not_found_msg(cls, word):
         raise NotImplementedError
 
-    def test_not_found(self, mock_requests, mock_api_keys):
+    def test_not_found(self, mock_requests, mock_api_keys) -> None:
         mock_requests.add(
             "GET",
             self.build_url("word"),
@@ -81,7 +81,7 @@ class WordTestBase:
         out, _ = self.call("word")
         assert out == self.get_not_found_msg("word")
 
-    def test_unknown(self, mock_requests, mock_api_keys):
+    def test_unknown(self, mock_requests, mock_api_keys) -> None:
         mock_requests.add(
             "GET",
             self.build_url("word"),
@@ -98,7 +98,7 @@ class WordTestBase:
             "There was a problem contacting the Wordnik API (Unknown error 'FooBar')"
         )
 
-    def test_invalid_error(self, mock_requests, mock_api_keys):
+    def test_invalid_error(self, mock_requests, mock_api_keys) -> None:
         mock_requests.add(
             "GET",
             self.build_url("word"),
@@ -116,7 +116,7 @@ class WordTestBase:
             "(Unknown error, unable to retrieve error data)"
         )
 
-    def test_json_http_error(self, mock_requests, mock_api_keys):
+    def test_json_http_error(self, mock_requests, mock_api_keys) -> None:
         mock_requests.add(
             "GET",
             self.build_url("word"),
@@ -129,7 +129,7 @@ class WordTestBase:
         with pytest.raises(requests.HTTPError):
             self.call("word", event)
 
-    def test_json_no_http_error(self, mock_requests, mock_api_keys):
+    def test_json_no_http_error(self, mock_requests, mock_api_keys) -> None:
         mock_requests.add(
             "GET",
             self.build_url("word"),
@@ -141,7 +141,7 @@ class WordTestBase:
         with pytest.raises(json.JSONDecodeError):
             self.call("word", event)
 
-    def test_no_key(self, mock_requests, mock_api_keys):
+    def test_no_key(self, mock_requests, mock_api_keys) -> None:
         mock_api_keys.config.get_api_key.return_value = None
 
         mock_event = MagicMock()
@@ -161,14 +161,14 @@ class TestDefine(WordTestBase):
         return wordnik.define
 
     @classmethod
-    def get_op(cls):
+    def get_op(cls) -> str:
         return "definitions"
 
     @classmethod
-    def get_not_found_msg(cls, word):
+    def get_not_found_msg(cls, word) -> str:
         return f"I could not find a definition for \x02{word}\x02."
 
-    def test_search(self, mock_requests, mock_api_keys):
+    def test_search(self, mock_requests, mock_api_keys) -> None:
         mock_requests.add(
             "GET",
             self.build_url("word"),
@@ -221,18 +221,18 @@ class TestUsage(WordTestBase):
         return wordnik.word_usage
 
     @classmethod
-    def get_op(cls):
+    def get_op(cls) -> str:
         return "examples"
 
     @classmethod
-    def get_result_limit(cls):
+    def get_result_limit(cls) -> int:
         return 10
 
     @classmethod
-    def get_not_found_msg(cls, word):
+    def get_not_found_msg(cls, word) -> str:
         return f"I could not find any usage examples for \x02{word}\x02."
 
-    def test_search(self, mock_requests, mock_api_keys):
+    def test_search(self, mock_requests, mock_api_keys) -> None:
         mock_requests.add(
             "GET",
             self.build_url("word"),
@@ -278,14 +278,14 @@ class TestPronounce(WordTestBase):
         return wordnik.pronounce
 
     @classmethod
-    def get_op(cls):
+    def get_op(cls) -> str:
         return "pronunciations"
 
     @classmethod
-    def get_not_found_msg(cls, word):
+    def get_not_found_msg(cls, word) -> str:
         return "Sorry, I don't know how to pronounce \x02word\x02."
 
-    def _init_search(self, mock_requests, mock_api_keys):
+    def _init_search(self, mock_requests, mock_api_keys) -> None:
         mock_requests.add(
             "GET",
             self.build_url("word"),
@@ -335,7 +335,7 @@ class TestPronounce(WordTestBase):
             ],
         )
 
-    def test_search(self, mock_requests, mock_api_keys):
+    def test_search(self, mock_requests, mock_api_keys) -> None:
         self._init_search(mock_requests, mock_api_keys)
 
         mock_requests.add(
@@ -353,7 +353,7 @@ class TestPronounce(WordTestBase):
         out, _ = self.call("word")
         assert out == expected
 
-    def test_search_no_audio(self, mock_requests, mock_api_keys):
+    def test_search_no_audio(self, mock_requests, mock_api_keys) -> None:
         self._init_search(mock_requests, mock_api_keys)
 
         mock_requests.add(
@@ -369,7 +369,7 @@ class TestPronounce(WordTestBase):
         out, _ = self.call("word")
         assert out == expected
 
-    def test_search_audio_error(self, mock_requests, mock_api_keys):
+    def test_search_audio_error(self, mock_requests, mock_api_keys) -> None:
         self._init_search(mock_requests, mock_api_keys)
 
         mock_requests.add(
@@ -395,7 +395,7 @@ class TestSynonym(WordTestBase):
         return wordnik.synonym
 
     @classmethod
-    def get_op(cls):
+    def get_op(cls) -> str:
         return "relatedWords"
 
     @classmethod
@@ -407,10 +407,10 @@ class TestSynonym(WordTestBase):
         return {"relationshipTypes": "synonym", "limitPerRelationshipType": "5"}
 
     @classmethod
-    def get_not_found_msg(cls, word):
+    def get_not_found_msg(cls, word) -> str:
         return f"Sorry, I couldn't find any synonyms for \x02{word}\x02."
 
-    def test_search(self, mock_requests, mock_api_keys):
+    def test_search(self, mock_requests, mock_api_keys) -> None:
         mock_requests.add(
             "GET",
             self.build_url("word"),
@@ -441,7 +441,7 @@ class TestAntonym(WordTestBase):
         return wordnik.antonym
 
     @classmethod
-    def get_op(cls):
+    def get_op(cls) -> str:
         return "relatedWords"
 
     @classmethod
@@ -457,10 +457,10 @@ class TestAntonym(WordTestBase):
         }
 
     @classmethod
-    def get_not_found_msg(cls, word):
+    def get_not_found_msg(cls, word) -> str:
         return f"Sorry, I couldn't find any antonyms for \x02{word}\x02."
 
-    def test_search(self, mock_requests, mock_api_keys):
+    def test_search(self, mock_requests, mock_api_keys) -> None:
         mock_requests.add(
             "GET",
             self.build_url("clear"),
@@ -501,22 +501,22 @@ class WordsTestBase(WordTestBase):
 
 class TestWOTD(WordsTestBase):
     @classmethod
-    def get_result_limit(cls):
+    def get_result_limit(cls) -> int:
         return 0
 
     @classmethod
-    def get_not_found_msg(cls, word):
+    def get_not_found_msg(cls, word) -> str:
         return "Sorry I couldn't find the word of the day"
 
     @classmethod
-    def get_op(cls):
+    def get_op(cls) -> str:
         return "wordOfTheDay"
 
     @classmethod
     def get_func(cls):
         return wordnik.wordoftheday
 
-    def test_today(self, mock_requests, mock_api_keys):
+    def test_today(self, mock_requests, mock_api_keys) -> None:
         definitions = [
             {
                 "source": "wiktionary",
@@ -575,7 +575,7 @@ class TestWOTD(WordsTestBase):
 
         assert out == expected
 
-    def test_date(self, mock_requests, mock_api_keys):
+    def test_date(self, mock_requests, mock_api_keys) -> None:
         definitions = [
             {
                 "text": (
@@ -701,7 +701,7 @@ class TestWOTD(WordsTestBase):
 
 class TestRandomWord(WordsTestBase):
     @classmethod
-    def get_op(cls):
+    def get_op(cls) -> str:
         return "randomWord"
 
     @classmethod
@@ -712,11 +712,11 @@ class TestRandomWord(WordsTestBase):
         }
 
     @classmethod
-    def get_result_limit(cls):
+    def get_result_limit(cls) -> int:
         return 0
 
     @classmethod
-    def get_not_found_msg(cls, word):
+    def get_not_found_msg(cls, word) -> str:
         return "There was a problem contacting the Wordnik API (Word not found)"
 
     @classmethod
@@ -730,7 +730,7 @@ class TestRandomWord(WordsTestBase):
 
         return cls.get_func()(event), event
 
-    def test_not_found(self, mock_requests, mock_api_keys):
+    def test_not_found(self, mock_requests, mock_api_keys) -> None:
         mock_requests.add(
             "GET",
             self.build_url(),
@@ -745,7 +745,7 @@ class TestRandomWord(WordsTestBase):
 
         event.reply.assert_called_with(self.get_not_found_msg("word"))
 
-    def test_random(self, mock_requests, mock_api_keys):
+    def test_random(self, mock_requests, mock_api_keys) -> None:
         mock_requests.add(
             "GET",
             self.build_url(),

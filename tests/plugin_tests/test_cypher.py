@@ -16,7 +16,7 @@ from plugins import cypher
         ),
     ],
 )
-def test_encipher(plaintext, key, ciphertext):
+def test_encipher(plaintext, key, ciphertext) -> None:
     event = MagicMock()
     assert cypher.cypher(f"{key} {plaintext}", event) == ciphertext
 
@@ -32,26 +32,26 @@ def test_encipher(plaintext, key, ciphertext):
         ),
     ],
 )
-def test_decipher(ciphertext, key, plaintext):
+def test_decipher(ciphertext, key, plaintext) -> None:
     event = MagicMock()
     assert cypher.decypher(f"{key} {ciphertext}", event) == plaintext
 
 
-def test_base64_error():
+def test_base64_error() -> None:
     event = MagicMock()
     assert cypher.decypher("thing stuff and things", event) is None
 
     event.notice.assert_called_with("Invalid input 'stuff and things'")
 
 
-def test_encipher_param_error():
+def test_encipher_param_error() -> None:
     event = MagicMock()
     assert cypher.cypher("", event) is None
 
     assert event.notice_doc.call_count == 1
 
 
-def test_decipher_param_error():
+def test_decipher_param_error() -> None:
     event = MagicMock()
     assert cypher.decypher("", event) is None
 

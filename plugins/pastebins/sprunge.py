@@ -42,10 +42,10 @@ class Sprunge(Pastebin):
 
 
 @hook.on_start()
-def register():
+def register() -> None:
     pastebins.register("sprunge", Sprunge("http://sprunge.us"))
 
 
 @hook.on_stop()
-def unregister():
+def unregister() -> None:
     pastebins.remove("sprunge")

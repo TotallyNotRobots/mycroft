@@ -11,7 +11,7 @@ URL_RE = re.compile(
 
 
 @hook.event([EventType.message, EventType.action], clients=["irc"])
-def yell_check(conn, chan, content, bot, nick):
+def yell_check(conn, chan, content, bot, nick) -> None:
     """THIS IS A CUSTOM PLUGIN FOR #YELLING TO MAKE SURE PEOPLE FOLLOW THE RULES."""
     if chan.casefold() not in OPT_IN:
         return

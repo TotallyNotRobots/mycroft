@@ -23,7 +23,7 @@ def make_conn(mock_bot_factory, loop=None):
 
 
 @pytest.mark.asyncio
-async def test_load_keys(mock_bot_factory, mock_db):
+async def test_load_keys(mock_bot_factory, mock_db) -> None:
     conn = make_conn(mock_bot_factory)
     db = mock_db.session()
     chan_key_db.table.create(mock_db.engine)
@@ -42,7 +42,7 @@ async def test_load_keys(mock_bot_factory, mock_db):
 
 
 @pytest.mark.asyncio
-async def test_handle_modes(mock_bot_factory, mock_db):
+async def test_handle_modes(mock_bot_factory, mock_db) -> None:
     conn = make_conn(mock_bot_factory)
     db = mock_db.session()
     chan_key_db.table.create(mock_db.engine)
@@ -82,7 +82,7 @@ async def test_handle_modes(mock_bot_factory, mock_db):
 
 
 @pytest.mark.asyncio
-async def test_check_send_key(mock_bot_factory, mock_db):
+async def test_check_send_key(mock_bot_factory, mock_db) -> None:
     conn = make_conn(mock_bot_factory)
     db = mock_db.session()
     chan_key_db.table.create(mock_db.engine)
@@ -99,7 +99,7 @@ async def test_check_send_key(mock_bot_factory, mock_db):
 
 
 @pytest.mark.asyncio
-async def test_key_use(mock_bot_factory, mock_db):
+async def test_key_use(mock_bot_factory, mock_db) -> None:
     conn = make_conn(mock_bot_factory)
     db = mock_db.session()
     chan_key_db.table.create(mock_db.engine)

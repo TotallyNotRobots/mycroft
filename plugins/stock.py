@@ -19,7 +19,7 @@ class APIError(Exception):
 
 
 class StockSymbolNotFoundError(APIError):
-    def __init__(self, symbol):
+    def __init__(self, symbol) -> None:
         super().__init__(symbol)
         self.symbol = symbol
 
@@ -30,12 +30,12 @@ class AVApi:
         api_key=None,
         url="https://www.alphavantage.co/query",
         user_agent=None,
-    ):
+    ) -> None:
         self.api_key = api_key
         self.url = url
         self.user_agent = user_agent
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return bool(self.api_key)
 
     def _request(self, **args):
@@ -89,7 +89,7 @@ def _get_group_count(num):
     return n
 
 
-def format_money(n):
+def format_money(n) -> str:
     idx = min(_get_group_count(n), len(number_suffixes))
     c = number_suffixes[idx]
     if c:
@@ -100,7 +100,7 @@ def format_money(n):
 
 
 @hook.on_start()
-def setup_api(bot):
+def setup_api(bot) -> None:
     api.api_key = bot.config.get_api_key("alphavantage")
     api.user_agent = bot.user_agent
 

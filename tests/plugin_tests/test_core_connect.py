@@ -10,12 +10,12 @@ from plugins.core import core_connect
 class MockClient(IrcClient):
     send = MagicMock()
 
-    async def connect(self, timeout=None):
+    async def connect(self, timeout=None) -> None:
         pass
 
 
 @pytest.mark.asyncio
-async def test_ssl_client(mock_bot_factory, mock_db):
+async def test_ssl_client(mock_bot_factory, mock_db) -> None:
     bot = mock_bot_factory(db=mock_db)
     client = MockClient(
         bot,
@@ -40,7 +40,7 @@ async def test_ssl_client(mock_bot_factory, mock_db):
 
 
 @pytest.mark.asyncio
-async def test_ssl_client_no_verify(mock_bot_factory, mock_db):
+async def test_ssl_client_no_verify(mock_bot_factory, mock_db) -> None:
     bot = mock_bot_factory(db=mock_db)
     client = MockClient(
         bot,
@@ -66,7 +66,7 @@ async def test_ssl_client_no_verify(mock_bot_factory, mock_db):
 
 
 @pytest.mark.asyncio()
-async def test_core_connects(mock_bot_factory, mock_db):
+async def test_core_connects(mock_bot_factory, mock_db) -> None:
     bot = mock_bot_factory(db=mock_db)
     client = MockClient(
         bot,

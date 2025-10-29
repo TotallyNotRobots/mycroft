@@ -174,7 +174,7 @@ def format_attrs(obj: object, ignore_dunder: bool = False) -> Iterable[str]:
 
 
 @hook.post_hook()
-def on_hook_end(error, launched_hook, launched_event, admin_log):
+def on_hook_end(error, launched_hook, launched_event, admin_log) -> None:
     if error is None:
         return
 

@@ -17,7 +17,7 @@ def _get_hook(func, name):
 
 
 @pytest.mark.asyncio
-async def test_chainlist_empty(mock_db, mock_bot_factory):
+async def test_chainlist_empty(mock_db, mock_bot_factory) -> None:
     mock_bot = mock_bot_factory(db=mock_db)
     chain.commands.create(mock_db.engine)
     chain.load_cache(mock_db.session())
@@ -28,7 +28,7 @@ async def test_chainlist_empty(mock_db, mock_bot_factory):
 
 
 @pytest.mark.asyncio
-async def test_chainlist(mock_db, mock_bot_factory):
+async def test_chainlist(mock_db, mock_bot_factory) -> None:
     mock_bot = mock_bot_factory(db=mock_db)
 
     @command()
@@ -50,7 +50,7 @@ async def test_chainlist(mock_db, mock_bot_factory):
 
 
 @pytest.mark.asyncio
-async def test_chainallow_bad_subcmd(mock_db, mock_bot_factory):
+async def test_chainallow_bad_subcmd(mock_db, mock_bot_factory) -> None:
     mock_bot = mock_bot_factory(db=mock_db)
     db = mock_db.session()
     notice_doc = MagicMock(return_value=None)
@@ -60,7 +60,7 @@ async def test_chainallow_bad_subcmd(mock_db, mock_bot_factory):
 
 
 @pytest.mark.asyncio
-async def test_chainallow_add_no_args(mock_db, mock_bot_factory):
+async def test_chainallow_add_no_args(mock_db, mock_bot_factory) -> None:
     mock_bot = mock_bot_factory(db=mock_db)
     db = mock_db.session()
     notice_doc = MagicMock(return_value=None)
@@ -70,7 +70,7 @@ async def test_chainallow_add_no_args(mock_db, mock_bot_factory):
 
 
 @pytest.mark.asyncio
-async def test_chainallow_add_no_cmd(mock_db, mock_bot_factory):
+async def test_chainallow_add_no_cmd(mock_db, mock_bot_factory) -> None:
     mock_bot = mock_bot_factory(db=mock_db)
     db = mock_db.session()
     notice_doc = MagicMock(return_value=None)
@@ -80,7 +80,7 @@ async def test_chainallow_add_no_cmd(mock_db, mock_bot_factory):
 
 
 @pytest.mark.asyncio
-async def test_chainallow_del_no_cmd(mock_db, mock_bot_factory):
+async def test_chainallow_del_no_cmd(mock_db, mock_bot_factory) -> None:
     mock_bot = mock_bot_factory(db=mock_db)
     db = mock_db.session()
     notice_doc = MagicMock(return_value=None)
@@ -90,7 +90,7 @@ async def test_chainallow_del_no_cmd(mock_db, mock_bot_factory):
 
 
 @pytest.mark.asyncio
-async def test_chainallow_del_hook_not_set(mock_db, mock_bot_factory):
+async def test_chainallow_del_hook_not_set(mock_db, mock_bot_factory) -> None:
     @hook.command("foo")
     def hook_func():
         raise NotImplementedError
@@ -122,7 +122,7 @@ async def test_chainallow_del_hook_not_set(mock_db, mock_bot_factory):
 
 
 @pytest.mark.asyncio
-async def test_chainallow_del_hook(mock_db, mock_bot_factory):
+async def test_chainallow_del_hook(mock_db, mock_bot_factory) -> None:
     @hook.command("foo")
     def hook_func():
         raise NotImplementedError
@@ -158,7 +158,7 @@ async def test_chainallow_del_hook(mock_db, mock_bot_factory):
 
 
 @pytest.mark.asyncio
-async def test_chainallow_add_hook_no_arg(mock_db, mock_bot_factory):
+async def test_chainallow_add_hook_no_arg(mock_db, mock_bot_factory) -> None:
     @hook.command("foo")
     def hook_func():
         raise NotImplementedError
@@ -192,7 +192,7 @@ async def test_chainallow_add_hook_no_arg(mock_db, mock_bot_factory):
 
 
 @pytest.mark.asyncio
-async def test_chainallow_add_hook_allow(mock_db, mock_bot_factory):
+async def test_chainallow_add_hook_allow(mock_db, mock_bot_factory) -> None:
     @hook.command("foo")
     def hook_func():
         raise NotImplementedError
@@ -228,7 +228,9 @@ async def test_chainallow_add_hook_allow(mock_db, mock_bot_factory):
 
 
 @pytest.mark.asyncio
-async def test_chainallow_add_hook_allow_update(mock_db, mock_bot_factory):
+async def test_chainallow_add_hook_allow_update(
+    mock_db, mock_bot_factory
+) -> None:
     @hook.command("foo")
     def hook_func():
         raise NotImplementedError
@@ -272,7 +274,7 @@ async def test_chainallow_add_hook_allow_update(mock_db, mock_bot_factory):
 
 
 @pytest.mark.asyncio
-async def test_chainallow_add_hook_deny(mock_db, mock_bot_factory):
+async def test_chainallow_add_hook_deny(mock_db, mock_bot_factory) -> None:
     @hook.command("foo")
     def hook_func():
         raise NotImplementedError
@@ -308,7 +310,7 @@ async def test_chainallow_add_hook_deny(mock_db, mock_bot_factory):
 
 
 @pytest.mark.asyncio
-async def test_chainallow_add_hook_bad_arg(mock_db, mock_bot_factory):
+async def test_chainallow_add_hook_bad_arg(mock_db, mock_bot_factory) -> None:
     @hook.command("foo")
     def hook_func():
         raise NotImplementedError
@@ -342,7 +344,7 @@ async def test_chainallow_add_hook_bad_arg(mock_db, mock_bot_factory):
 
 
 @pytest.mark.asyncio
-async def test_chainallow_add_cmd(mock_db, mock_bot_factory):
+async def test_chainallow_add_cmd(mock_db, mock_bot_factory) -> None:
     @hook.command("foo")
     def hook_func():
         raise NotImplementedError
@@ -376,7 +378,7 @@ async def test_chainallow_add_cmd(mock_db, mock_bot_factory):
 
 
 @pytest.mark.asyncio
-async def test_chainallow_add_partial_cmd(mock_db, mock_bot_factory):
+async def test_chainallow_add_partial_cmd(mock_db, mock_bot_factory) -> None:
     @hook.command("foo")
     def hook_func():
         raise NotImplementedError

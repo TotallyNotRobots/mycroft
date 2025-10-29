@@ -62,7 +62,7 @@ def egg_calculator(text):
     r = requests.get(egg_calc_url, params=params, timeout=5)
     soup = parse_soup(r.text)
     dragons = []
-    for line in soup.findAll("td", {"class": "views-field views-field-title"}):
+    for line in soup.find_all("td", {"class": "views-field views-field-title"}):
         dragons.append(line.text.replace("\n", "").strip())
 
     return ", ".join(dragons)

@@ -17,7 +17,7 @@ with open("data/password_words.txt", encoding="utf-8") as f:
 
 
 @hook.command(autohelp=False)
-def password(text, notice):
+def password(text, notice) -> None:
     """[length [types]] - generates a password of <length> (default 12).
     [types] can include 'alpha', 'no caps', 'numeric', 'symbols' or any combination: eg. 'numbers symbols'
     (default: alpha numeric no caps)"""
@@ -67,7 +67,7 @@ def password(text, notice):
 
 
 @hook.command("wpass", "wordpass", "wordpassword", autohelp=False)
-def word_password(text, notice):
+def word_password(text, notice) -> None:
     """[length] - generates an easy to remember password with [length] (default 4) commonly used words"""
     try:
         length = int(text)

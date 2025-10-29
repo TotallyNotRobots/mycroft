@@ -28,7 +28,7 @@ IS_WINDOWS = os.name == "nt"
 
 
 @hook.command()
-def ping(text, reply):
+def ping(text, reply) -> str:
     """<host> [count] - pings <host> [count] times"""
 
     args = text.split(" ")

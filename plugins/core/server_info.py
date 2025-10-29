@@ -15,7 +15,7 @@ DEFAULT_STATUS = (
 
 
 @hook.on_start()
-def do_isupport(bot):
+def do_isupport(bot) -> None:
     for conn in bot.connections.values():
         if conn.connected:
             clear_isupport(conn)
@@ -23,7 +23,7 @@ def do_isupport(bot):
 
 
 @hook.connect()
-def clear_isupport(conn):
+def clear_isupport(conn) -> None:
     serv_info = conn.memory.setdefault("server_info", {})
     statuses = get_status_modes(serv_info, clear=True)
     for s in DEFAULT_STATUS:
@@ -74,7 +74,7 @@ def get_channel_modes(
     return _get_set_clear(serv_info, "channel_modes", dict, clear=clear)
 
 
-def sync_statuses(serv_info):
+def sync_statuses(serv_info) -> None:
     """
     Copy channel status modes to the modelist
     """
@@ -85,7 +85,7 @@ def sync_statuses(serv_info):
         modes[status.character] = status
 
 
-def handle_prefixes(data, serv_info):
+def handle_prefixes(data, serv_info) -> None:
     modes, prefixes = data.split(")", 1)
     modes = modes.strip("(")
     parsed = enumerate(reversed(list(zip(modes, prefixes))))
@@ -98,7 +98,7 @@ def handle_prefixes(data, serv_info):
     sync_statuses(serv_info)
 
 
-def handle_chan_modes(value, serv_info):
+def handle_chan_modes(value, serv_info) -> None:
     types = "ABCD"
     modelist = get_channel_modes(serv_info, clear=True)
     for i, modes in enumerate(value.split(",")):
@@ -111,7 +111,7 @@ def handle_chan_modes(value, serv_info):
     sync_statuses(serv_info)
 
 
-def handle_extbans(value, serv_info):
+def handle_extbans(value, serv_info) -> None:
     pfx, extbans = value.split(",", 1)
     serv_info["extbans"] = extbans
     serv_info["extban_prefix"] = pfx
@@ -125,7 +125,7 @@ isupport_handlers = {
 
 
 @hook.irc_raw("005", singlethread=True)
-def on_isupport(conn, irc_paramlist):
+def on_isupport(conn, irc_paramlist) -> None:
     serv_info = get_server_info(conn)
     token_data = serv_info["isupport_tokens"]
     # strip the nick and trailing ':are supported by this server' message

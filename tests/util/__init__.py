@@ -13,7 +13,7 @@ __all__ = (
 
 
 class HookResult:
-    def __init__(self, return_type, value, data=None):
+    def __init__(self, return_type, value, data=None) -> None:
         self.return_type = return_type
         self.value = value
         self.data = data
@@ -38,12 +38,12 @@ class HookResult:
         if isinstance(other, Mapping):
             return self == HookResult(**other)
 
-        return NotImplemented
+        return False
 
-    def __ne__(self, other):
+    def __ne__(self, other) -> bool:
         return not self.__eq__(other)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return str(self.as_tuple())
 
 
@@ -55,16 +55,16 @@ def wrap_hook_response(func, event, results=None):
     if results is None:
         results = []
 
-    def add_result(name, value, data=None):
+    def add_result(name, value, data=None) -> None:
         results.append(HookResult(name, value, data))
 
-    def notice(*args, **kwargs):  # pragma: no cover
+    def notice(*args, **kwargs) -> None:  # pragma: no cover
         add_result("notice", args, kwargs)
 
-    def message(*args, **kwargs):  # pragma: no cover
+    def message(*args, **kwargs) -> None:  # pragma: no cover
         add_result("message", args, kwargs)
 
-    def action(*args, **kwargs):  # pragma: no cover
+    def action(*args, **kwargs) -> None:  # pragma: no cover
         add_result("action", args, kwargs)
 
     patch_notice = patch.object(event.conn, "notice", notice)
@@ -90,16 +90,16 @@ async def wrap_hook_response_async(func, event, results=None):
     async def async_call(func, *args, **kwargs):
         return func(*args, **kwargs)
 
-    def add_result(name, value, data=None):
+    def add_result(name, value, data=None) -> None:
         results.append(HookResult(name, value, data))
 
-    def notice(*args, **kwargs):  # pragma: no cover
+    def notice(*args, **kwargs) -> None:  # pragma: no cover
         add_result("notice", args, kwargs)
 
-    def message(*args, **kwargs):  # pragma: no cover
+    def message(*args, **kwargs) -> None:  # pragma: no cover
         add_result("message", args, kwargs)
 
-    def action(*args, **kwargs):  # pragma: no cover
+    def action(*args, **kwargs) -> None:  # pragma: no cover
         add_result("action", args, kwargs)
 
     patch_notice = patch.object(event.conn, "notice", notice)

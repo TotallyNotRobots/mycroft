@@ -6,7 +6,7 @@ from cloudbot.bot import bot
 max_length = 100
 
 
-def goog_trans(text, source, target):
+def goog_trans(text, source, target) -> str:
     api_key = bot.config.get_api_key("google_dev_key")
     url = "https://www.googleapis.com/language/translate/v2"
 

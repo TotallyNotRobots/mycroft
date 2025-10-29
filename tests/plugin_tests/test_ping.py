@@ -11,7 +11,7 @@ def patch_subproc():
         yield mocked
 
 
-def test_ping(patch_subproc):
+def test_ping(patch_subproc) -> None:
     with patch.object(ping, "IS_WINDOWS", new=False):
         patch_subproc.return_value = b"""\
 PING 1.1.1.1 (1.1.1.1) 56(84) bytes of data.
@@ -37,7 +37,7 @@ rtt min/avg/max/mdev = 11.403/12.584/14.632/1.270 ms
         assert res == expted
 
 
-def test_ping_win(patch_subproc):
+def test_ping_win(patch_subproc) -> None:
     with patch.object(ping, "IS_WINDOWS", new=True):
         patch_subproc.return_value = b"""\
 PING 1.1.1.1 (1.1.1.1) 56(84) bytes of data.

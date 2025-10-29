@@ -6,7 +6,7 @@ import requests
 from cloudbot.util import web
 
 
-def test_paste(mock_requests):
+def test_paste(mock_requests) -> None:
     mock_requests.add(
         "POST",
         "https://hastebin.com/documents",
@@ -20,7 +20,7 @@ def test_paste(mock_requests):
     assert web.paste("test data", service="none") == "Unable to paste data"
 
 
-def test_paste_try(mock_requests):
+def test_paste_try(mock_requests) -> None:
     web.pastebins.set_working()
     mock_requests.add(
         "POST",
@@ -32,7 +32,7 @@ def test_paste_try(mock_requests):
     assert web.paste("test data") == expected
 
 
-def test_paste_error(mock_requests):
+def test_paste_error(mock_requests) -> None:
     assert web.paste("test data") == "Unable to paste data"
 
     mock_requests.add("POST", "https://hastebin.com/documents", status=502)
@@ -47,7 +47,7 @@ def test_paste_error(mock_requests):
     assert web.paste("test data") == "Unable to paste data"
 
 
-def test_registry_items():
+def test_registry_items() -> None:
     registry = web.Registry[object]()
     obj = object()
     registry.register("test", obj)
@@ -56,7 +56,7 @@ def test_registry_items():
     assert list(registry.items()) == [("test", item)]
 
 
-def test_registry_item_working(freeze_time):
+def test_registry_item_working(freeze_time) -> None:
     registry = web.Registry[object]()
     registry.register("test", object())
     item = registry.get_item("test")
@@ -71,7 +71,7 @@ def test_registry_item_working(freeze_time):
     assert item.should_use
 
 
-def test_shorten(mock_requests):
+def test_shorten(mock_requests) -> None:
     mock_requests.add(
         "GET",
         "https://is.gd/create.php",
@@ -151,7 +151,7 @@ def test_shorten(mock_requests):
         web.shorten("https://example.com", service="git.io", custom="test")
 
 
-def test_isgd_errors(mock_requests):
+def test_isgd_errors(mock_requests) -> None:
     mock_requests.add("GET", "https://is.gd/create.php", status=429)
 
     with pytest.raises(web.ServiceHTTPError):
@@ -162,7 +162,7 @@ def test_isgd_errors(mock_requests):
         web.shorten("https://example.com", service="is.gd")
 
 
-def test_try_shorten(mock_requests):
+def test_try_shorten(mock_requests) -> None:
     mock_requests.add(
         "GET",
         "https://is.gd/create.php",
@@ -185,7 +185,7 @@ def test_try_shorten(mock_requests):
     )
 
 
-def test_expand(mock_requests):
+def test_expand(mock_requests) -> None:
     mock_requests.add(
         "GET",
         "https://is.gd/forward.php?shorturl=https%3A%2F%2Fis.gd%2Ffoobar&format=json",
@@ -269,7 +269,7 @@ def test_expand(mock_requests):
     assert web.expand("http://goo.gl/foobar") == "https://example.com"
 
 
-def test_register_duplicate_paste():
+def test_register_duplicate_paste() -> None:
     obj = object()
     obj1 = object()
     registry = web.Registry[object]()
@@ -281,7 +281,7 @@ def test_register_duplicate_paste():
     registry.remove("test")
 
 
-def test_remove_paste():
+def test_remove_paste() -> None:
     obj = object()
     registry = web.Registry[object]()
 

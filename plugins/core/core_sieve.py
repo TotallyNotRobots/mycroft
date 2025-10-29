@@ -13,7 +13,7 @@ logger = logging.getLogger("cloudbot")
 
 
 @hook.periodic(600)
-def task_clear():
+def task_clear() -> None:
     for uid, _bucket in buckets.copy().items():
         if (time() - _bucket.timestamp) > 600:
             del buckets[uid]

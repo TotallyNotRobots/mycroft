@@ -25,7 +25,7 @@ def _get_hook(func, name):
         (hook.irc_out, "irc_out"),
     ],
 )
-def test_deprecated_hooks(func, name):
+def test_deprecated_hooks(func, name) -> None:
     with pytest.deprecated_call():
 
         @func
@@ -35,7 +35,7 @@ def test_deprecated_hooks(func, name):
         assert _get_hook(f, name).function is f
 
 
-def test_sieve_deprecated_bare():
+def test_sieve_deprecated_bare() -> None:
     with pytest.deprecated_call():
 
         @hook.sieve
@@ -45,7 +45,7 @@ def test_sieve_deprecated_bare():
         assert _get_hook(f, "sieve").function is f
 
 
-def test_hook_decorate():
+def test_hook_decorate() -> None:
     @hook.event(EventType.message)
     @hook.event([EventType.notice, EventType.action])
     @hook.command("test")
@@ -132,9 +132,9 @@ def test_hook_decorate():
     ]
 
 
-def test_command_hook_doc():
+def test_command_hook_doc() -> None:
     @hook.command()
-    def test(bot):
+    def test(bot) -> None:
         """<arg> - foo
         bar
         baz
@@ -145,7 +145,7 @@ def test_command_hook_doc():
     assert cmd_hook.doc == "<arg> - foo bar baz"
 
     @hook.command()
-    def test1(bot):
+    def test1(bot) -> None:
         """<arg> - foo bar baz
 
         foo"""
@@ -154,14 +154,14 @@ def test_command_hook_doc():
     assert cmd_hook.doc == "<arg> - foo bar baz"
 
     @hook.command()
-    def test2(bot):
+    def test2(bot) -> None:
         """<arg> - foo bar baz"""
 
     cmd_hook = getattr(test2, HOOK_ATTR)["command"]
     assert cmd_hook.doc == "<arg> - foo bar baz"
 
     @hook.command()
-    def test3(bot):
+    def test3(bot) -> None:
         """
         <arg> - foo bar baz
         """
@@ -170,7 +170,7 @@ def test_command_hook_doc():
     assert cmd_hook.doc == "<arg> - foo bar baz"
 
     @hook.command()
-    def test4(bot):
+    def test4(bot) -> None:
         """<arg> - foo bar baz"""
 
     cmd_hook = getattr(test4, HOOK_ATTR)["command"]

@@ -43,7 +43,7 @@ def get_sign(db, nick):
     return row[0]
 
 
-def set_sign(db, nick, sign):
+def set_sign(db, nick, sign) -> None:
     res = db.execute(
         table.update()
         .values(sign=sign.lower())
@@ -94,7 +94,7 @@ def parse_or_lookup(text, db, nick, event):
 
 
 class HoroscopeParseError(Exception):
-    def __init__(self, msg, content):
+    def __init__(self, msg, content) -> None:
         super().__init__(msg)
         self.content = content
 

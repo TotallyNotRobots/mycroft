@@ -13,7 +13,7 @@ reaction_macros: dict[str, list[str]] = {}
 
 
 @hook.on_start()
-def load_macros(bot):
+def load_macros(bot) -> None:
     reaction_macros.clear()
     with open(
         (bot.data_path / "reaction_macros.json"), encoding="utf-8"
@@ -22,7 +22,7 @@ def load_macros(bot):
 
 
 @hook.command("dwi", "dealwithit")
-def deal_with_it(text, message):
+def deal_with_it(text, message) -> None:
     """<nick> - Tell <nick> in the channel to deal with it. Code located in reactions.py"""
     person_needs_to_deal = text.strip()
     phrase = random.choice(deal_with_it_phrases)
@@ -33,7 +33,7 @@ def deal_with_it(text, message):
 
 
 @hook.command("fp", "facepalm")
-def face_palm(text, message):
+def face_palm(text, message) -> None:
     """<nick> - Expresses your frustration with <Nick>. Code located in reactions.py"""
     face_palmer = text.strip()
     message(
@@ -42,14 +42,14 @@ def face_palm(text, message):
 
 
 @hook.command("hd", "headdesk")
-def head_desk(text, message):
+def head_desk(text, message) -> None:
     """<nick> - Hit your head against the desk becausae of <nick>. Code located in reactions.py"""
     idiot = text.strip()
     message(f"{idiot} {random.choice(reaction_macros['head_desk_macros'])}")
 
 
 @hook.command("fetish", "tmf")
-def my_fetish(text, message):
+def my_fetish(text, message) -> None:
     """<nick> - Did some one just mention what your fetish was? Let <nick> know! Code located in reactions.py"""
     person_to_share_fetish_with = text.strip()
     message(

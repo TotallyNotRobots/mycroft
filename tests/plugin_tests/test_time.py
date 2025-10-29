@@ -22,7 +22,7 @@ async def setup_api(mock_bot_factory):
     )
 
 
-def test_time_command_no_key(mock_requests, freeze_time, setup_api):
+def test_time_command_no_key(mock_requests, freeze_time, setup_api) -> None:
     setup_api.config.update({"api_keys": {}})
     conn = MagicMock(bot=setup_api)
     event = CommandEvent(
@@ -45,7 +45,9 @@ def test_time_command_no_key(mock_requests, freeze_time, setup_api):
     assert conn.mock_calls == []
 
 
-def test_time_command_api_disabled(mock_requests, freeze_time, setup_api):
+def test_time_command_api_disabled(
+    mock_requests, freeze_time, setup_api
+) -> None:
     conn = MagicMock(bot=setup_api)
     event = CommandEvent(
         text="New York",
@@ -83,7 +85,9 @@ def test_time_command_api_disabled(mock_requests, freeze_time, setup_api):
     assert conn.mock_calls == []
 
 
-def test_time_command_api_quota_limit(mock_requests, freeze_time, setup_api):
+def test_time_command_api_quota_limit(
+    mock_requests, freeze_time, setup_api
+) -> None:
     conn = MagicMock(bot=setup_api)
     event = CommandEvent(
         text="New York",
@@ -118,7 +122,7 @@ def test_time_command_api_quota_limit(mock_requests, freeze_time, setup_api):
     assert conn.mock_calls == []
 
 
-def test_time_command(mock_requests, freeze_time, setup_api):
+def test_time_command(mock_requests, freeze_time, setup_api) -> None:
     conn = MagicMock(bot=setup_api)
     event = CommandEvent(
         text="New York",
@@ -187,7 +191,7 @@ def test_time_command(mock_requests, freeze_time, setup_api):
     assert conn.mock_calls == []
 
 
-def test_time_command_utc(mock_requests, freeze_time, setup_api):
+def test_time_command_utc(mock_requests, freeze_time, setup_api) -> None:
     conn = MagicMock(bot=setup_api)
     event = CommandEvent(
         text="GMT+2",
@@ -207,7 +211,7 @@ def test_time_command_utc(mock_requests, freeze_time, setup_api):
     assert conn.mock_calls == []
 
 
-def test_time_command_utc_15m(mock_requests, freeze_time, setup_api):
+def test_time_command_utc_15m(mock_requests, freeze_time, setup_api) -> None:
     conn = MagicMock(bot=setup_api)
     event = CommandEvent(
         text="GMT+2:15",
@@ -227,7 +231,7 @@ def test_time_command_utc_15m(mock_requests, freeze_time, setup_api):
     assert conn.mock_calls == []
 
 
-def test_beats(freeze_time):
+def test_beats(freeze_time) -> None:
     conn = MagicMock()
     event = CommandEvent(
         text="",

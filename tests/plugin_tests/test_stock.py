@@ -24,5 +24,5 @@ from plugins import stock
         (-0.000001234, "-0.00"),
     ],
 )
-def test_format_money(number, output):
+def test_format_money(number, output) -> None:
     assert stock.format_money(number) == output

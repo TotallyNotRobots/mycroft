@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, call
 from plugins import linux
 
 
-def test_linux(mock_requests):
+def test_linux(mock_requests) -> None:
     mock_requests.add(
         "GET",
         "https://www.kernel.org/finger_banner",

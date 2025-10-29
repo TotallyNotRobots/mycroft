@@ -1,7 +1,7 @@
 from cloudbot.util import database
 
 
-def test_database(mock_db):
+def test_database(mock_db) -> None:
     database.configure()
     assert database.Session().bind is None
     engine = mock_db.engine

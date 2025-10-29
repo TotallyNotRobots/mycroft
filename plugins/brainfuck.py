@@ -15,7 +15,7 @@ class UnbalancedBrackets(ValueError):
 
 
 class BrainfuckProgram:
-    def __init__(self, text):
+    def __init__(self, text) -> None:
         self.op_map = {
             "+": self.inc,
             "-": self.dec,
@@ -56,7 +56,7 @@ class BrainfuckProgram:
 
         return bracket_map
 
-    def grow_memory(self):
+    def grow_memory(self) -> None:
         self.memory.extend([0] * BUFFER_SIZE)
 
     def get(self):
@@ -69,13 +69,13 @@ class BrainfuckProgram:
     def set_random(self):
         return self.set(random.randrange(1, 256))
 
-    def inc(self):
+    def inc(self) -> None:
         self.set(self.get() + 1)
 
-    def dec(self):
+    def dec(self) -> None:
         self.set(self.get() - 1)
 
-    def next_cell(self):
+    def next_cell(self) -> None:
         self.mp += 1
         if self.mp > self.rightmost:
             self.rightmost = self.mp
@@ -83,7 +83,7 @@ class BrainfuckProgram:
                 # no restriction on memory growth!
                 self.grow_memory()
 
-    def prev_cell(self):
+    def prev_cell(self) -> None:
         self.mp -= 1 % len(self.memory)
 
     def get_op(self, pos):
@@ -92,15 +92,15 @@ class BrainfuckProgram:
     def get_cur_op(self):
         return self.get_op(self.ip)
 
-    def loop_enter(self):
+    def loop_enter(self) -> None:
         if self.get() == 0:
             self.ip = self.bracket_map[self.ip]
 
-    def loop_exit(self):
+    def loop_exit(self) -> None:
         if self.get() != 0:
             self.ip = self.bracket_map[self.ip]
 
-    def print(self):
+    def print(self) -> None:
         self.output += chr(self.get())
 
 

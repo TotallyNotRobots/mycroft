@@ -6,26 +6,26 @@ from watchdog.events import PatternMatchingEventHandler
 
 
 class Reloader(ABC):
-    def __init__(self, bot, handler, pattern, recursive=False):
+    def __init__(self, bot, handler, pattern, recursive=False) -> None:
         self.bot = bot
         self.recursive = recursive
         self.event_handler = handler(self, patterns=[pattern])
         self.watch = None
 
-    def start(self, path="."):
+    def start(self, path=".") -> None:
         self.watch = self.observer.schedule(
             self.event_handler, path=path, recursive=self.recursive
         )
 
-    def stop(self):
+    def stop(self) -> None:
         if self.watch:
             self.observer.unschedule(self.watch)
             self.watch = None
 
-    def reload(self, path):
+    def reload(self, path) -> None:
         pass
 
-    def unload(self, path):
+    def unload(self, path) -> None:
         pass
 
     @property
@@ -34,9 +34,9 @@ class Reloader(ABC):
 
 
 class PluginReloader(Reloader):
-    def __init__(self, bot):
+    def __init__(self, bot) -> None:
         super().__init__(bot, PluginEventHandler, "[!_]*.py", recursive=True)
-        self.reloading = set()
+        self.reloading = set[Path]()
 
     def reload(self, path: str) -> None:
         """
@@ -57,7 +57,7 @@ class PluginReloader(Reloader):
             self._unload(path_obj), self.bot.loop
         ).result()
 
-    async def _reload(self, path):
+    async def _reload(self, path: Path) -> None:
         if path in self.reloading:
             # we already have a coroutine reloading
             return
@@ -68,15 +68,15 @@ class PluginReloader(Reloader):
         self.reloading.remove(path)
         await self.bot.plugin_manager.load_plugin(path)
 
-    async def _unload(self, path):
+    async def _unload(self, path: Path) -> None:
         await self.bot.plugin_manager.unload_plugin(path)
 
 
 class ConfigReloader(Reloader):
-    def __init__(self, bot):
+    def __init__(self, bot) -> None:
         super().__init__(bot, ConfigEventHandler, f"*{bot.config.filename}")
 
-    def reload(self, path):
+    def reload(self, path) -> None:
         if self.bot.running:
             self.bot.logger.info("Config changed, triggering reload.")
             asyncio.run_coroutine_threadsafe(
@@ -85,7 +85,7 @@ class ConfigReloader(Reloader):
 
 
 class ReloadHandler(PatternMatchingEventHandler):
-    def __init__(self, loader, *args, **kwargs):
+    def __init__(self, loader, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.loader = loader
 
@@ -95,16 +95,16 @@ class ReloadHandler(PatternMatchingEventHandler):
 
 
 class PluginEventHandler(ReloadHandler):
-    def on_created(self, event):
+    def on_created(self, event) -> None:
         self.loader.reload(event.src_path)
 
-    def on_deleted(self, event):
+    def on_deleted(self, event) -> None:
         self.loader.unload(event.src_path)
 
-    def on_modified(self, event):
+    def on_modified(self, event) -> None:
         self.loader.reload(event.src_path)
 
-    def on_moved(self, event):
+    def on_moved(self, event) -> None:
         self.loader.unload(event.src_path)
         # only load if it's moved to a .py file
         end = ".py" if isinstance(event.dest_path, str) else b".py"
@@ -113,14 +113,14 @@ class PluginEventHandler(ReloadHandler):
 
 
 class ConfigEventHandler(ReloadHandler):
-    def on_created(self, event):
+    def on_created(self, event) -> None:
         self.loader.reload(event.src_path)
 
-    def on_deleted(self, event):
+    def on_deleted(self, event) -> None:
         self.loader.reload(event.src_path)
 
-    def on_modified(self, event):
+    def on_modified(self, event) -> None:
         self.loader.reload(event.src_path)
 
-    def on_moved(self, event):
+    def on_moved(self, event) -> None:
         self.loader.reload(event.dest_path)

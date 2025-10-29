@@ -19,7 +19,7 @@ allow_cache: dict[str, bool] = {}
 
 
 @hook.on_start()
-def load_cache(db):
+def load_cache(db) -> None:
     new_cache = {}
     for row in db.execute(commands.select()):
         new_cache[row.hook] = row.allowed
@@ -28,7 +28,7 @@ def load_cache(db):
     allow_cache.update(new_cache)
 
 
-def format_hook_name(_hook):
+def format_hook_name(_hook) -> str:
     return f"{_hook.plugin.title}.{_hook.function.__name__}"
 
 
@@ -88,7 +88,7 @@ def handle_chainallow_add(args, notice_doc, hook_name, db):
     return f"Added '{hook_name}' as a denied command"
 
 
-def handle_chainallow_del(args, notice_doc, hook_name, db):
+def handle_chainallow_del(args, notice_doc, hook_name, db) -> str:
     res = db.execute(commands.delete().where(commands.c.hook == hook_name))
     db.commit()
     load_cache(db)
@@ -177,7 +177,7 @@ async def chain(text, bot, event):
     out_func = None
     _target = None
 
-    def message(msg, target=None):
+    def message(msg, target=None) -> None:
         nonlocal buffer
         nonlocal out_func
         nonlocal _target
@@ -187,7 +187,7 @@ async def chain(text, bot, event):
 
         _target = target
 
-    def reply(*messages, target=None):
+    def reply(*messages, target=None) -> None:
         nonlocal buffer
         nonlocal out_func
         nonlocal _target
@@ -197,7 +197,7 @@ async def chain(text, bot, event):
 
         _target = target
 
-    def action(msg, target=None):
+    def action(msg, target=None) -> None:
         nonlocal buffer
         nonlocal out_func
         nonlocal _target
@@ -237,7 +237,7 @@ async def chain(text, bot, event):
 
 
 @hook.command(autohelp=False)
-def chainlist(bot, event):
+def chainlist(bot, event) -> None:
     """- Returns the list of commands allowed in 'chain'"""
     hooks = [
         get_hook_from_command(bot, name)

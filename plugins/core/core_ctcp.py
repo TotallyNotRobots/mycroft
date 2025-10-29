@@ -7,7 +7,7 @@ from cloudbot.event import EventType
 
 # CTCP responses
 @hook.event([EventType.other])
-async def ctcp_version(notice, irc_ctcp_text):
+async def ctcp_version(notice, irc_ctcp_text) -> None:
     if irc_ctcp_text:
         command, _, params = irc_ctcp_text.partition(" ")
         if command == "VERSION":

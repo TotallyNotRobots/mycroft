@@ -3,7 +3,7 @@ from unittest.mock import call, patch
 from cloudbot.util import http
 
 
-def test_open_request():
+def test_open_request() -> None:
     with (
         patch("urllib.request.Request") as mocked,
         patch("urllib.request.build_opener") as mocked_open_build,
@@ -18,7 +18,7 @@ def test_open_request():
         assert mocked_open_build.mock_calls == [call(), call().open(mocked())]
 
 
-def test_open_request_with_cookies():
+def test_open_request_with_cookies() -> None:
     with (
         patch("urllib.request.Request") as mocked,
         patch("urllib.request.build_opener") as mocked_open_build,
@@ -40,7 +40,7 @@ def test_open_request_with_cookies():
         ]
 
 
-def test_get_soup():
+def test_get_soup() -> None:
     test_data = """
     <html>
         <body>

@@ -127,13 +127,15 @@ class TimeUnit:
     7200
     """
 
-    def __init__(self, seconds, short_name, long_name, long_name_plural):
+    def __init__(
+        self, seconds, short_name, long_name, long_name_plural
+    ) -> None:
         self.seconds = seconds
         self.short_name = short_name
         self.long_name = long_name
         self.long_name_plural = long_name_plural
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         fields = ("seconds", "short_name", "long_name", "long_name_plural")
         return f"TimeUnit({', '.join(f'{k}={getattr(self, k)!r}' for k in fields)})"
 
@@ -151,7 +153,7 @@ class TimeUnit:
 
 
 class TimeInterval:
-    def __init__(self, parts):
+    def __init__(self, parts) -> None:
         self.parts = parts
 
     def format(self, simple=True, skip_empty=True, count=3):

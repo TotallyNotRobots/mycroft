@@ -5,7 +5,7 @@ from cloudbot import hook
 from cloudbot.util import colors
 
 
-async def do_reconnect(conn, auto=True):
+async def do_reconnect(conn, auto=True) -> str:
     if conn.connected:
         conn.quit("Reconnecting...")
         await asyncio.sleep(5)
@@ -44,7 +44,7 @@ async def reconnect(conn, text, bot):
 
 
 @hook.periodic(120, singlethread=True)
-async def check_conns(bot):
+async def check_conns(bot) -> None:
     for conn in bot.connections.values():
         if conn.active and not conn.connected:
             await do_reconnect(conn)
@@ -73,14 +73,14 @@ def format_conn(conn):
 @hook.command(
     "connlist", "listconns", autohelp=False, permissions=["botcontrol"]
 )
-def list_conns(bot):
+def list_conns(bot) -> str:
     """- Lists all current connections and their status"""
     conns = ", ".join(map(format_conn, bot.connections.values()))
     return f"Current connections: {conns}"
 
 
 @hook.connect()
-def on_connect(conn):
+def on_connect(conn) -> None:
     now = time.time()
     conn.memory["lag_sent"] = 0
     conn.memory["ping_recv"] = now
@@ -92,7 +92,7 @@ def on_connect(conn):
 
 @hook.command("lagcheck", autohelp=False, permissions=["botcontrol"])
 @hook.periodic(5)
-def lag_check(bot, admin_log):
+def lag_check(bot, admin_log) -> None:
     """- Manually update lag times for all connections"""
     now = time.time()
     for conn in bot.connections.values():
@@ -123,14 +123,14 @@ def lag_check(bot, admin_log):
 
 
 @hook.periodic(30, singlethread=True)
-async def reconnect_loop(bot):
+async def reconnect_loop(bot) -> None:
     for conn in bot.connections.values():
         if conn.memory.get("needs_reconnect"):
             await do_reconnect(conn)
 
 
 @hook.irc_raw("PONG")
-def on_pong(conn, irc_paramlist):
+def on_pong(conn, irc_paramlist) -> None:
     now = time.time()
     conn.memory["ping_recv"] = now
     timestamp = irc_paramlist[-1]
@@ -149,6 +149,6 @@ def on_pong(conn, irc_paramlist):
 
 
 @hook.irc_raw("*")
-async def on_act(conn):
+async def on_act(conn) -> None:
     now = time.time()
     conn.memory["last_activity"] = now

@@ -86,7 +86,7 @@ async def _do_test(
 )
 async def test_message_reply(
     plugin_name, loader, data_name, cmd, mock_bot_factory
-):
+) -> None:
     _, event = await _do_test(
         plugin_name,
         loader,
@@ -118,7 +118,7 @@ async def test_message_reply(
 )
 async def test_action_reply(
     plugin_name, loader, data_name, cmd, mock_bot_factory
-):
+) -> None:
     _, event = await _do_test(
         plugin_name,
         loader,
@@ -132,7 +132,7 @@ async def test_action_reply(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("seed", list(range(0, 100, 5)))
-async def test_drinks(seed, mock_bot_factory):
+async def test_drinks(seed, mock_bot_factory) -> None:
     random.seed(seed)
     _, event = await _do_test(
         "drinks",
@@ -157,7 +157,7 @@ async def test_drinks(seed, mock_bot_factory):
 )
 async def test_text_return(
     plugin_name, loader, data_name, cmd, mock_bot_factory
-):
+) -> None:
     res, _ = await _do_test(
         plugin_name,
         loader,
@@ -171,7 +171,7 @@ async def test_text_return(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("food", [food.name for food in foods.BASIC_FOOD])
-async def test_foods(food, mock_bot_factory):
+async def test_foods(food, mock_bot_factory) -> None:
     _, event = await _do_test(
         "foods",
         "load_foods",
@@ -206,7 +206,7 @@ async def test_foods(food, mock_bot_factory):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("attack", [attack for attack in attacks.ATTACKS])
-async def test_attacks(attack, mock_bot_factory):
+async def test_attacks(attack, mock_bot_factory) -> None:
     _, event = await _do_test(
         "attacks",
         "load_attacks",

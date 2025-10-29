@@ -4,7 +4,7 @@ from cloudbot import hook
 
 
 @hook.command("bible", "passage", singlethread=True)
-def bible(text, reply):
+def bible(text, reply) -> str:
     """<passage> - Prints the specified passage from the Bible"""
     passage = text.strip()
     params = {"passage": passage, "formatting": "plain", "type": "json"}

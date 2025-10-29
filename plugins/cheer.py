@@ -10,7 +10,7 @@ cheers: list[str] = []
 
 
 @hook.on_start()
-def load_cheers(bot: CloudBot):
+def load_cheers(bot: CloudBot) -> None:
     cheers.clear()
     data_file = bot.data_path / "cheers.txt"
     with data_file.open(encoding="utf-8") as f:
@@ -18,6 +18,6 @@ def load_cheers(bot: CloudBot):
 
 
 @hook.regex(cheer_re)
-def cheer(chan, message):
+def cheer(chan, message) -> None:
     shit = random.choice(cheers)
     message(shit, chan)

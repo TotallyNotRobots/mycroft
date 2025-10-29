@@ -4,7 +4,7 @@ from plugins import poll
 from tests.util.mock_conn import MockConn
 
 
-def test_poll_close():
+def test_poll_close() -> None:
     poll.polls.clear()
     text = "close"
     conn = MockConn()
@@ -26,7 +26,7 @@ def test_poll_close():
     assert uid not in poll.polls
 
 
-def test_poll_create():
+def test_poll_create() -> None:
     poll.polls.clear()
     text = "thing?: yes yes no"
     conn = MockConn()
@@ -47,7 +47,7 @@ def test_poll_create():
     assert uid in poll.polls
 
 
-def test_poll_create_default():
+def test_poll_create_default() -> None:
     poll.polls.clear()
     text = "thing?"
     conn = MockConn()
@@ -68,7 +68,7 @@ def test_poll_create_default():
     assert uid in poll.polls
 
 
-def test_vote_invalid_input():
+def test_vote_invalid_input() -> None:
     poll.polls.clear()
     text = "foo"
     conn = MockConn()
@@ -84,7 +84,7 @@ def test_vote_invalid_input():
     assert event.mock_calls == []
 
 
-def test_vote():
+def test_vote() -> None:
     poll.polls.clear()
     text = "foo yes"
     conn = MockConn()
@@ -102,7 +102,7 @@ def test_vote():
     assert p.format_results() == "Yes: 1, No: 0"
 
 
-def test_vote_unknown_opttion():
+def test_vote_unknown_opttion() -> None:
     poll.polls.clear()
     text = "foo bar"
     conn = MockConn()
@@ -118,7 +118,7 @@ def test_vote_unknown_opttion():
     assert p.format_results() == "Yes: 0, No: 0"
 
 
-def test_vote_no_poll():
+def test_vote_no_poll() -> None:
     poll.polls.clear()
     text = "foo yes"
     conn = MockConn()
@@ -131,7 +131,7 @@ def test_vote_no_poll():
     assert event.mock_calls == []
 
 
-def test_results():
+def test_results() -> None:
     poll.polls.clear()
     text = ""
     conn = MockConn()

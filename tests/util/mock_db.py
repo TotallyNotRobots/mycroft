@@ -7,7 +7,7 @@ from cloudbot.util.database import Session
 
 
 class MockDB:
-    def __init__(self, path="sqlite:///:memory:", force_session=False):
+    def __init__(self, path="sqlite:///:memory:", force_session=False) -> None:
         self.engine = create_engine(path, future=True)
         if force_session:
             self.session = scoped_session(
@@ -23,7 +23,7 @@ class MockDB:
         self.session().execute(table.insert().values(data))
         self.session().commit()
 
-    def load_data(self, table: Table, data: list[dict[str, Any]]):
+    def load_data(self, table: Table, data: list[dict[str, Any]]) -> None:
         with self.session() as session, session.begin():
             for item in data:
                 session.execute(table.insert().values(item))

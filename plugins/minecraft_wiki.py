@@ -12,7 +12,7 @@ mc_url = "http://minecraft.gamepedia.com/"
 
 
 @hook.command()
-def mcwiki(text, reply):
+def mcwiki(text, reply) -> str:
     """<phrase> - gets the first paragraph of the Minecraft Wiki article on <phrase>"""
 
     try:

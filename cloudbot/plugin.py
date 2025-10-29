@@ -3,13 +3,13 @@ import importlib
 import logging
 import os
 import sys
-import typing
 from collections import defaultdict
 from collections.abc import MutableMapping
 from functools import partial
 from operator import attrgetter
 from pathlib import Path
-from typing import Optional, TypedDict, cast
+from re import Pattern
+from typing import Any, Optional, TypedDict, cast
 from weakref import WeakValueDictionary
 
 import sqlalchemy
@@ -77,7 +77,7 @@ def find_hooks(parent, module) -> HookDict:
     return cast(HookDict, hooks)
 
 
-def find_tables(code):
+def find_tables(code) -> list[sqlalchemy.Table]:
     tables = []
     for obj in code.__dict__.values():
         if (
@@ -113,6 +113,10 @@ def safe_resolve(path_obj: Path) -> Path:
     return path_obj
 
 
+class HookHookDict(TypedDict):
+    post: list[PostHookHook]
+
+
 class PluginManager:
     """
     PluginManager is the core of CloudBot plugin loading.
@@ -128,7 +132,7 @@ class PluginManager:
     - SievePlugin is a catch-all sieve, which all other plugins go through before being executed.
     """
 
-    def __init__(self, bot):
+    def __init__(self, bot) -> None:
         """
         Creates a new PluginManager. You generally only need to do this from inside cloudbot.bot.CloudBot
         """
@@ -144,23 +148,23 @@ class PluginManager:
         self.event_type_hooks: dict[EventType, list[EventHook]] = defaultdict(
             list
         )
-        self.regex_hooks: list[tuple[typing.Pattern, RegexHook]] = []
-        self.sieves = []
+        self.regex_hooks: list[tuple[Pattern[str], RegexHook]] = []
+        self.sieves: list[SieveHook] = []
         self.cap_hooks: dict[str, dict[str, list[CapHook]]] = {
             "on_available": defaultdict(list),
             "on_ack": defaultdict(list),
         }
-        self.connect_hooks = []
-        self.out_sieves = []
-        self.hook_hooks = defaultdict(list)
-        self.perm_hooks = defaultdict(list)
+        self.connect_hooks: list[OnConnectHook] = []
+        self.out_sieves: list[IrcOutHook] = []
+        self.hook_hooks = HookHookDict({"post": []})
+        self.perm_hooks: dict[str, list[PermHook]] = defaultdict(list)
         self.config_hooks: list[ConfigHook] = []
 
-    def _add_plugin(self, plugin: "Plugin"):
+    def _add_plugin(self, plugin: "Plugin") -> None:
         self.plugins[plugin.file_path] = plugin
         self._plugin_name_map[plugin.title] = plugin
 
-    def _rem_plugin(self, plugin: "Plugin"):
+    def _rem_plugin(self, plugin: "Plugin") -> None:
         del self.plugins[plugin.file_path]
         del self._plugin_name_map[plugin.title]
 
@@ -196,7 +200,7 @@ class PluginManager:
 
         return self.plugins.get(str(safe_resolve(path_obj)))
 
-    def can_load(self, plugin_title, noisy=True):
+    def can_load(self, plugin_title, noisy=True) -> bool:
         pl = self.bot.config.get("plugin_loading")
         if not pl:
             return True
@@ -240,7 +244,7 @@ class PluginManager:
                 mark_loaded=False,
             )
 
-    async def load_all(self, plugin_dir):
+    async def load_all(self, plugin_dir) -> None:
         """
         Load a plugin from each *.py file in the given directory.
 
@@ -253,7 +257,7 @@ class PluginManager:
         # Load plugins asynchronously :O
         await asyncio.gather(*[self.load_plugin(path) for path in path_list])
 
-    async def unload_all(self):
+    async def unload_all(self) -> None:
         await asyncio.gather(
             *[self.unload_plugin(path) for path in self.plugins],
         )
@@ -271,7 +275,7 @@ class PluginManager:
 
         return plugin_module
 
-    async def load_plugin(self, path):
+    async def load_plugin(self, path) -> None:
         """
         Loads a plugin from the given path and plugin object,
         then registers all hooks from that plugin.
@@ -417,10 +421,10 @@ class PluginManager:
         plugin.hooks["on_start"].clear()
 
     def _sort_hooks(self) -> None:
-        def _sort_list(hooks):
+        def _sort_list(hooks) -> None:
             hooks.sort(key=attrgetter("priority"))
 
-        def _sort_dict(hooks):
+        def _sort_dict(hooks) -> None:
             for items in hooks.values():
                 _sort_list(items)
 
@@ -438,7 +442,7 @@ class PluginManager:
         _sort_dict(self.perm_hooks)
         _sort_list(self.config_hooks)
 
-    async def unload_plugin(self, path):
+    async def unload_plugin(self, path) -> bool:
         """
         Unloads the plugin from the given path, unregistering all hooks from the plugin.
 
@@ -551,7 +555,7 @@ class PluginManager:
 
         return True
 
-    def _log_hook(self, hook):
+    def _log_hook(self, hook) -> None:
         """
         Logs registering a given hook
         """
@@ -679,7 +683,7 @@ class PluginManager:
 
         return result
 
-    async def _start_periodic(self, hook):
+    async def _start_periodic(self, hook) -> None:
         interval = hook.interval
         initial_interval = hook.initial_interval
         await asyncio.sleep(initial_interval)
@@ -717,7 +721,7 @@ class PluginManager:
         return await self._launch(hook, event)
 
 
-def _create_table(table: Table, bot):
+def _create_table(table: Table, bot) -> None:
     table.create(bot.db_engine, checkfirst=True)
 
 
@@ -726,9 +730,9 @@ class Plugin:
     Each Plugin represents a plugin file, and contains loaded hooks.
     """
 
-    def __init__(self, filepath, filename, title, code):
+    def __init__(self, filepath, filename, title, code) -> None:
         """ """
-        self.tasks = []
+        self.tasks: list[asyncio.Task[Any]] = []
         self.file_path = filepath
         self.file_name = filename
         self.title = title
@@ -739,7 +743,7 @@ class Plugin:
         # Keep a reference to this in case another plugin needs to access it
         self.code = code
 
-    async def create_tables(self, bot):
+    async def create_tables(self, bot) -> None:
         """
         Creates all sqlalchemy Tables that are registered in this plugin
         """
@@ -751,7 +755,7 @@ class Plugin:
             for table in self.tables:
                 await bot.loop.run_in_executor(None, _create_table, table, bot)
 
-    def unregister_tables(self, bot):
+    def unregister_tables(self, bot) -> None:
         """
         Unregisters all sqlalchemy Tables registered to the global metadata by this plugin
         """

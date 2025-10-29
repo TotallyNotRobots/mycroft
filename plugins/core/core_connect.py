@@ -2,18 +2,18 @@ from cloudbot import hook
 
 
 @hook.connect(priority=0, clients="irc")
-def conn_pass(conn):
+def conn_pass(conn) -> None:
     conn.set_pass(conn.config["connection"].get("password"))
 
 
 @hook.connect(priority=10)
-def conn_nick(conn):
+def conn_nick(conn) -> None:
     conn.nick = conn.target_nick
     conn.set_nick(conn.nick)
 
 
 @hook.connect(priority=20, clients="irc")
-def conn_user(conn, bot):
+def conn_user(conn, bot) -> None:
     conn.cmd(
         "USER",
         conn.config.get("user", "cloudbot"),

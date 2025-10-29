@@ -19,7 +19,7 @@ def format_domain(domain):
 
 
 @hook.command("domain", "domainr")
-def domainr(text):
+def domainr(text) -> str:
     """<domain> - uses domain.nr's API to search for a domain, and similar domains"""
     try:
         data = http.get_json(f"http://domai.nr/api/json/search?q={text}")

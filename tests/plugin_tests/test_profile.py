@@ -5,7 +5,7 @@ from plugins import profile
 from tests.util import wrap_hook_response
 
 
-def test_profile_add(mock_db, mock_bot):
+def test_profile_add(mock_db, mock_bot) -> None:
     profile.table.create(mock_db.engine)
     profile.load_cache(mock_db.session())
     conn = MagicMock()
@@ -28,7 +28,7 @@ def test_profile_add(mock_db, mock_bot):
     assert conn.mock_calls == []
 
 
-def test_profile_update(mock_db, mock_bot):
+def test_profile_update(mock_db, mock_bot) -> None:
     profile.table.create(mock_db.engine)
     mock_db.add_row(
         profile.table, chan="#chan", nick="nick", category="foo", text="text"
@@ -55,7 +55,7 @@ def test_profile_update(mock_db, mock_bot):
     assert conn.mock_calls == []
 
 
-def test_profile_category_delete(mock_db, mock_bot):
+def test_profile_category_delete(mock_db, mock_bot) -> None:
     profile.table.create(mock_db.engine)
     mock_db.add_row(
         profile.table, chan="#chan", nick="nick", category="foo", text="text"
@@ -80,7 +80,7 @@ def test_profile_category_delete(mock_db, mock_bot):
     assert conn.mock_calls == []
 
 
-def test_profile_clear(mock_db, mock_bot):
+def test_profile_clear(mock_db, mock_bot) -> None:
     profile.table.create(mock_db.engine)
     mock_db.add_row(
         profile.table, chan="#chan", nick="nick", category="foo", text="text"

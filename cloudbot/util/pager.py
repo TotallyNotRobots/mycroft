@@ -1,5 +1,8 @@
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from threading import RLock
+from typing import TypeVar, overload
+
+from typing_extensions import Self
 
 from cloudbot.util.formatting import chunk_str
 from cloudbot.util.sequence import chunk_iter
@@ -26,7 +29,7 @@ class Pager:
     """
 
     @classmethod
-    def from_multiline_string(cls, s):
+    def from_multiline_string(cls, s: str) -> Self:
         r"""
         >>> pager = Pager.from_multiline_string("foo\nbar\nbaz")
         >>> list(pager)
@@ -42,27 +45,27 @@ class Pager:
         """
         return cls(s.splitlines())
 
-    def __init__(self, lines, chunk_size=2):
+    def __init__(self, lines: Sequence[str], chunk_size: int = 2) -> None:
         # This lock should always be acquired when accessing data from this object
         # Added here due to extensive use of threads throughout plugins
         self.lock = RLock()
         self.chunk_size = chunk_size
-        self.chunks: tuple[str, ...]
+        self.chunks: tuple[list[str], ...]
         if self.chunk_size == 0:
-            self.chunks = (lines,)
+            self.chunks = (list(lines),)
         else:
-            self.chunks = tuple(chunk_iter(lines, self.chunk_size))
+            self.chunks = tuple(map(list, chunk_iter(lines, self.chunk_size)))
 
         self.current_pos = 0
 
-    def format_chunk(self, chunk: Iterable[str], pagenum: int) -> list[str]:
-        chunk = list(chunk)
+    def format_chunk(self, chunk: list[str], pagenum: int) -> list[str]:
+        chunk = chunk.copy()
         if len(self.chunks) > 1:
             chunk[-1] += f" (page {pagenum + 1}/{len(self.chunks)})"
 
         return chunk
 
-    def next(self) -> None | list[str]:
+    def next(self) -> list[str] | None:
         with self.lock:
             if self.current_pos >= len(self.chunks):
                 return None
@@ -72,17 +75,17 @@ class Pager:
 
         return chunk
 
-    def get(self, index) -> list[str]:
+    def get(self, index: int) -> list[str]:
         """Get a specific page"""
         return self[index]
 
-    def __getitem__(self, item) -> list[str]:
+    def __getitem__(self, item: int) -> list[str]:
         """Get a specific page"""
         with self.lock:
             chunk = self.chunks[item]
             return self.format_chunk(chunk, item)
 
-    def __len__(self):
+    def __len__(self) -> int:
         with self.lock:
             return len(self.chunks)
 
@@ -92,7 +95,7 @@ class CommandPager(Pager):
     A `Pager` which is designed to be used with one of the .more* commands
     """
 
-    def handle_lookup(self, text) -> list[str]:
+    def handle_lookup(self, text: str) -> list[str]:
         if text:
             try:
                 index = int(text)
@@ -122,14 +125,40 @@ class CommandPager(Pager):
         ]
 
 
+_ClassT = TypeVar("_ClassT", bound=Pager)
+
+
+@overload
 def paginated_list(
-    data,
-    delim=" \u2022 ",
-    suffix="...",
-    max_len=256,
-    page_size=2,
-    pager_cls=Pager,
-):
+    data: Iterable[str],
+    delim: str = " \u2022 ",
+    suffix: str = "...",
+    max_len: int = 256,
+    page_size: int = 2,
+) -> Pager: ...
+
+
+@overload
+def paginated_list(
+    data: Iterable[str],
+    delim: str = " \u2022 ",
+    suffix: str = "...",
+    max_len: int = 256,
+    page_size: int = 2,
+    *,
+    pager_cls: type[_ClassT],
+) -> _ClassT: ...
+
+
+def paginated_list(
+    data: Iterable[str],
+    delim: str = " \u2022 ",
+    suffix: str = "...",
+    max_len: int = 256,
+    page_size: int = 2,
+    *,
+    pager_cls: type[_ClassT | Pager] = Pager,
+) -> _ClassT | Pager:
     """
     >>> list(paginated_list(['abc', 'def']))
     [['abc \u2022 def']]
@@ -144,7 +173,7 @@ def paginated_list(
     """
     lines = [""]
 
-    def get_delim():
+    def get_delim() -> str:
         if lines[-1]:
             return delim
 

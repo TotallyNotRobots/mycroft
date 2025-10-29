@@ -34,11 +34,11 @@ from tests.util import HookResult, get_data_file, wrap_hook_response
         (348.74, "NNW"),
     ],
 )
-def test_wind_direction(bearing, direction):
+def test_wind_direction(bearing, direction) -> None:
     assert weather.bearing_to_card(bearing) == direction
 
 
-def test_wind_dir_error():
+def test_wind_dir_error() -> None:
     with pytest.raises(ValueError):
         weather.bearing_to_card(400)
 
@@ -51,7 +51,7 @@ def test_wind_dir_error():
         (-40, -40),
     ],
 )
-def test_temp_convert(temp_f, temp_c):
+def test_temp_convert(temp_f, temp_c) -> None:
     assert weather.convert_f2c(temp_f) == temp_c
 
 
@@ -63,7 +63,7 @@ def test_temp_convert(temp_f, temp_c):
         (43, 69.201792),
     ],
 )
-def test_mph_to_kph(mph, kph):
+def test_mph_to_kph(mph, kph) -> None:
     assert weather.mph_to_kph(mph) == kph
 
 
@@ -121,7 +121,7 @@ def setup_api(
 @pytest.mark.asyncio
 async def test_rounding(
     mock_bot_factory, mock_requests, patch_try_shorten, mock_db
-):
+) -> None:
     bot = setup_api(
         mock_requests, mock_db, asyncio.get_running_loop(), mock_bot_factory
     )
@@ -179,7 +179,7 @@ async def test_rounding(
 @pytest.mark.asyncio
 async def test_find_location(
     mock_bot_factory, mock_requests, patch_try_shorten, mock_db
-):
+) -> None:
     bot = mock_bot_factory(config={}, db=mock_db)
     weather.create_maps_api(bot)
     weather.create_owm_api(bot)
@@ -345,7 +345,7 @@ async def test_find_location(
     assert list(db_data[0]) == [cmd_event.nick, cmd_event.text]
 
 
-def test_update_location(mock_db):
+def test_update_location(mock_db) -> None:
     weather.table.create(mock_db.engine, checkfirst=True)
 
     db = mock_db.session()
@@ -370,7 +370,7 @@ def test_update_location(mock_db):
 @pytest.mark.asyncio
 async def test_parse_no_results(
     mock_bot_factory, mock_requests, patch_try_shorten, mock_db
-):
+) -> None:
     mock_requests.add(
         "GET",
         "https://maps.googleapis.com/maps/api/geocode/json",

@@ -84,7 +84,7 @@ table_flipper = "\u253b\u2501\u253b \ufe35\u30fd(`\u0414\xb4)\uff89\ufe35 \u253b
 
 
 @hook.command()
-def flip(text, message, chan):
+def flip(text, message, chan) -> None:
     """<text> - Flips <text> over."""
     if text in ["table", "tables"]:
         message(
@@ -111,7 +111,7 @@ def flip(text, message, chan):
 
 
 @hook.command()
-def table(text, message):
+def table(text, message) -> None:
     """<text> - Flip text"""
     message(
         random.choice(flippers)
@@ -121,7 +121,7 @@ def table(text, message):
 
 
 @hook.command()
-def fix(text, message, chan):
+def fix(text, message, chan) -> None:
     """<text> - fixes a flipped over table."""
     if text in ["table", "tables"]:
         if table_status.pop(chan, False) is True:

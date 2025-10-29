@@ -35,7 +35,7 @@ def api_request(method, **params):
 
 
 @hook.on_start()
-def load_cache(db: Session):
+def load_cache(db: Session) -> None:
     new_cache = []
     for row in db.execute(table.select()):
         new_cache.append((row.nick, row.acc))

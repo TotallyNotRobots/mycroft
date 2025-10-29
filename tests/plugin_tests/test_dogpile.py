@@ -16,7 +16,7 @@ def test_data():
     yield data
 
 
-def add_page(mock_requests, endpoint, test_data):
+def add_page(mock_requests, endpoint, test_data) -> None:
     data = test_data[endpoint]
     mock_requests.add(
         "GET",
@@ -25,7 +25,7 @@ def add_page(mock_requests, endpoint, test_data):
     )
 
 
-def test_web_search(test_data, mock_requests):
+def test_web_search(test_data, mock_requests) -> None:
     add_page(mock_requests, "web", test_data)
     assert (
         dogpile.dogpile("test search")
@@ -47,7 +47,7 @@ def test_web_search(test_data, mock_requests):
     assert dogpile.dogpile("test search") == "No results found."
 
 
-def test_image_search(test_data, mock_requests):
+def test_image_search(test_data, mock_requests) -> None:
     add_page(mock_requests, "images", test_data)
 
     assert dogpile.dogpileimage("test search") in [

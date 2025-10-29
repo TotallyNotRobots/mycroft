@@ -63,7 +63,7 @@ def translate_basic(word, vowels="aeiou", start=0):
 
 
 @hook.on_start()
-def load_nltk():
+def load_nltk() -> None:
     nltk.download("cmudict")
 
     pronunciations.clear()

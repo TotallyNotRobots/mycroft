@@ -41,7 +41,7 @@ cache_lock = RLock()
 
 @total_ordering
 class OptOut:
-    def __init__(self, channel, hook_pattern, allow):
+    def __init__(self, channel, hook_pattern, allow) -> None:
         self.channel = channel.casefold()
         self.hook = hook_pattern.casefold()
         self.allow = allow
@@ -61,7 +61,7 @@ class OptOut:
 
         return NotImplemented
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.channel}, {self.hook}, {self.allow})"
 
     def match(self, channel, hook_name):
@@ -114,7 +114,7 @@ def format_optout_list(opts):
     return gen_markdown_table(headers, table)
 
 
-def set_optout(db, conn, chan, pattern, allowed):
+def set_optout(db, conn, chan, pattern, allowed) -> None:
     conn_cf = conn.casefold()
     chan_cf = chan.casefold()
     pattern_cf = pattern.casefold()
@@ -170,7 +170,7 @@ def clear_optout(db, conn, chan=None):
 
 
 @hook.onload()
-def load_cache(db):
+def load_cache(db) -> None:
     new_cache = defaultdict(list)
     for row in db.execute(optout_table.select()):
         new_cache[row.network].append(OptOut(row.chan, row.hook, row.allow))
