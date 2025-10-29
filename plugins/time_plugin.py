@@ -5,16 +5,12 @@ import time
 import requests
 
 from cloudbot import hook
-from cloudbot.bot import bot
+from cloudbot.bot import CloudBot
 
 # Define some constants
 base_url = "https://maps.googleapis.com/maps/api/"
 geocode_api = f"{base_url}geocode/json"
 timezone_api = f"{base_url}timezone/json"
-
-# Change this to a ccTLD code (eg. uk, nz) to make results more targeted towards that specific country.
-# <https://developers.google.com/maps/documentation/geocoding/#RegionCodes>
-bias = None
 
 
 def check_status(status, api):
@@ -43,7 +39,7 @@ def check_status(status, api):
 
 
 @hook.command("time")
-def time_command(text: str, reply) -> str:
+def time_command(text: str, reply, bot: "CloudBot") -> str:
     """<location> - Gets the current time in <location>."""
     dev_key = bot.config.get_api_key("google_dev_key")
     if not dev_key:
@@ -79,7 +75,8 @@ def time_command(text: str, reply) -> str:
 
     # Use the Geocoding API to get coordinates from the input
     params = {"address": text, "key": dev_key}
-    if bias:
+    bias = bot.config.get("location_bias_cc")
+    if bias is not None:
         params["region"] = bias
 
     json = requests.get(geocode_api, params=params).json()

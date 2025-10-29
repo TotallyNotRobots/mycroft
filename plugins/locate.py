@@ -1,15 +1,11 @@
 import requests
 
 from cloudbot import hook
-from cloudbot.bot import bot
+from cloudbot.bot import CloudBot
 
 # Define some constants
 base_url = "https://maps.googleapis.com/maps/api/"
 geocode_api = f"{base_url}geocode/json"
-
-# Change this to a ccTLD code (eg. uk, nz) to make results more targeted towards that specific country.
-# <https://developers.google.com/maps/documentation/geocoding/#RegionCodes>
-bias = None
 
 
 def check_status(status):
@@ -37,7 +33,7 @@ def check_status(status):
 
 
 @hook.command("locate", "maps")
-def locate(text):
+def locate(text: str, bot: "CloudBot") -> str:
     """<location> - Finds <location> on Google Maps."""
     dev_key = bot.config.get_api_key("google_dev_key")
     if not dev_key:
@@ -45,7 +41,8 @@ def locate(text):
 
     # Use the Geocoding API to get coordinates from the input
     params = {"address": text, "key": dev_key}
-    if bias:
+    bias = bot.config.get("location_bias_cc")
+    if bias is not None:
         params["region"] = bias
 
     r = requests.get(geocode_api, params=params)
