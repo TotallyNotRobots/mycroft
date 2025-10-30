@@ -1,19 +1,21 @@
-import random as std_random
+import secrets
 import string
 
 from cloudbot import hook
+from cloudbot.bot import CloudBot
 
-try:
-    from Crypto.Random import random
+gen = secrets.SystemRandom()
+common_words: list[str] = []
 
-    gen = random.StrongRandom()
-except ImportError:
-    random = None
-    # Just use the regular random module, not the strong one
-    gen = std_random.SystemRandom()
 
-with open("data/password_words.txt", encoding="utf-8") as f:
-    common_words = [line.strip() for line in f.readlines()]
+@hook.on_start()
+def load_words(bot: CloudBot) -> None:
+    new_words: list[str] = []
+    with open(bot.data_path / "password_words.txt", encoding="utf-8") as f:
+        new_words = [line.strip() for line in f.readlines()]
+
+    common_words.clear()
+    common_words.extend(new_words)
 
 
 @hook.command(autohelp=False)
