@@ -1,5 +1,6 @@
 import logging
 from collections.abc import Awaitable
+from pathlib import Path
 
 from watchdog.observers import Observer
 
@@ -17,7 +18,7 @@ class MockBot(AbstractBot):
         config=None,
         loop=None,
         db: MockDB | None = None,
-        base_dir=None,
+        base_dir: Path,
     ) -> None:
         self.old_db = None
         self.do_db_migrate = False
