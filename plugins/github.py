@@ -12,7 +12,7 @@ url_re = re.compile(
 )
 
 
-def parse_url(url):
+def parse_url(url) -> tuple[str, str]:
     """
     >>> parse_url("https://github.com/TotallyNotRobots/CloudBot/")
     ('TotallyNotRobots', 'CloudBot')
@@ -22,6 +22,9 @@ def parse_url(url):
     ('TotallyNotRobots', 'CloudBot')
     """
     match = url_re.match(url)
+    if match is None:
+        raise ValueError("Failed to match repo name")
+
     return match.group("owner"), match.group("repo")
 
 
@@ -39,7 +42,10 @@ def issue_cmd(text, event) -> str:
     if shortcut:
         data = shortcut
     else:
-        data = parse_url(first)
+        try:
+            data = parse_url(first)
+        except ValueError:
+            return f"Invalid repo: {first}"
 
     owner, repo = data
     issue = args[1] if len(args) > 1 else None

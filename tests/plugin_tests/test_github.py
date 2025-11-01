@@ -6,6 +6,16 @@ from requests import HTTPError
 from plugins import github
 
 
+def test_github_invalid_repo(
+    mock_requests, mock_bot, patch_try_shorten
+) -> None:
+    github.load_shortcuts(mock_bot)
+    event = MagicMock()
+    res = github.issue_cmd("myinvalid-repo", event)
+    assert res == "Invalid repo: myinvalid-repo"
+    assert event.mock_calls == []
+
+
 def test_github(mock_requests, mock_bot, patch_try_shorten) -> None:
     owner = "foo"
     repo = "bar"

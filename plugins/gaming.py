@@ -77,7 +77,11 @@ def dice(text, event):
     rolls = []
 
     for roll in groups:
-        _count, _side = split_re.match(roll).groups()
+        match = split_re.match(roll)
+        if match is None:
+            return f"Can't match roll: {roll}"
+
+        _count, _side = match.groups()
         count = int(_count) if _count not in " +-" else 1
         if _side.upper() == "F":  # fudge dice are basically 1d3-2
             for fudge in n_rolls(count, "F"):

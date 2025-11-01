@@ -151,7 +151,7 @@ class IrcClient(Client):
         self._channel_keys: dict[str, str | None] = {}
 
     def set_channel_key(
-        self, channel: str, key: str, *, override: bool = True
+        self, channel: str, key: str | None, *, override: bool = True
     ) -> None:
         if override or channel not in self._channel_keys:
             self._channel_keys[channel] = key

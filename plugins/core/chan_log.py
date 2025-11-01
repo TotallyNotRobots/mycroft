@@ -127,7 +127,7 @@ SPECIAL_CASES = {
 }
 
 
-def format_error_data(exc: Exception) -> Iterable[str]:
+def format_error_data(exc: BaseException) -> Iterable[str]:
     yield repr(exc)
     yield from indent(format_attrs(exc, ignore_dunder=True))
 
@@ -146,13 +146,14 @@ def format_error_chain(exc: Exception) -> Iterable[str]:
     :param exc: The exception to format
     :return: An iterable of lines of the formatted data from the exception
     """
-    while exc:
-        yield from format_error_data(exc)
+    next_exc: BaseException | None = exc
+    while next_exc is not None:
+        yield from format_error_data(next_exc)
         # Get "direct cause of" or
         # "during handling of ..., another exception occurred" stack
-        cause = getattr(exc, "__cause__", None)
-        context = getattr(exc, "__context__", None)
-        exc = cause or context
+        cause = next_exc.__cause__
+        context = next_exc.__context__
+        next_exc = cause or context
 
 
 def format_attrs(obj: object, ignore_dunder: bool = False) -> Iterable[str]:

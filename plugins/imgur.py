@@ -39,7 +39,7 @@ def set_api(bot) -> None:
     container.api = make_api(bot)
 
 
-def get_items(text):
+def get_items(text, api: ImgurClient):
     reddit_search: Match[str] | None
     if text:
         reddit_search = re.search(r"/r/([^\s/]+)", text)
@@ -47,21 +47,21 @@ def get_items(text):
 
         if reddit_search:
             subreddit = reddit_search.groups()[0]
-            items = container.api.subreddit_gallery(subreddit)
+            items = api.subreddit_gallery(subreddit)
         elif user_search:
             user = user_search.groups()[0]
-            items = container.api.get_account_submissions(user)
+            items = api.get_account_submissions(user)
         elif text in ("meme", "memes"):
-            items = container.api.memes_subgallery()
+            items = api.memes_subgallery()
         elif text == "random":
             page = random.randint(1, 50)
-            items = container.api.gallery_random(page=page)
+            items = api.gallery_random(page=page)
         else:
             page = random.randint(1, 5)
-            items = container.api.gallery_search(text, page=page)
+            items = api.gallery_search(text, page=page)
     else:
         reddit_search = None
-        items = container.api.gallery()
+        items = api.gallery()
 
     if NO_NSFW:
         items = [item for item in items if not item.nsfw]
@@ -82,7 +82,7 @@ def imgur(text):
     if text == "apicredits":
         return container.api.credits
 
-    items, is_reddit = get_items(text)
+    items, is_reddit = get_items(text, container.api)
 
     if not items:
         return "No results found."
@@ -140,7 +140,7 @@ def imguralbum(text, conn):
     if text == "apicredits":
         return container.api.credits
 
-    items, _ = get_items(text)
+    items, _ = get_items(text, container.api)
 
     if not items:
         return "No results found."

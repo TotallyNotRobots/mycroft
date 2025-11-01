@@ -59,3 +59,35 @@ Minimum = 5ms, Maximum = 10ms, Average = 7ms
             call.reply("Attempting to ping 1.1.1.1 5 times...")
         ]
         assert res == "min: 5ms, max: 10ms, average: 7ms, range: 5ms, count: 5"
+
+
+def test_ping_invalid(patch_subproc) -> None:
+    with patch.object(ping, "IS_WINDOWS", new=False):
+        patch_subproc.return_value = b"""\
+FAILED
+"""
+        event = MagicMock()
+        res = ping.ping("1.1.1.1 5", event.reply)
+        assert patch_subproc.mock_calls == [
+            call(["ping", "-c", "5", "1.1.1.1"])
+        ]
+        assert event.mock_calls == [
+            call.reply("Attempting to ping 1.1.1.1 5 times...")
+        ]
+        assert res == "Failed to match results"
+
+
+def test_ping_win_invalid(patch_subproc) -> None:
+    with patch.object(ping, "IS_WINDOWS", new=True):
+        patch_subproc.return_value = b"""\
+Some error.
+"""
+        event = MagicMock()
+        res = ping.ping("1.1.1.1 5", event.reply)
+        assert patch_subproc.mock_calls == [
+            call(["ping", "-n", "5", "1.1.1.1"])
+        ]
+        assert event.mock_calls == [
+            call.reply("Attempting to ping 1.1.1.1 5 times...")
+        ]
+        assert res == "Failed to match results"

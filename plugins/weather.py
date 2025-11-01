@@ -1,6 +1,5 @@
 import math
 from fractions import Fraction
-from typing import Optional
 
 import googlemaps
 import pyowm
@@ -12,12 +11,38 @@ from sqlalchemy import Column, PrimaryKeyConstraint, String, Table
 from cloudbot import hook
 from cloudbot.util import colors, database
 
-Api = Optional[googlemaps.Client]
+
+class ApiNotConfigured(Exception):
+    def __init__(self, api_name: str) -> None:
+        super().__init__(f"{api_name} API is not configured")
+        self.api_name = api_name
+
+
+class MapsApiNotConfigured(ApiNotConfigured):
+    def __init__(self) -> None:
+        super().__init__("maps")
+
+
+class OwmApiNotConfigured(ApiNotConfigured):
+    def __init__(self) -> None:
+        super().__init__("openweather")
 
 
 class PluginData:
-    maps_api: Api = None
+    maps_api: googlemaps.Client | None = None
     owm_api: OWM | None = None
+
+    def get_maps_api(self) -> googlemaps.Client:
+        if self.maps_api is None:
+            raise MapsApiNotConfigured
+
+        return self.maps_api
+
+    def get_owm_api(self) -> OWM:
+        if self.owm_api is None:
+            raise OwmApiNotConfigured
+
+        return self.owm_api
 
 
 data = PluginData()
@@ -101,7 +126,7 @@ def find_location(location, bias=None):
     """
     Takes a location as a string, and returns a dict of data
     """
-    results = data.maps_api.geocode(location, region=bias)
+    results = data.get_maps_api().geocode(location, region=bias)
     if not results:
         raise LocationNotFound(location)
 
@@ -170,18 +195,6 @@ def check_and_parse(event, db):
     """
     Check for the API keys and parse the location from user input
     """
-    if not data.maps_api:
-        return (
-            None,
-            "This command requires a Google Developers Console API key.",
-        )
-
-    if not data.owm_api:
-        return (
-            None,
-            "This command requires a OpenWeatherMap API key.",
-        )
-
     # If no input try the db
     if not event.text:
         location = get_location(event.nick)
@@ -199,13 +212,23 @@ def check_and_parse(event, db):
     # use find_location to get location data from the user input
     try:
         location_data = find_location(location, bias=bias)
+        owm_api = data.get_owm_api()
+    except OwmApiNotConfigured:
+        return (
+            None,
+            "This command requires a OpenWeatherMap API key.",
+        )
+    except MapsApiNotConfigured:
+        return (
+            None,
+            "This command requires a Google Developers Console API key.",
+        )
     except ApiError:
         event.reply("API Error occurred.")
         raise
     except LocationNotFound as e:
         return None, str(e)
 
-    owm_api = data.owm_api
     wm = owm_api.weather_manager()
     conditions = wm.one_call(
         location_data["lat"], location_data["lng"], exclude="minutely,hourly"

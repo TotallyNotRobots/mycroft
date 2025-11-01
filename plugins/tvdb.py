@@ -231,7 +231,8 @@ class Holder(Generic[T]):
         if not self._set:
             raise MissingItem()
 
-        return self._item
+        # if self._set is True, then set() was called, so return the value
+        return cast(T, self._item)
 
 
 class LazyCollection(Sized, Iterable[T], Container[T]):
@@ -471,6 +472,9 @@ def tv_next(text: str) -> str:
     if err is not None:
         return err
 
+    if series is None:
+        return "Got empty series."
+
     if series.ended:
         return f"{series.name} has ended."
 
@@ -508,6 +512,9 @@ def tv_last(text: str) -> str:
     series, err = check_and_get_series(text)
     if err is not None:
         return err
+
+    if series is None:
+        return "Got empty series."
 
     prev_ep = None
     today = datetime.date.today()

@@ -44,7 +44,7 @@ class Poll:
             raise PollError("Sorry, you have already voted on this poll.")
 
         # fetch the option object, and increment option.votes
-        option = self.options.get(voted_option)
+        option = self.options[voted_option]
         option.votes += 1
 
         self.voted.append(voter.lower())
@@ -74,7 +74,7 @@ def poll(text, conn, nick, chan, message, reply):
         if uid not in polls.keys():
             return "You have no active poll to close."
 
-        p = polls.get(uid)
+        p = polls[uid]
         reply(
             f'Your poll has been closed. Final results for \x02"{p.question}"\x02:'
         )
@@ -151,7 +151,7 @@ def results(text, conn, chan, nick, message, reply):
         if uid not in polls.keys():
             return "You have no current poll. Use .vote <user> <option> to vote on another users poll."
 
-    p = polls.get(uid)
+    p = polls[uid]
 
     reply(f'Results for \x02"{p.question}"\x02 by \x02{p.creator}\x02:')
     message(p.format_results())

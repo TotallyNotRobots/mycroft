@@ -9,6 +9,7 @@ from plugins import chatbot
 async def test_make_api(mock_bot_factory) -> None:
     bot = mock_bot_factory(config={"api_keys": {"cleverbot": "testapikey"}})
     chatbot.make_api(bot)
+    assert chatbot.container.api is not None
     assert chatbot.container.api.key == "testapikey"
 
 

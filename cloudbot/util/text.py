@@ -1,4 +1,7 @@
+from typing import Literal, overload
+
 __all__ = ("parse_bool",)
+
 
 _STR_TO_BOOL = {
     "yes": True,
@@ -14,6 +17,18 @@ _STR_TO_BOOL = {
     "true": True,
     "false": False,
 }
+
+
+@overload
+def parse_bool(s: str) -> bool: ...
+
+
+@overload
+def parse_bool(s: str, *, fail_on_unknown: Literal[True]) -> bool: ...
+
+
+@overload
+def parse_bool(s: str, *, fail_on_unknown: Literal[False]) -> bool | None: ...
 
 
 def parse_bool(s: str, *, fail_on_unknown: bool = True) -> bool | None:

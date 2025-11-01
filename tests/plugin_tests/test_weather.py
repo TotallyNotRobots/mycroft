@@ -177,9 +177,7 @@ async def test_rounding(
 
 
 @pytest.mark.asyncio
-async def test_find_location(
-    mock_bot_factory, mock_requests, patch_try_shorten, mock_db
-) -> None:
+async def test_no_keys(mock_bot_factory, patch_try_shorten, mock_db) -> None:
     bot = mock_bot_factory(config={}, db=mock_db)
     weather.create_maps_api(bot)
     weather.create_owm_api(bot)
@@ -187,6 +185,11 @@ async def test_find_location(
     assert weather.data.maps_api is None
     assert weather.data.owm_api is None
 
+
+@pytest.mark.asyncio
+async def test_weather_no_args(
+    mock_bot_factory, mock_requests, patch_try_shorten, mock_db
+) -> None:
     bot = setup_api(
         mock_requests,
         mock_db,
@@ -224,6 +227,46 @@ async def test_find_location(
     assert wrap_hook_response(weather.weather, cmd_event) == [
         ("notice", ("foobar", ".we - foobar"), {})
     ]
+
+
+@pytest.mark.asyncio
+async def test_find_location(
+    mock_bot_factory, mock_requests, patch_try_shorten, mock_db
+) -> None:
+    bot = setup_api(
+        mock_requests,
+        mock_db,
+        asyncio.get_running_loop(),
+        mock_bot_factory,
+    )
+
+    assert weather.find_location("Foo Bar") == {
+        "lat": 30.123,
+        "lng": 123.456,
+        "address": "123 Test St, Example City, CA",
+    }
+
+    conn = MagicMock()
+    conn.config = {}
+
+    conn.bot = bot
+
+    cmd_event = CommandEvent(
+        text="",
+        cmd_prefix=".",
+        triggered_command="we",
+        hook=MagicMock(),
+        bot=bot,
+        conn=conn,
+        channel="#foo",
+        nick="foobar",
+    )
+
+    cmd_event.hook.required_args = ["db"]
+    cmd_event.hook.doc = "- foobar"
+
+    cmd_event.prepare_threaded()
+
     weather.location_cache.append(("foobar", "test location"))
 
     mock_requests.add(
@@ -261,6 +304,41 @@ async def test_find_location(
         )
     ]
 
+
+@pytest.mark.asyncio
+async def test_api_error(
+    mock_bot_factory, mock_requests, patch_try_shorten, mock_db
+) -> None:
+    bot = setup_api(
+        mock_requests,
+        mock_db,
+        asyncio.get_running_loop(),
+        mock_bot_factory,
+    )
+
+    conn = MagicMock()
+    conn.config = {}
+
+    conn.bot = bot
+
+    cmd_event = CommandEvent(
+        text="",
+        cmd_prefix=".",
+        triggered_command="we",
+        hook=MagicMock(),
+        bot=bot,
+        conn=conn,
+        channel="#foo",
+        nick="foobar",
+    )
+
+    cmd_event.hook.required_args = ["db"]
+    cmd_event.hook.doc = "- foobar"
+
+    cmd_event.prepare_threaded()
+
+    weather.location_cache.append(("foobar", "test location"))
+
     mock_requests.reset()
     mock_requests.add(
         "GET",
@@ -276,6 +354,41 @@ async def test_find_location(
         ("message", ("#foo", "(foobar) API Error occurred."), {})
     ]
 
+
+@pytest.mark.asyncio
+async def test_no_owm_key(
+    mock_bot_factory, mock_requests, patch_try_shorten, mock_db
+) -> None:
+    bot = setup_api(
+        mock_requests,
+        mock_db,
+        asyncio.get_running_loop(),
+        mock_bot_factory,
+    )
+
+    conn = MagicMock()
+    conn.config = {}
+
+    conn.bot = bot
+
+    cmd_event = CommandEvent(
+        text="",
+        cmd_prefix=".",
+        triggered_command="we",
+        hook=MagicMock(),
+        bot=bot,
+        conn=conn,
+        channel="#foo",
+        nick="foobar",
+    )
+
+    cmd_event.hook.required_args = ["db"]
+    cmd_event.hook.doc = "- foobar"
+
+    cmd_event.prepare_threaded()
+
+    weather.location_cache.append(("foobar", "test location"))
+
     bot.config["api_keys"]["openweathermap"] = None
     bot.config.load_config()
     weather.create_maps_api(bot)
@@ -287,10 +400,46 @@ async def test_find_location(
         ("return", "This command requires a OpenWeatherMap API key.")
     ]
 
+
+@pytest.mark.asyncio
+async def test_no_google_key(
+    mock_bot_factory, mock_requests, patch_try_shorten, mock_db
+) -> None:
+    bot = setup_api(
+        mock_requests,
+        mock_db,
+        asyncio.get_running_loop(),
+        mock_bot_factory,
+    )
+
+    conn = MagicMock()
+    conn.config = {}
+
+    conn.bot = bot
+
+    cmd_event = CommandEvent(
+        text="",
+        cmd_prefix=".",
+        triggered_command="we",
+        hook=MagicMock(),
+        bot=bot,
+        conn=conn,
+        channel="#foo",
+        nick="foobar",
+    )
+
+    cmd_event.hook.required_args = ["db"]
+    cmd_event.hook.doc = "- foobar"
+
+    cmd_event.prepare_threaded()
+
+    weather.location_cache.append(("foobar", "test location"))
+
     bot.config["api_keys"]["google_dev_key"] = None
     bot.config.load_config()
     weather.create_maps_api(bot)
     weather.create_owm_api(bot)
+    mock_requests.reset()
     assert wrap_hook_response(weather.weather, cmd_event) == [
         ("return", "This command requires a Google Developers Console API key.")
     ]
@@ -298,30 +447,35 @@ async def test_find_location(
         ("return", "This command requires a Google Developers Console API key.")
     ]
 
-    # Test DB storage
-    bot.config.update(
-        {
-            "api_keys": {
-                "google_dev_key": "AIzatestapikey",
-                "openweathermap": "abc12345" * 4,
-            }
-        }
-    )
-    bot.config.load_config()
-    weather.create_maps_api(bot)
-    weather.create_owm_api(bot)
-    weather.table.create(mock_db.engine, checkfirst=True)
-    cmd_event.db = mock_db.session()
-    cmd_event.text = "my location"
 
-    weather.load_cache(mock_db.session())
-    mock_requests.reset()
-    setup_api(
+@pytest.mark.asyncio
+async def test_db_save(mock_bot_factory, mock_requests, mock_db):
+    bot = setup_api(
         mock_requests,
         mock_db,
         asyncio.get_running_loop(),
         mock_bot_factory,
     )
+
+    conn = MagicMock()
+    conn.config = {}
+
+    conn.bot = bot
+
+    cmd_event = CommandEvent(
+        text="my location",
+        cmd_prefix=".",
+        triggered_command="we",
+        hook=MagicMock(),
+        bot=bot,
+        conn=conn,
+        channel="#foo",
+        nick="foobar",
+    )
+
+    weather.table.create(mock_db.engine, checkfirst=True)
+    cmd_event.db = mock_db.session()
+
     mock_requests.add(
         "GET",
         "https://api.openweathermap.org/data/3.0/onecall?"

@@ -96,6 +96,10 @@ def profile(text, chan, notice, nick):
         pager = paginated_list(cats, ", ", pager_cls=CommandPager)
         cat_pages[chan_cf][nick_cf] = pager
         page = pager.next()
+        if page is None:
+            notice("No results")
+            return None
+
         page[0] = f"Categories: {page[0]}"
         if len(pager) > 1:
             page[-1] += " .moreprofile"

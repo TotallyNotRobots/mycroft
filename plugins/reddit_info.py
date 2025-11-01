@@ -209,6 +209,9 @@ def moderates(text, chan, conn, reply):
     pager = paginated_list([sub["sr"] for sub in subs], pager_cls=CommandPager)
     search_pages[conn.name][chan.casefold()] = pager
     page = pager.next()
+    if page is None:
+        return "No results"
+
     if len(pager) > 1:
         page[-1] += " .moremod"
 
@@ -331,6 +334,9 @@ def submods(text, chan, conn, reply):
     pager = paginated_list(moderators, pager_cls=CommandPager)
     search_pages[conn.name][chan.casefold()] = pager
     page = pager.next()
+    if page is None:
+        return "No results"
+
     if len(pager) > 1:
         page[-1] += " .moremod"
 

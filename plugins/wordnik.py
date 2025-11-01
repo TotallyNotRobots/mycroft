@@ -2,7 +2,7 @@ import logging
 import random
 import re
 import urllib.parse
-from collections.abc import Iterable
+from collections.abc import Generator
 from json import JSONDecodeError
 from typing import Any, cast
 
@@ -157,7 +157,7 @@ class WordLookupRequest:
 
     def get_filtered_results(
         self, min_results: int = 1
-    ) -> Iterable[dict[str, Any]]:
+    ) -> Generator[dict[str, Any], None, None]:
         count = 0
         tries = 0
         results = []
@@ -186,11 +186,8 @@ class WordLookupRequest:
 
         raise NoValidResults(self.word, results)
 
-    def first(self) -> dict[str, Any] | None:
-        for item in self.get_filtered_results():
-            return item
-
-        return None
+    def first(self) -> dict[str, Any]:
+        return next(self.get_filtered_results())
 
     def random(self) -> dict[str, Any]:
         return random.choice(list(self.get_filtered_results()))
