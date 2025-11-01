@@ -2,29 +2,27 @@ import signal
 import sys
 import threading
 import traceback
+from typing import Optional
 
 from cloudbot import hook
 from cloudbot.util import web
 
-PYMPLER_ENABLED = False
-
-if PYMPLER_ENABLED:
-    try:
-        import pympler
-        import pympler.muppy
-        import pympler.summary
-        import pympler.tracker
-    except ImportError:
-        pympler = None
-else:
+try:  # pragma: no cover
+    import pympler
+    import pympler.muppy
+    import pympler.summary
+    import pympler.tracker
+    from pympler.tracker import SummaryTracker
+except ImportError:
     pympler = None
-try:
+
+try:  # pragma: no cover
     import objgraph
 except ImportError:
     objgraph = None
 
 
-def create_tracker():
+def create_tracker() -> Optional["SummaryTracker"]:
     if pympler is None:
         return None
 
@@ -34,7 +32,7 @@ def create_tracker():
 tr = create_tracker()
 
 
-def get_name(thread_id):
+def get_name(thread_id) -> str:
     current_thread = threading.current_thread()
     if thread_id == current_thread.ident:
         is_current = True
@@ -62,7 +60,7 @@ def get_name(thread_id):
     return name
 
 
-def get_thread_dump():
+def get_thread_dump() -> str:
     code = []
     threads = [
         (get_name(thread_id), traceback.extract_stack(stack))
@@ -79,7 +77,7 @@ def get_thread_dump():
 
 
 @hook.command("threaddump", autohelp=False, permissions=["botcontrol"])
-async def threaddump_command():
+async def threaddump_command() -> str:
     """- Return a full thread dump"""
     return get_thread_dump()
 

@@ -2,6 +2,6 @@ from cloudbot import hook
 
 
 @hook.command()
-def dig() -> str:
+def dig() -> str:  # pragma: no cover
     """- This command is retired"""
     return "The jsondns API no longer exists. This command is retired."

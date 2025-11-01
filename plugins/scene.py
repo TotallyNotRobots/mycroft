@@ -13,13 +13,11 @@ License:
     GPL v3
 """
 
-from typing_extensions import LiteralString
-
 from cloudbot import hook
 
 
 @hook.command("pre", "scene")
-def pre() -> LiteralString:
+def pre() -> str:  # pragma: no cover
     """- This command has been removed, orlydb.com is down permanently."""
 
     return "This command has been removed, orlydb.com is down permanently."

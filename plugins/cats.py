@@ -29,7 +29,6 @@ def cats(reply, bot):
 
 
 @hook.command(autohelp=False)
-def catgifs(reply, bot) -> str:
-    """- gets a fucking cat gif."""
-    r = get_data("http://marume.herokuapp.com/random.gif", reply, bot)
-    return f"OMG A CAT GIF: {r.url}"
+def catgifs() -> str:  # pragma: no cover
+    """- Cat gif API has been shut down."""
+    return "Cat gif API has been shut down."

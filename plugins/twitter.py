@@ -2,14 +2,14 @@ from cloudbot import hook
 
 
 @hook.command("twitter", "tw", "twatter")
-def twitter(text, reply, conn) -> str:
+def twitter() -> str:  # pragma: no cover
     """- The Twitter API is no longer available."""
 
     return "The Twitter API is no longer available."
 
 
 @hook.command("twuser", "twinfo")
-def twuser(text, reply) -> str:
+def twuser() -> str:  # pragma: no cover
     """- The Twitter API is no longer available."""
 
     return "The Twitter API is no longer available."

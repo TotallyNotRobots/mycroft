@@ -19,7 +19,6 @@ class MockConn:
     [
         ["grab", "moregrab", "search_pages", "grabsearch"],
         ["reddit_info", "moremod", "search_pages", "modlist"],
-        ["sportscores", "morescore", "search_pages", "score"],
     ],
 )
 def test_page_commands(plugin_name, hook_name, pages_name, page_type) -> None:
