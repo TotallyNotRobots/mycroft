@@ -38,8 +38,7 @@ def issue_cmd(text, event) -> str:
     """<username|repo> [number] - gets issue [number]'s summary, or the open issue count if no issue is specified"""
     args = text.split()
     first = args[0]
-    shortcut = shortcuts.get(first)
-    if shortcut:
+    if shortcut := shortcuts.get(first):
         data = shortcut
     else:
         try:

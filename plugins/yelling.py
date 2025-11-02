@@ -16,8 +16,7 @@ def yell_check(conn, chan, content, bot, nick) -> None:
     if chan.casefold() not in OPT_IN:
         return
 
-    link_announcer = bot.plugin_manager.find_plugin("link_announcer")
-    if link_announcer:
+    if link_announcer := bot.plugin_manager.find_plugin("link_announcer"):
         url_re = link_announcer.code.url_re
     else:
         url_re = URL_RE

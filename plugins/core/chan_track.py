@@ -700,8 +700,7 @@ def on_kick(chan, target, conn) -> None:
 
 @hook.irc_raw("QUIT", do_sieve=False)
 def on_quit(nick, conn) -> None:
-    users = get_users(conn)
-    if nick in users:
+    if nick in (users := get_users(conn)):
         user = users.pop(nick)
         for memb in user.channels.values():
             chan = memb.channel

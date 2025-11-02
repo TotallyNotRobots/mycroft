@@ -215,8 +215,7 @@ def cmd_show(args, db, event):
 def cmd_get(args, db, event) -> None:
     # user is getting a single note
     # show the note
-    text = cmd_show(args, db, event)
-    if text is not None:
+    if (text := cmd_show(args, db, event)) is not None:
         event.notice(text)
 
 

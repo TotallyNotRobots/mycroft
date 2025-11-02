@@ -296,8 +296,7 @@ class CoinMarketCapAPI:
         return api_response
 
     def check(self, response: APIResponse) -> None:
-        msg = response.data.status.error_message
-        if msg:
+        if msg := response.data.status.error_message:
             raise APIError(msg)
 
 

@@ -115,8 +115,7 @@ class CommandPager(Pager):
                 out = "Please specify a valid page number between 1 and {}."
                 return [out.format(len(self))]
 
-        page = self.next()
-        if page is not None:
+        if (page := self.next()) is not None:
             return page
 
         return [

@@ -43,12 +43,11 @@ def get_stats(bot):
 @hook.post_hook(priority=Priority.HIGHEST)
 def stats_sieve(launched_event, error, bot, launched_hook) -> None:
     chan = launched_event.chan
-    conn = launched_event.conn
     status = "success" if error is None else "failure"
     stats = get_stats(bot)
     name = f"{launched_hook.plugin.title}.{launched_hook.function_name}"
     stats["global"][name][status] += 1
-    if conn:
+    if conn := launched_event.conn:
         stats["network"][conn.name.casefold()][name][status] += 1
 
         if chan:

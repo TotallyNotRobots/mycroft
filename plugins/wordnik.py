@@ -362,9 +362,8 @@ def wordoftheday(text, event):
     """[date] - returns the word of the day. To see past word of the day
     enter use the format yyyy-MM-dd. The specified date must be after
     2009-08-10."""
-    match = re.search(r"(\d\d\d\d-\d\d-\d\d)", text)
     date = ""
-    if match:
+    if match := re.search(r"(\d\d\d\d-\d\d-\d\d)", text):
         date = match.group(1)
 
     if date:

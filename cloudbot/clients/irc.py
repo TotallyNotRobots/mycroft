@@ -326,8 +326,7 @@ class IrcClient(Client):
             self.cmd("PRIVMSG", target, text)
 
     def admin_log(self, text, console=True) -> None:
-        log_chan = self.config.get("log_channel")
-        if log_chan:
+        if log_chan := self.config.get("log_channel"):
             self.message(log_chan, text)
 
         if console:

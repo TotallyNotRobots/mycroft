@@ -80,8 +80,7 @@ class Registry(Generic[_T]):
         self._items[name] = RegistryItem(item)
 
     def get(self, name: str) -> _T | None:
-        val = self._items.get(name)
-        if val:
+        if val := self._items.get(name):
             return val.item
 
         return None

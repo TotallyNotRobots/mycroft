@@ -52,8 +52,7 @@ def format_item(item) -> str:
 @hook.command("feed", "rss", "news")
 def rss(text: str) -> str:
     """<feed> - Gets the first three items from the RSS/ATOM feed <feed>."""
-    t = text.lower().strip()
-    if t in ALIASES:
+    if (t := text.lower().strip()) in ALIASES:
         alias = ALIASES[t]
         addr = alias.url
         limit = alias.limit

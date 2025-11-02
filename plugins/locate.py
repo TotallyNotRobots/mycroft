@@ -41,16 +41,14 @@ def locate(text: str, bot: "CloudBot") -> str:
 
     # Use the Geocoding API to get coordinates from the input
     params = {"address": text, "key": dev_key}
-    bias = bot.config.get("location_bias_cc")
-    if bias is not None:
+    if (bias := bot.config.get("location_bias_cc")) is not None:
         params["region"] = bias
 
     r = requests.get(geocode_api, params=params)
     r.raise_for_status()
     json = r.json()
 
-    error = check_status(json["status"])
-    if error:
+    if error := check_status(json["status"]):
         return error
 
     result = json["results"][0]

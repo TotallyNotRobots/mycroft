@@ -118,7 +118,6 @@ def librefm(text, nick, db, event):
     title = track["name"]
     album = track["album"]["#text"]
     artist = track["artist"]["#text"]
-    url = web.try_shorten(track["url"])
     tags = getartisttags(artist)
 
     out = f'{user} {status} "{title}"'
@@ -126,7 +125,7 @@ def librefm(text, nick, db, event):
         out += f" by \x02{artist}\x0f"
     if album:
         out += f" from the album \x02{album}\x0f"
-    if url:
+    if url := web.try_shorten(track["url"]):
         out += f" {url}"
 
     out += f" ({tags})"

@@ -166,8 +166,7 @@ def load_cache(db) -> None:
 
 @hook.on_start()
 def create_maps_api(bot) -> None:
-    google_key = bot.config.get_api_key("google_dev_key")
-    if google_key:
+    if google_key := bot.config.get_api_key("google_dev_key"):
         data.maps_api = googlemaps.Client(google_key)
     else:
         data.maps_api = None
@@ -175,8 +174,7 @@ def create_maps_api(bot) -> None:
 
 @hook.on_start()
 def create_owm_api(bot) -> None:
-    owm_key = bot.config.get_api_key("openweathermap")
-    if owm_key:
+    if owm_key := bot.config.get_api_key("openweathermap"):
         data.owm_api = OWM(owm_key, pyowm.owm.cfg.get_default_config())
     else:
         data.owm_api = None

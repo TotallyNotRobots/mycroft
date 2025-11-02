@@ -283,7 +283,6 @@ def lastfm(event, db, text, nick, bot):
     title = track["name"]
     album = track["album"]["#text"]
     artist = track["artist"]["#text"]
-    url = web.try_shorten(track["url"])
 
     tags = gettracktags(artist, title)
     if tags == "no tags":
@@ -300,7 +299,7 @@ def lastfm(event, db, text, nick, bot):
         out += f" [playcount: {playcount}]"
     else:
         out += " [playcount: 0]"
-    if url:
+    if url := web.try_shorten(track["url"]):
         out += f" {url}"
 
     out += f" ({tags})"
@@ -392,12 +391,10 @@ def lastfmcompare(text, nick, bot):
         user2 = user1
         user1 = nick
 
-    user2_check = get_account(user2)
-    if user2_check:
+    if user2_check := get_account(user2):
         user2 = user2_check
 
-    user1_check = get_account(user1)
-    if user1_check:
+    if user1_check := get_account(user1):
         user1 = user1_check
 
     data, err = api_request(

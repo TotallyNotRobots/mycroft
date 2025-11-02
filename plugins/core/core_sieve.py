@@ -31,16 +31,14 @@ def check_acls(bot: CloudBot, event: Event, _hook: Hook) -> Event | None:
 
     # check acls
     acl = conn.config.get("acls", {}).get(_hook.function_name, {})
-    allowlist = acl.get("deny-except")
-    denylist = acl.get("allow-except")
 
     chan = event.chan.lower()
-    if allowlist is not None:
+    if (allowlist := acl.get("deny-except")) is not None:
         allowed_channels = list(map(str.lower, allowlist))
         if chan not in allowed_channels:
             return None
 
-    if denylist is not None:
+    if (denylist := acl.get("allow-except")) is not None:
         denied_channels = list(map(str.lower, denylist))
         if chan in denied_channels:
             return None

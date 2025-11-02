@@ -28,8 +28,7 @@ def get_group_permissions(text, conn, notice):
         notice(f"Unknown group '{group}'")
         return None
 
-    group_permissions = permission_manager.get_group_permissions(group)
-    if group_permissions:
+    if group_permissions := permission_manager.get_group_permissions(group):
         return f"Group {group} has permissions {group_permissions}"
 
     return f"Group {group} exists, but has no permissions"
@@ -44,8 +43,7 @@ def get_group_users(text, conn, notice):
         notice(f"Unknown group '{group}'")
         return None
 
-    group_users = permission_manager.get_group_users(group)
-    if group_users:
+    if group_users := permission_manager.get_group_users(group):
         return f"Group {group} has members: {group_users}"
 
     return f"Group {group} exists, but has no members"
@@ -73,8 +71,7 @@ def get_user_permissions(event):
 
     permission_manager = event.conn.permissions
 
-    user_permissions = permission_manager.get_user_permissions(user)
-    if user_permissions:
+    if user_permissions := permission_manager.get_user_permissions(user):
         return f"User {user} has permissions: {user_permissions}"
 
     return f"User {user} has no elevated permissions"
@@ -89,8 +86,7 @@ def get_user_groups(event):
 
     permission_manager = event.conn.permissions
 
-    user_groups = permission_manager.get_user_groups(user)
-    if user_groups:
+    if user_groups := permission_manager.get_user_groups(user):
         return (
             f"User {user} is in groups: {[group.name for group in user_groups]}"
         )

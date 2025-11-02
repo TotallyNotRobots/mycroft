@@ -53,9 +53,10 @@ def update_score(nick, chan, thing, score, db) -> None:
         karma_table.c.chan == chan,
         karma_table.c.thing == thing.lower(),
     )
-    karma = db.execute(select(karma_table.c.score).where(clause)).fetchone()
     query: Executable
-    if karma:
+    if karma := db.execute(
+        select(karma_table.c.score).where(clause)
+    ).fetchone():
         score += karma.score
         query = karma_table.update().values(score=score).where(clause)
     else:
@@ -76,8 +77,7 @@ def addpoint(text, nick, chan, db) -> None:
 @hook.regex(karmaplus_re)
 def re_addpt(match, nick, chan, db, notice) -> None:
     """no useful help txt"""
-    thing = match.group().split("++")[0]
-    if thing:
+    if thing := match.group().split("++")[0]:
         addpoint(thing, nick, chan, db)
     else:
         out = pluspts(nick, chan, db)
@@ -139,8 +139,7 @@ def minuspts(nick, chan, db):
 @hook.regex(karmaminus_re)
 def re_rmpt(match, nick, chan, db, notice) -> None:
     """no useful help txt"""
-    thing = match.group().split("--")[0]
-    if thing:
+    if thing := match.group().split("--")[0]:
         rmpoint(thing, nick, chan, db)
     else:
         out = minuspts(nick, chan, db)
@@ -166,8 +165,7 @@ def points_cmd(text, chan, db) -> str:
             .where(karma_table.c.chan == chan)
         )
 
-    karma = db.execute(query).fetchall()
-    if karma:
+    if karma := db.execute(query).fetchall():
         pos = 0
         neg = 0
         for k in karma:

@@ -252,9 +252,7 @@ def log(event) -> None:
     if not logging_config.get("file_log", False):
         return
 
-    text = format_event(event)
-
-    if text is not None:
+    if (text := format_event(event)) is not None:
         if (
             event.irc_command
             in ["PRIVMSG", "PART", "JOIN", "MODE", "TOPIC", "QUIT", "NOTICE"]

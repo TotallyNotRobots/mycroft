@@ -311,8 +311,7 @@ class LazyCollection(Sized, Iterable[T], Container[T]):
                 return True
 
     def _gen_to_index(self, i: int) -> None:
-        current_size = len(self._data)
-        if i >= current_size:
+        if i >= (current_size := len(self._data)):
             for _ in range((i - current_size) + 1):
                 try:
                     self._data.append(next(self._it))

@@ -75,8 +75,7 @@ def time_command(text: str, reply, bot: "CloudBot") -> str:
 
     # Use the Geocoding API to get coordinates from the input
     params = {"address": text, "key": dev_key}
-    bias = bot.config.get("location_bias_cc")
-    if bias is not None:
+    if (bias := bot.config.get("location_bias_cc")) is not None:
         params["region"] = bias
 
     json = requests.get(geocode_api, params=params).json()

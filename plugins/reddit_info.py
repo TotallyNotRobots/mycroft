@@ -42,16 +42,14 @@ post_re = re.compile(
 
 
 def get_user(text):
-    match = user_re.match(text)
-    if match:
+    if match := user_re.match(text):
         return match.group("name")
 
     return None
 
 
 def get_sub(text):
-    match = sub_re.match(text)
-    if match:
+    if match := sub_re.match(text):
         return match.group("name")
 
     return None
