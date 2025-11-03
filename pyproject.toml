@@ -78,9 +78,8 @@ disable = [
     "broad-exception-raised",
     "use-implicit-booleaness-not-comparison",
     "comparison-with-callable",
-    "wrong-import-order",                     # isort handles this
+    "wrong-import-order", # isort handles this
 ]
-
 enable = ["c-extension-no-member"]
 
 [tool.pylint.typecheck]
@@ -99,14 +98,9 @@ warn_unused_ignores = true
 warn_redundant_casts = true
 # strict_equality = true
 plugins = ["pydantic.mypy"]
-
 follow_imports = "silent"
 # disallow_any_generics = true
 no_implicit_reexport = true
-
-# for strict mypy: (this is the tricky one :-))
-# disallow_untyped_defs = true
-
 enable_error_code = [
     "deprecated",
     "exhaustive-match",
@@ -144,16 +138,6 @@ init_forbid_extra = true
 init_typed = true
 warn_required_dynamic_aliases = true
 
-[tool.commitizen]
-name = "cz_conventional_commits"
-tag_format = "v$version"
-version_scheme = "semver2"
-update_changelog_on_bump = true
-version_files = ["cloudbot/__init__.py:__version__"]
-version = "1.5.0"
-version_provider = "scm"
-annotated_tag = true
-
 [tool.autoflake]
 remove-all-unused-imports = true
 in-place = true
@@ -184,7 +168,7 @@ minversion = "8.0"
 fail_under = 80
 exclude_lines = [
     "@overload",
-    "if TYPE_CHECKING:",                  # Type checking blocks are never accessible at test/runtime
+    "if TYPE_CHECKING:", # Type checking blocks are never accessible at test/runtime
     "pragma: no cover",
     "def __repr__",
     "raise AssertionError",
@@ -200,9 +184,9 @@ branch = true
 omit = [
     "tests/data/*",
     "tests/util/*",
-    ".*",           # Ignore any .cache, .venv, etc directories
+    ".*", # Ignore any .cache, .venv, etc directories
     "venv/*",
-    "tools/*",      # Build/CI tools
+    "tools/*", # Build/CI tools
     "alembic/*",
 ]
 relative_files = true
@@ -225,69 +209,13 @@ quiet-level = 3
 ignore-words-list = ["cypher", "decypher", "AHD", "ahd"]
 
 [tool.alembic]
-
 # path to migration scripts.
 # this is typically a path given in POSIX (e.g. forward slashes)
 # format, relative to the token %(here)s which refers to the location of this
 # ini file
 script_location = "%(here)s/alembic"
-
-# template used to generate migration file names; The default value is %%(rev)s_%%(slug)s
-# Uncomment the line below if you want the files to be prepended with date and time
-# see https://alembic.sqlalchemy.org/en/latest/tutorial.html#editing-the-ini-file
-# for all available tokens
-# file_template = "%%(year)d_%%(month).2d_%%(day).2d_%%(hour).2d%%(minute).2d-%%(rev)s_%%(slug)s"
-
 # additional paths to be prepended to sys.path. defaults to the current working directory.
 prepend_sys_path = ["."]
-
-# timezone to use when rendering the date within the migration file
-# as well as the filename.
-# If specified, requires the tzdata library which can be installed by adding
-# `alembic[tz]` to the pip requirements.
-# string value is passed to ZoneInfo()
-# leave blank for localtime
-# timezone =
-
-# max length of characters to apply to the "slug" field
-# truncate_slug_length = 40
-
-# set to 'true' to run the environment during
-# the 'revision' command, regardless of autogenerate
-# revision_environment = false
-
-# set to 'true' to allow .pyc and .pyo files without
-# a source .py file to be detected as revisions in the
-# versions/ directory
-# sourceless = false
-
-# version location specification; This defaults
-# to <script_location>/versions.  When using multiple version
-# directories, initial revisions must be specified with --version-path.
-# version_locations = [
-#    "%(here)s/alembic/versions",
-#    "%(here)s/foo/bar"
-# ]
-
-# set to 'true' to search source files recursively
-# in each "version_locations" directory
-# new in Alembic version 1.10
-# recursive_version_locations = false
-
-# the output encoding used when revision files
-# are written from script.py.mako
-# output_encoding = "utf-8"
-
-# This section defines scripts or Python functions that are run
-# on newly generated revision scripts.  See the documentation for further
-# detail and examples
-# [[tool.alembic.post_write_hooks]]
-# format using "black" - use the console_scripts runner,
-# against the "black" entrypoint
-# name = "black"
-# type = "exec"
-# executable = "pre-commit"
-# options = "run --files REVISION_SCRIPT_FILENAME"
 
 # [[tool.alembic.post_write_hooks]]
 # lint with attempts to fix using "ruff" - use the module runner, against the "ruff" module
