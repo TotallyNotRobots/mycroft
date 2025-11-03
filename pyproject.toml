@@ -1,8 +1,10 @@
+[project]
+name = "cloudbot"
+requires-python = ">=3.10"
+version = "1.5.0"
+
 [tool.isort]
 line_length = 80
-multi_line_output = 3
-include_trailing_comma = true
-use_parentheses = true
 known_first_party = ["cloudbot", "plugins", "tests"]
 known_third_party = ["alembic"]
 float_to_top = true
@@ -10,25 +12,7 @@ profile = "black"
 
 [tool.black]
 line-length = 80
-target-version = ['py310']
 include = '\.pyi?$'
-exclude = '''
-(
-  /(
-      \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
-    | \.hg
-    | \.mypy_cache
-    | \.tox
-    | \.venv
-    | _build
-    | buck-out
-    | build
-    | dist
-    | venv
-  )/
-)
-'''
 
 [tool.pylint.main]
 analyse-fallback-blocks = true
@@ -175,11 +159,26 @@ remove-all-unused-imports = true
 in-place = true
 
 [tool.pytest.ini_options]
-addopts = ["--ignore=venv", "--ignore=.*", "--ignore=tools", "--ignore=alembic", "--cov=.", "--cov-report=xml", "--cov-report=html", "--doctest-modules", "--random-order", "--pythonhashseed=123"]
+addopts = [
+    "--ignore=venv",
+    "--ignore=.*",
+    "--ignore=tools",
+    "--ignore=alembic",
+    "--cov=.",
+    "--cov-report=xml",
+    "--cov-report=html",
+    "--doctest-modules",
+    "--random-order",
+    "--pythonhashseed=123",
+]
 testpaths = ["."]
-filterwarnings = ["error", "ignore:.*asyncio\\.iscoroutinefunction.*:DeprecationWarning:mcstatus.*"]
+filterwarnings = [
+    "error",
+    "ignore:.*asyncio\\.iscoroutinefunction.*:DeprecationWarning:mcstatus.*",
+]
 asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "function"
+minversion = "8.0"
 
 [tool.coverage.report]
 fail_under = 80
@@ -193,6 +192,7 @@ exclude_lines = [
     "class .*\\(.*(Error|Exception)\\):",
     "^ *\\.\\.\\.$",
     "raise ShouldBeUnreachable",
+    "if __name__ == .__main__.:",
 ]
 
 [tool.coverage.run]
@@ -205,9 +205,12 @@ omit = [
     "tools/*",      # Build/CI tools
     "alembic/*",
 ]
+relative_files = true
 
 [tool.nitpick]
-style = ["gh://TotallyNotRobots/nitpick/app-style-3.10.toml"]
+style = [
+    "gh://TotallyNotRobots/nitpick/app-style-3.10.toml",
+]
 
 [tool.flynt]
 transform-concats = true
