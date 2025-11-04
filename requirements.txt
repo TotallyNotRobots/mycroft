@@ -1,6 +1,6 @@
 attrs == 23.2.0
 beautifulsoup4 == 4.12.3
-isodate == 0.6.1
+isodate == 0.7.2
 lxml == 5.1.0
 multidict == 6.0.5
 PBinCLI == 0.2
