@@ -3,7 +3,7 @@ beautifulsoup4 == 4.12.3
 isodate == 0.6.1
 lxml == 5.1.0
 multidict == 6.0.5
-PBinCLI == 0.2
+PBinCLI ==0.2.1
 psutil == 5.9.8
 py-irclib == 0.3.0
 requests ==2.32.4
