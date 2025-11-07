@@ -1,28 +1,38 @@
 comment:
   require_changes: true
+
 coverage:
   status:
     patch:
       default: false
-      tests:
-        target: 100%
-        paths:
-        - tests/
-      core:
-        paths:
-        - cloudbot/
-        target: 100%
-      plugins:
-        paths:
-        - plugins/
     project:
-      tests:
-        target: 100%
-        paths:
-        - tests/
-      core:
-        paths:
-        - cloudbot/
-      plugins:
-        paths:
-        - plugins/
+      default: false
+
+component_management:
+  individual_components:
+  - component_id: tests
+    name: tests
+    paths:
+    - tests/
+    statuses:
+    - type: patch
+      target: 85%
+    - type: project
+      target: 80%
+
+  - component_id: core
+    name: core
+    paths:
+    - cloudbot/
+    statuses:
+    - type: patch
+      target: 90%
+    - type: project
+
+  - component_id: plugins
+    name: plugins
+    paths:
+    - plugins/
+    statuses:
+    - type: patch
+    - type: project
