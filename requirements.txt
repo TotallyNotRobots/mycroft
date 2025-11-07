@@ -6,7 +6,7 @@ multidict == 6.0.5
 PBinCLI == 0.2
 psutil == 5.9.8
 py-irclib == 0.3.0
-requests == 2.31.0
+requests ==2.32.4
 sjcl == 0.2.1
 SQLAlchemy == 1.4.32
 venusian == 1.2.0
