@@ -485,7 +485,7 @@ class TestConnect:
             runs += 1
             raise OSError("foo")
 
-        client.connect = connect  # type: ignore
+        client.connect = connect  # type: ignore[method-assign, assignment]
         await client.try_connect()
         assert caplog_bot.record_tuples == [
             (
@@ -539,7 +539,7 @@ class TestConnect:
             runs += 1
             raise TimeoutError("foo")
 
-        client.connect = connect  # type: ignore
+        client.connect = connect  # type: ignore[assignment, method-assign]
         await client.try_connect()
         assert caplog_bot.record_tuples == [
             (
@@ -579,7 +579,7 @@ class TestConnect:
     async def test_other_exc(self, caplog_bot, mock_db) -> None:
         client, bot = await self.make_client()
 
-        client.connect = AsyncMock()  # type: ignore
+        client.connect = AsyncMock()  # type: ignore[method-assign]
         client.connect.side_effect = Exception("foo")
 
         with pytest.raises(ClientConnectError):
@@ -601,7 +601,7 @@ class TestConnect:
         async def _connect(timeout=5) -> None:
             await asyncio.sleep(timeout)
 
-        client._connect = _connect  # type: ignore
+        client._connect = _connect  # type: ignore[method-assign]
         with pytest.raises(
             ValueError,
             match="Attempted to connect while another connect attempt is happening",
