@@ -141,6 +141,7 @@ warn_required_dynamic_aliases = true
 [tool.autoflake]
 remove-all-unused-imports = true
 in-place = true
+expand-star-imports = true
 
 [tool.pytest.ini_options]
 addopts = [
