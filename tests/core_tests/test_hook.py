@@ -175,3 +175,11 @@ def test_command_hook_doc() -> None:
 
     cmd_hook = getattr(test4, HOOK_ATTR)["command"]
     assert cmd_hook.doc == "<arg> - foo bar baz"
+
+
+def test_sieve_hook_args_validate() -> None:
+    with pytest.raises(ValueError, match=r".*incorrect argument count.*"):
+
+        @hook.sieve()
+        def _() -> None:
+            pass

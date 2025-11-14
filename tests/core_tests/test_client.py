@@ -5,7 +5,7 @@ import pytest
 from cloudbot.client import Client
 
 
-class MockClient(Client):  # pylint: disable=abstract-method
+class MockClient(Client):
     _connected = False
 
     def __init__(self, bot, *args, **kwargs) -> None:
@@ -20,7 +20,7 @@ class MockClient(Client):  # pylint: disable=abstract-method
         self._connected = True
 
 
-class FailingMockClient(MockClient):  # pylint: disable=abstract-method
+class FailingMockClient(MockClient):
     def __init__(self, *args, fail_count=None, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.fail_count = fail_count

@@ -66,7 +66,9 @@ async def async_main() -> int:
     restart = await _bot.run()
 
     # the bot has stopped, do we want to restart?
-    if restart:
+    if (
+        restart
+    ):  # pragma: no cover # not covered, will be dropping support eventually
         # remove reference to cloudbot, so exit_gracefully won't try to stop it
         _bot = None
         # sleep one second for timeouts
@@ -85,7 +87,7 @@ async def async_main() -> int:
             # close logging, and exit the program.
             logger.debug("Stopping logging engine")
             logging.shutdown()
-            os.execv(sys.executable, [sys.executable] + args)  # nosec
+            os.execv(sys.executable, [sys.executable] + args)
 
     # close logging, and exit the program.
     logger.debug("Stopping logging engine")

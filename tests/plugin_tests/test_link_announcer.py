@@ -107,19 +107,17 @@ ENCODINGS = (
 )
 
 
-def test_encoding_parse() -> None:
-    for text, enc in ENCODINGS:
-        soup = BeautifulSoup(text, "lxml")
-        encoding = link_announcer.get_encoding(soup)
-        if encoding is None:
-            assert (
-                enc is None
-            ), f"Got empty encoding from {text!r} expected {enc!r}"
-            continue
+@pytest.mark.parametrize(("text", "enc"), ENCODINGS)
+def test_encoding_parse(text: bytes, enc) -> None:
+    soup = BeautifulSoup(text, "lxml")
+    encoding = link_announcer.get_encoding(soup)
+    if encoding is None:
+        assert enc is None, f"Got empty encoding from {text!r} expected {enc!r}"
+        return
 
-        enc_obj = codecs.lookup(encoding)
+    enc_obj = codecs.lookup(encoding)
 
-        assert enc, enc_obj
+    assert enc == enc_obj
 
 
 STD_HTML = "<head><title>{}</title></head>"
@@ -160,7 +158,7 @@ def test_link_announce(match, test_str, res, mock_requests) -> None:
     link_announcer.print_url_title(match=match, message=mck, logger=logger)
     if res:
         if len(res) > link_announcer.MAX_TITLE:
-            res = f"{res[:link_announcer.MAX_TITLE]} ... [trunc]"
+            res = f"{res[: link_announcer.MAX_TITLE]} ... [trunc]"
 
         mck.assert_called_with(f"Title: \x02{res}\x02")
     else:

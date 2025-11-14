@@ -314,9 +314,10 @@ def sieve(param=None, **kwargs):
     """External sieve decorator. Can be used directly as a decorator, or with args to return a decorator"""
 
     def _sieve_hook(func):
-        assert (
-            len(inspect.signature(func).parameters) == 3
-        ), "Sieve plugin has incorrect argument count. Needs params: bot, input, plugin"
+        if len(inspect.signature(func).parameters) != 3:
+            raise ValueError(
+                "Sieve hook has incorrect argument count. Needs params: bot, input, plugin"
+            )
 
         hook = _get_hook(func, "sieve")
         if hook is None:

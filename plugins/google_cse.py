@@ -46,7 +46,7 @@ def gse(text, bot) -> str:
     else:
         content = formatting.truncate_str(content.replace("\n", ""), 150)
 
-    return f"{result['link']} -- \x02{title}\x02: \"{content}\""
+    return f'{result["link"]} -- \x02{title}\x02: "{content}"'
 
 
 @hook.command("gseis", "image")

@@ -11,7 +11,7 @@ async def test_main() -> None:
     async def run() -> bool:
         return False
 
-    with (patch("cloudbot.__main__.CloudBot") as mocked_bot,):
+    with patch("cloudbot.__main__.CloudBot") as mocked_bot:
         mocked_bot().run = run
         await async_main()
         assert logging._srcfile is None

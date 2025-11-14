@@ -150,7 +150,7 @@ def get_video_description(video_id: str) -> str:
 
     if "viewCount" in statistics:
         views = int(statistics["viewCount"])
-        out += f" - \x02{views:,}\x02 view{'s'[views == 1:]}"
+        out += f" - \x02{views:,}\x02 view{'s'[views == 1 :]}"
 
     uploader = snippet["channelTitle"]
 
@@ -271,5 +271,5 @@ def ytplaylist_url(match: Match[str]) -> str | None:
     title = snippet["title"]
     author = snippet["channelTitle"]
     num_videos = int(content_details["itemCount"])
-    count_videos = f" - \x02{num_videos:,}\x02 video{'s'[num_videos == 1:]}"
+    count_videos = f" - \x02{num_videos:,}\x02 video{'s'[num_videos == 1 :]}"
     return f"\x02{title}\x02 {count_videos} - \x02{author}\x02"

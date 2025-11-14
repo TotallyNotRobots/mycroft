@@ -56,10 +56,10 @@ class TestGetVideoDescription:
     base_url = "https://www.googleapis.com/youtube/v3/"
     api_url = f"{base_url}videos"
 
-    def get_params(self, id, key):
+    def get_params(self, _id, key):
         return {
             "maxResults": "1",
-            "id": id,
+            "id": _id,
             "part": "statistics,contentDetails,snippet",
             "key": key,
         }
@@ -75,7 +75,7 @@ class TestGetVideoDescription:
             "GET",
             self.api_url,
             match=[
-                query_param_matcher(self.get_params(id="foobar", key="APIKEY"))
+                query_param_matcher(self.get_params(_id="foobar", key="APIKEY"))
             ],
             json={
                 "error": {
@@ -95,7 +95,7 @@ class TestGetVideoDescription:
             self.api_url,
             match=[
                 query_param_matcher(
-                    self.get_params(id="phL7P6gtZRM", key="APIKEY")
+                    self.get_params(_id="phL7P6gtZRM", key="APIKEY")
                 )
             ],
             json=video_data,
@@ -118,7 +118,7 @@ class TestGetVideoDescription:
             self.api_url,
             match=[
                 query_param_matcher(
-                    self.get_params(id="phL7P6gtZRM", key="APIKEY")
+                    self.get_params(_id="phL7P6gtZRM", key="APIKEY")
                 )
             ],
             json=data,
@@ -137,7 +137,7 @@ class TestGetVideoDescription:
             self.api_url,
             match=[
                 query_param_matcher(
-                    self.get_params(id="phL7P6gtZRM", key="APIKEY")
+                    self.get_params(_id="phL7P6gtZRM", key="APIKEY")
                 )
             ],
             json=data,
@@ -159,7 +159,7 @@ class TestGetVideoDescription:
             self.api_url,
             match=[
                 query_param_matcher(
-                    self.get_params(id="phL7P6gtZRM", key="APIKEY")
+                    self.get_params(_id="phL7P6gtZRM", key="APIKEY")
                 )
             ],
             json=data,
@@ -184,7 +184,7 @@ class TestGetVideoDescription:
             self.api_url,
             match=[
                 query_param_matcher(
-                    self.get_params(id="phL7P6gtZRM", key="APIKEY")
+                    self.get_params(_id="phL7P6gtZRM", key="APIKEY")
                 )
             ],
             json=data,
@@ -208,7 +208,7 @@ class TestGetVideoDescription:
             self.api_url,
             match=[
                 query_param_matcher(
-                    self.get_params(id="phL7P6gtZRM", key="APIKEY")
+                    self.get_params(_id="phL7P6gtZRM", key="APIKEY")
                 )
             ],
             json=data,
@@ -231,7 +231,7 @@ class TestGetVideoDescription:
             "GET",
             self.api_url,
             match=[
-                query_param_matcher(self.get_params(id="foobar", key="APIKEY"))
+                query_param_matcher(self.get_params(_id="foobar", key="APIKEY"))
             ],
             json={
                 "error": {

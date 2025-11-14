@@ -82,7 +82,7 @@ def parse_xml(text):
     >>> elem.text
     'bar'
     """
-    return etree.fromstring(text, parser=parser)  # nosec
+    return etree.fromstring(text, parser=parser)
 
 
 def get_json(*args, **kwargs):
@@ -135,7 +135,7 @@ def open_request(
     return opener.open(request)
 
 
-def open(
+def open(  # noqa: A001
     url,
     query_params=None,
     user_agent=None,
@@ -146,7 +146,7 @@ def open(
     timeout=None,
     headers=None,
     **kwargs,
-):  # pylint: disable=locally-disabled, redefined-builtin  # pragma: no cover
+):  # pragma: no cover
     warnings.warn(
         "http.open() is deprecated, use http.open_request() instead.",
         DeprecationWarning,

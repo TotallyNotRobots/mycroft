@@ -449,7 +449,7 @@ async def test_no_google_key(
 
 
 @pytest.mark.asyncio
-async def test_db_save(mock_bot_factory, mock_requests, mock_db):
+async def test_db_save(mock_bot_factory, mock_requests, mock_db) -> None:
     bot = setup_api(
         mock_requests,
         mock_db,
