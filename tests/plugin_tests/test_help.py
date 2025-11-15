@@ -5,7 +5,7 @@ import pytest
 from cloudbot import hook
 from cloudbot.event import CommandEvent, Event
 from cloudbot.plugin import PluginManager
-from plugins.core import help
+from plugins.core import help as help_plugin
 from tests.util import wrap_hook_response, wrap_hook_response_async
 from tests.util.mock_module import MockModule
 
@@ -49,7 +49,7 @@ async def test_help_command(
         ),
     )
 
-    assert wrap_hook_response(help.help_command, event) == [
+    assert wrap_hook_response(help_plugin.help_command, event) == [
         (
             "notice",
             ("testnick", "Here's a list of commands you can use: bar, foo"),
@@ -105,7 +105,7 @@ async def test_help_command_single(
         ),
     )
 
-    assert wrap_hook_response(help.help_command, event) == [
+    assert wrap_hook_response(help_plugin.help_command, event) == [
         ("notice", ("testnick", ".foo - foo bar")),
     ]
 
@@ -151,7 +151,7 @@ async def test_help_command_single_no_doc(
         ),
     )
 
-    assert wrap_hook_response(help.help_command, event) == [
+    assert wrap_hook_response(help_plugin.help_command, event) == [
         (
             "notice",
             ("testnick", "Command foo has no additional documentation."),
@@ -200,7 +200,7 @@ async def test_cmdinfo(
         ),
     )
 
-    assert await wrap_hook_response_async(help.cmdinfo, event) == [
+    assert await wrap_hook_response_async(help_plugin.cmdinfo, event) == [
         (
             "notice",
             (
@@ -252,7 +252,7 @@ async def test_cmdinfo_perms(
         ),
     )
 
-    assert await wrap_hook_response_async(help.cmdinfo, event) == [
+    assert await wrap_hook_response_async(help_plugin.cmdinfo, event) == [
         (
             "notice",
             (

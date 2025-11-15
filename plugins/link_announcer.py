@@ -1,6 +1,9 @@
 import re
+from collections.abc import Callable
+from typing import Final
 
 import requests
+from bs4 import BeautifulSoup
 
 from cloudbot import hook
 from cloudbot.hook import Action, Priority
@@ -65,25 +68,42 @@ HEADERS = {
     "Chrome/53.0.2785.116 Safari/537.36",
 }
 
-MAX_RECV = 1000000
+MAX_RECV: Final = 1000000
 
 
-def get_encoding(soup):
+def match_attr_value(value: str) -> Callable[[str | None], bool]:
+    def _match(thing: str | None) -> bool:
+        if thing is None:
+            return False
+
+        return thing.lower() == value.lower()
+
+    return _match
+
+
+def get_encoding(soup: BeautifulSoup) -> str | None:
     meta_charset = soup.find("meta", charset=True)
 
-    if meta_charset:
-        return meta_charset["charset"]
+    if (
+        meta_charset
+        and len(attr_list := meta_charset.get_attribute_list("charset")) > 0
+    ):
+        return attr_list[0]
 
     meta_content_type = soup.find(
         "meta",
         {
-            "http-equiv": lambda t: t and t.lower() == "content-type",
+            "http-equiv": match_attr_value("content-type"),
             "content": True,
         },
     )
-    if meta_content_type:
+    if (
+        meta_content_type
+        and len(attr_list := meta_content_type.get_attribute_list("content"))
+        > 0
+    ):
         return requests.utils.get_encoding_from_headers(
-            {"content-type": meta_content_type["content"]}
+            {"content-type": attr_list[0]}
         )
 
     return None

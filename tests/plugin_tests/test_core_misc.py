@@ -9,7 +9,7 @@ from plugins.core import core_misc
 from tests.util.mock_irc_client import MockIrcClient
 
 
-class MockClient(Client):  # pylint: disable=abstract-method
+class MockClient(Client):
     def __init__(self, bot, *args, **kwargs) -> None:
         super().__init__(bot, "TestClient", *args, **kwargs)
         self.active = True

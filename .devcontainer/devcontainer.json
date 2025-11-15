@@ -33,11 +33,11 @@
                 "ms-python.vscode-pylance",
                 "EditorConfig.EditorConfig",
                 "GitHub.vscode-pull-request-github",
-                "ms-python.black-formatter",
-                "redhat.vscode-yaml"
+                "redhat.vscode-yaml",
+                "charliermarsh.ruff"
             ],
             "settings": {
-                "python.pythonPath": "/usr/local/bin/python",
+                "python.defaultInterpreterPath": "/usr/local/bin/python",
                 "terminal.integrated.profiles.linux": {
                     "zsh": {
                         "path": "/usr/bin/zsh"

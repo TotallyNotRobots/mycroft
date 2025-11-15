@@ -28,9 +28,8 @@ def goog_trans(text, source, target) -> str:
         return "Google API error."
 
     if not source:
-        return "(%(detectedSourceLanguage)s) %(translatedText)s" % (
-            parsed["data"]["translations"][0]
-        )
+        translations = parsed["data"]["translations"][0]
+        return f"({translations['detectedSourceLanguage']}) {translations['translatedText']}"
 
     return f"{parsed['data']['translations'][0]['translatedText']}"
 
