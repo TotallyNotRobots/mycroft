@@ -9,12 +9,10 @@ from sqlalchemy import (
     String,
     Table,
     func,
-    inspect,
     not_,
     select,
 )
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
 from sqlalchemy.types import REAL
 
 from cloudbot import hook
@@ -31,57 +29,6 @@ qtable = Table(
     Column("deleted", Boolean, default=False),
     PrimaryKeyConstraint("chan", "nick", "msg"),
 )
-
-
-@hook.on_start()
-def migrate_table(db: Session, logger) -> None:
-    old_table = Table(
-        "quote",
-        database.metadata,
-        Column("chan", String(25)),
-        Column("nick", String(25)),
-        Column("add_nick", String(25)),
-        Column("msg", String(500)),
-        Column("time", REAL),
-        Column("deleted", String(5), default=0),
-        PrimaryKeyConstraint("chan", "nick", "time"),
-    )
-    inspector = inspect(db.bind)
-
-    if not inspector.has_table(old_table.name):
-        database.metadata.remove(old_table)
-        return
-
-    old_quotes = db.execute(old_table.select()).fetchall()
-
-    if not old_quotes:
-        return
-
-    logger.info("Migrating quotes table")
-    qtable.drop(checkfirst=True, bind=db.bind)
-    qtable.create(checkfirst=True, bind=db.bind)
-
-    db.execute(
-        qtable.insert().values(
-            [
-                {
-                    "chan": row.chan,
-                    "nick": row.nick,
-                    "add_nick": row.add_nick,
-                    "msg": row.msg,
-                    "time": row.time,
-                    "deleted": row.deleted in (1, "1", True),
-                }
-                for row in old_quotes
-            ]
-        )
-    )
-
-    logger.info("Migrated all quotes")
-
-    db.commit()
-    old_table.drop(bind=db.bind)
-    database.metadata.remove(old_table)
 
 
 def format_quote(q, num, n_quotes) -> str:
