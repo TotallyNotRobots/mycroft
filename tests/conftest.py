@@ -69,10 +69,13 @@ def patch_import_reload():
 def mock_db(tmp_path):
     db = MockDB(f"sqlite:///{tmp_path / 'database.db'!s}")
     database.configure(db.engine)
-    yield db
-    close_all_sessions()
-    Session.remove()
-    database.configure()
+    try:
+        yield db
+    finally:
+        close_all_sessions()
+        Session.remove()
+        database.configure()
+        db.close()
 
 
 @pytest.fixture()

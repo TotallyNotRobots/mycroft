@@ -8,9 +8,10 @@ Author:
 from __future__ import annotations
 
 from itertools import zip_longest
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
-from sqlalchemy import Column, PrimaryKeyConstraint, String, Table, and_, select
+import sqlalchemy as sa
+from sqlalchemy import Column, PrimaryKeyConstraint, String, Table, select
 
 from cloudbot import hook
 from cloudbot.util import database
@@ -18,9 +19,10 @@ from cloudbot.util.irc import parse_mode_string
 from plugins.core import server_info
 
 if TYPE_CHECKING:
+    import sqlalchemy.orm as sa_orm
     from irclib.parser import Message
+    from sqlalchemy import CursorResult
     from sqlalchemy.orm import Session
-    from sqlalchemy.sql.elements import BooleanClauseList, ClauseElement
 
     from cloudbot.client import Client
     from cloudbot.clients.irc import IrcClient
@@ -78,23 +80,28 @@ def handle_modes(
 
 
 def insert_or_update(
-    db: Session, tbl: Table, data: dict[str, Any], query: ClauseElement
+    db: sa_orm.Session,
+    tbl: sa.Table,
+    data: dict[str, Any],
+    query: sa.ColumnElement[bool],
 ) -> None:
     """
     Insert a new row or update an existing matching row
     """
-    result = db.execute(tbl.update().where(query).values(**data))
+    result = cast(
+        "CursorResult", db.execute(tbl.update().where(query).values(**data))
+    )
     if not result.rowcount:
         db.execute(tbl.insert().values(**data))
 
     db.commit()
 
 
-def make_clause(conn: Client, chan: str) -> BooleanClauseList:
+def make_clause(conn: Client, chan: str) -> sa.ColumnElement[bool]:
     """
     Generate a WHERE clause to match keys for this conn+channel
     """
-    return and_(
+    return sa.and_(
         table.c.conn == conn.name.lower(),
         table.c.chan == chan.lower(),
     )

@@ -57,6 +57,7 @@ async def test_handle_modes(mock_bot_factory, mock_db) -> None:
         is None
     )
     assert conn.get_channel_key("#foo") is None
+    assert mock_db.get_data(chan_key_db.table) == []
 
     assert (
         chan_key_db.handle_modes(
@@ -65,6 +66,20 @@ async def test_handle_modes(mock_bot_factory, mock_db) -> None:
         is None
     )
     assert conn.get_channel_key("#foo") == "beep"
+    assert mock_db.get_data(chan_key_db.table) == [
+        ("conn", "#foo", "beep"),
+    ]
+
+    assert (
+        chan_key_db.handle_modes(
+            ["#foo", "+ok", "foo", "boop"], conn, db, "#foo"
+        )
+        is None
+    )
+    assert conn.get_channel_key("#foo") == "boop"
+    assert mock_db.get_data(chan_key_db.table) == [
+        ("conn", "#foo", "boop"),
+    ]
 
     assert (
         chan_key_db.handle_modes(
@@ -73,12 +88,14 @@ async def test_handle_modes(mock_bot_factory, mock_db) -> None:
         is None
     )
     assert conn.get_channel_key("#foo") is None
+    assert mock_db.get_data(chan_key_db.table) == []
 
     assert (
         chan_key_db.handle_modes([conn.nick, "-ok"], conn, db, "server.host")
         is None
     )
     assert conn.get_channel_key("#foo") is None
+    assert mock_db.get_data(chan_key_db.table) == []
 
 
 @pytest.mark.asyncio
@@ -89,13 +106,22 @@ async def test_check_send_key(mock_bot_factory, mock_db) -> None:
     msg = Message(None, None, "JOIN", ["#foo,#bar", "bing"])
     assert chan_key_db.check_send_key(conn, msg, db) is msg
     assert conn.get_channel_key("#foo") == "bing"
+    assert mock_db.get_data(chan_key_db.table) == [
+        ("conn", "#foo", "bing"),
+    ]
 
     msg = Message(None, None, "PRIVMSG", ["#foo,#bar", "bing"])
     assert chan_key_db.check_send_key(conn, msg, db) is msg
+    assert mock_db.get_data(chan_key_db.table) == [
+        ("conn", "#foo", "bing"),
+    ]
 
     msg = Message(None, None, "JOIN", ["#foo,#bar"])
     assert chan_key_db.check_send_key(conn, msg, db) is msg
     assert conn.get_channel_key("#foo") == "bing"
+    assert mock_db.get_data(chan_key_db.table) == [
+        ("conn", "#foo", "bing"),
+    ]
 
 
 @pytest.mark.asyncio

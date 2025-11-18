@@ -8,13 +8,15 @@ import asyncio
 import inspect
 from typing import TYPE_CHECKING, Any, TypeVar
 
-from typing_extensions import ParamSpec, TypeIs
+from typing_extensions import ParamSpec
 
 from cloudbot.util.func_utils import call_with_args
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Coroutine, Mapping
     from concurrent.futures import Executor
+
+    from typing_extensions import TypeIs
 
 _P = ParamSpec("_P")
 _T = TypeVar("_T")

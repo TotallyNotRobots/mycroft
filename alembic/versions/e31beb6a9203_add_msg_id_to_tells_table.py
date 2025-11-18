@@ -40,7 +40,9 @@ def upgrade() -> None:
     )
     if inspector.has_table(old_table.name):
         with Session(bind=op.get_bind()) as session:
-            old_tells = session.execute(sa.select(old_table)).fetchall()
+            old_tells = (
+                session.execute(sa.select(old_table)).mappings().fetchall()
+            )
 
         op.drop_table("tell_messages", if_exists=True)
         new_table = op.create_table(
@@ -81,7 +83,7 @@ def downgrade() -> None:
     inspector = sa.inspect(op.get_bind())
     new_table = sa.table(
         "tell_messages",
-        sa.column("msg_id", sa.Integer, autoincrement=True, primary_key=True),
+        sa.column("msg_id", sa.Integer),
         sa.column("conn", sa.String),
         sa.column("sender", sa.String),
         sa.column("target", sa.String),
@@ -93,7 +95,9 @@ def downgrade() -> None:
 
     if inspector.has_table(new_table.name):
         with Session(bind=op.get_bind()) as session:
-            new_tells = session.execute(sa.select(new_table)).fetchall()
+            new_tells = (
+                session.execute(sa.select(new_table)).mappings().fetchall()
+            )
 
         op.drop_table("tells", if_exists=True)
         old_table = op.create_table(

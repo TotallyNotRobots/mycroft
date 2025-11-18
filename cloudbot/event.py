@@ -14,6 +14,8 @@ from cloudbot.util.database import Session
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
+    import sqlalchemy.orm as sa_orm
+
 logger = logging.getLogger("cloudbot")
 
 
@@ -79,7 +81,7 @@ class Event(Mapping[str, Any]):
                                 should be removed from the front.
         :param irc_ctcp_text: CTCP text if this message is a CTCP command
         """
-        self.db = None
+        self.db: sa_orm.Session | None = None
         self.db_executor: concurrent.futures.Executor | None = None
         self.bot = bot
         self.conn = conn

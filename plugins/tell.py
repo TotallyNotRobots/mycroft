@@ -7,10 +7,8 @@ from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
 from sqlalchemy import (
-    Boolean,
     Column,
     DateTime,
-    Integer,
     PrimaryKeyConstraint,
     String,
     Table,
@@ -18,6 +16,7 @@ from sqlalchemy import (
     not_,
     update,
 )
+from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import select
 
 from cloudbot import hook
@@ -32,14 +31,14 @@ if TYPE_CHECKING:
 class TellMessage(database.Base):
     __tablename__ = "tell_messages"
 
-    msg_id = Column(Integer, primary_key=True, autoincrement=True)
-    conn = Column(String, index=True)
-    sender = Column(String)
-    target = Column(String, index=True)
-    message = Column(String)
-    is_read = Column(Boolean, default=False, index=True)
-    time_sent = Column(DateTime)
-    time_read = Column(DateTime)
+    msg_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    conn: Mapped[str | None] = mapped_column(index=True)
+    sender: Mapped[str | None]
+    target: Mapped[str | None] = mapped_column(index=True)
+    message: Mapped[str | None]
+    is_read: Mapped[bool] = mapped_column(default=False, index=True)
+    time_sent: Mapped[datetime | None]
+    time_read: Mapped[datetime | None]
 
     def format_for_message(self) -> str:
         reltime = timeformat.time_since(self.time_sent)

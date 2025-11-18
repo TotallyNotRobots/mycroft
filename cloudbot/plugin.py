@@ -96,8 +96,7 @@ def find_tables(code) -> list[sqlalchemy.Table]:
             # if it's a Table, and it's using our metadata, append it to the list
             tables.append(obj)
         elif isinstance(obj, type) and issubclass(obj, database.Base):
-            obj = cast("type[database.Base]", obj)
-            tables.append(obj.__table__)
+            tables.append(cast("sqlalchemy.Table", obj.__table__))
 
     return tables
 

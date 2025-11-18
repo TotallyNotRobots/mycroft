@@ -28,9 +28,7 @@ from cloudbot.util import CLIENT_ATTR, database, formatting
 from cloudbot.util.mapping import KeyFoldDict
 
 if TYPE_CHECKING:
-    from sqlalchemy import Table
     from sqlalchemy.engine import Engine
-    from sqlalchemy.orm import Session
 
     from cloudbot.client import Client
 
@@ -200,8 +198,8 @@ class CloudBot(AbstractBot):
             max_workers=self.config.get("thread_count")
         )
 
-        self.old_db = self.config.get("old_database")
-        self.do_db_migrate = self.config.get("migrate_db")
+        self.old_db: str | None = self.config.get("old_database")
+        self.do_db_migrate: bool = self.config.get("migrate_db", False)
 
         # set values for reloading
         reloading_conf = self.config.get("reloading", {})
@@ -354,7 +352,7 @@ class CloudBot(AbstractBot):
         await self.plugin_manager.load_all(self.plugin_dir)
 
         if self.old_db and self.do_db_migrate:
-            self.migrate_db()
+            self.migrate_db(old_db_url=self.old_db)
             if self.stopped_future:
                 self.stopped_future.set_result(False)
 
@@ -548,24 +546,33 @@ class CloudBot(AbstractBot):
 
         await asyncio.gather(*tasks)
 
-    def migrate_db(self) -> None:
+    def migrate_db(self, *, old_db_url: str) -> None:
         logger.info("Migrating database")
-        engine: Engine = create_engine(self.old_db, future=True)
-        old_session: Session = scoped_session(sessionmaker(bind=engine))()
-        new_session: Session = database.Session()
-        table: Table
-        inspector = sa_inspect(engine)
-        for table in database.metadata.tables.values():
-            logger.info("Migrating table %s", table.name)
-            if not inspector.has_table(table.name):
-                continue
+        engine: Engine = create_engine(old_db_url, future=True)
+        with (
+            scoped_session(
+                sessionmaker(bind=engine, future=True)
+            )() as old_session,
+            database.Session() as new_session,
+        ):
+            inspector = sa_inspect(engine)
+            for table in database.metadata.tables.values():
+                logger.info("Migrating table %s", table.name)
+                if not inspector.has_table(table.name):
+                    continue
 
-            old_data = old_session.execute(table.select()).mappings().fetchall()
-            if not old_data:
-                continue
+                old_data = (
+                    old_session.execute(table.select()).mappings().fetchall()
+                )
+                if not old_data:
+                    continue
 
-            table.create(bind=self.db_engine, checkfirst=True)
-            new_session.execute(table.insert(), [dict(row) for row in old_data])
-            new_session.commit()
-            old_session.execute(table.delete())
-            old_session.commit()
+                table.create(bind=self.db_engine, checkfirst=True)
+                new_session.execute(
+                    table.insert(), [dict(row) for row in old_data]
+                )
+                new_session.commit()
+                old_session.execute(table.delete())
+                old_session.commit()
+
+        engine.dispose()

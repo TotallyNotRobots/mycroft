@@ -1,12 +1,17 @@
+from __future__ import annotations
+
 import logging
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from irclib.util.compare import match_mask
-from sqlalchemy import Boolean, Column, ForeignKeyConstraint, String, select
-from sqlalchemy.orm import relationship
+from sqlalchemy import ForeignKeyConstraint, select
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from cloudbot.util import database
 from cloudbot.util.database import Session
+
+if TYPE_CHECKING:
+    import sqlalchemy as sa
 
 logger = logging.getLogger("cloudbot")
 
@@ -18,14 +23,16 @@ backdoor: str | None = None
 class Group(database.Base):
     __tablename__ = "perm_group"
 
-    connection = Column(String, nullable=False, primary_key=True)
-    name = Column(String, nullable=False, primary_key=True)
-    members = relationship("GroupMember", back_populates="group", uselist=True)
-    perms = relationship(
+    connection: Mapped[str] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(primary_key=True)
+    members: Mapped[list[GroupMember]] = relationship(
+        "GroupMember", back_populates="group", uselist=True
+    )
+    perms: Mapped[list[GroupPermission]] = relationship(
         "GroupPermission", back_populates="group", uselist=True
     )
 
-    config = Column(Boolean, default=False)
+    config: Mapped[bool | None] = mapped_column(default=False)
 
     def is_member(self, mask: str) -> bool:
         for member in self.members:
@@ -45,14 +52,14 @@ class Group(database.Base):
 class GroupMember(database.Base):
     __tablename__ = "group_member"
 
-    connection = Column(String, nullable=False, primary_key=True)
-    group_id = Column(String, primary_key=True)
+    connection: Mapped[str] = mapped_column(primary_key=True)
+    group_id: Mapped[str] = mapped_column(primary_key=True)
 
-    group = relationship(Group, back_populates="members", uselist=False)
+    group: Mapped[Group] = relationship(back_populates="members", uselist=False)
 
-    mask = Column(String, primary_key=True, nullable=False)
+    mask: Mapped[str] = mapped_column(primary_key=True)
 
-    config = Column(Boolean, default=False)
+    config: Mapped[bool | None] = mapped_column(default=False)
 
     __table_args__ = (
         ForeignKeyConstraint(
@@ -69,13 +76,15 @@ class GroupMember(database.Base):
 class GroupPermission(database.Base):
     __tablename__ = "group_perm"
 
-    connection = Column(String, nullable=False, primary_key=True)
-    group_id = Column(String, primary_key=True)
-    group = relationship(Group, back_populates="perms", uselist=False)
+    connection: Mapped[str] = mapped_column(primary_key=True)
+    group_id: Mapped[str] = mapped_column(primary_key=True)
+    group: Mapped[Group] = relationship(
+        Group, back_populates="perms", uselist=False
+    )
 
-    name = Column(String, primary_key=True, nullable=False)
+    name: Mapped[str] = mapped_column(primary_key=True)
 
-    config = Column(Boolean, default=False)
+    config: Mapped[bool | None] = mapped_column(default=False)
 
     __table_args__ = (
         ForeignKeyConstraint(
@@ -100,95 +109,99 @@ class PermissionManager:
         self.name = conn.name
         self.config = conn.config
 
-        session = Session()
-        Group.__table__.create(session.bind, checkfirst=True)
-        GroupPermission.__table__.create(session.bind, checkfirst=True)
-        GroupMember.__table__.create(session.bind, checkfirst=True)
+        engine = Session.bind
+        if engine is None:
+            raise ValueError("No session bind found")
+
+        cast("sa.Table", Group.__table__).create(engine, checkfirst=True)
+        cast("sa.Table", GroupPermission.__table__).create(
+            engine, checkfirst=True
+        )
+        cast("sa.Table", GroupMember.__table__).create(engine, checkfirst=True)
 
         self.reload()
 
     def reload(self) -> None:
-        session = Session()
-
-        updated = []
-        for group_id, data in self.config.get("permissions", {}).items():
-            group = self.get_group(group_id)
-            if not group:
-                group = Group(
-                    connection=self.name.lower(), name=group_id.lower()
-                )
-                session.add(group)
-
-            group.config = True
-            updated.append(group)
-
-            for user in data["users"]:
-                member = session.get(
-                    GroupMember,
-                    {
-                        "group_id": group_id.lower(),
-                        "mask": user.lower(),
-                        "connection": self.name.lower(),
-                    },
-                )
-                if not member:
-                    member = GroupMember(
-                        group_id=group_id.lower(),
-                        mask=user.lower(),
-                        connection=self.name.lower(),
+        with Session() as session:
+            updated = list[Group | GroupMember | GroupPermission]()
+            for group_id, data in self.config.get("permissions", {}).items():
+                group = self.get_group(group_id)
+                if not group:
+                    group = Group(
+                        connection=self.name.lower(), name=group_id.lower()
                     )
-                    session.add(member)
+                    session.add(group)
 
-                member.config = True
-                updated.append(member)
+                group.config = True
+                updated.append(group)
 
-            for perm in data["perms"]:
-                binding = session.get(
-                    GroupPermission,
-                    {
-                        "group_id": group_id.lower(),
-                        "name": perm.lower(),
-                        "connection": self.name.lower(),
-                    },
-                )
-                if not binding:
-                    binding = GroupPermission(
-                        group_id=group_id.lower(),
-                        name=perm.lower(),
-                        connection=self.name.lower(),
+                for user in data["users"]:
+                    member = session.get(
+                        GroupMember,
+                        {
+                            "group_id": group_id.lower(),
+                            "mask": user.lower(),
+                            "connection": self.name.lower(),
+                        },
                     )
-                    session.add(binding)
+                    if not member:
+                        member = GroupMember(
+                            group_id=group_id.lower(),
+                            mask=user.lower(),
+                            connection=self.name.lower(),
+                        )
+                        session.add(member)
 
-                binding.config = True
-                updated.append(binding)
+                    member.config = True
+                    updated.append(member)
 
-        session.commit()
+                for perm in data["perms"]:
+                    binding = session.get(
+                        GroupPermission,
+                        {
+                            "group_id": group_id.lower(),
+                            "name": perm.lower(),
+                            "connection": self.name.lower(),
+                        },
+                    )
+                    if not binding:
+                        binding = GroupPermission(
+                            group_id=group_id.lower(),
+                            name=perm.lower(),
+                            connection=self.name.lower(),
+                        )
+                        session.add(binding)
 
-        for item in (
-            session.query(GroupMember)
-            .filter_by(config=True, connection=self.name.lower())
-            .all()
-        ):
-            if item not in updated:
-                session.delete(item)
+                    binding.config = True
+                    updated.append(binding)
 
-        for item in (
-            session.query(GroupPermission)
-            .filter_by(config=True, connection=self.name.lower())
-            .all()
-        ):
-            if item not in updated:
-                session.delete(item)
+            session.commit()
 
-        for item in (
-            session.query(Group)
-            .filter_by(config=True, connection=self.name.lower())
-            .all()
-        ):
-            if item not in updated:
-                session.delete(item)
+            for member in (
+                session.query(GroupMember)
+                .filter_by(config=True, connection=self.name.lower())
+                .all()
+            ):
+                if member not in updated:
+                    session.delete(member)
 
-        session.commit()
+            for perm in (
+                session.query(GroupPermission)
+                .filter_by(config=True, connection=self.name.lower())
+                .all()
+            ):
+                if perm not in updated:
+                    session.delete(perm)
+
+            for group in (
+                session.query(Group)
+                .filter_by(config=True, connection=self.name.lower())
+                .all()
+            ):
+                if group not in updated:
+                    session.delete(group)
+
+            session.commit()
 
     def has_perm_mask(
         self, user_mask: str, perm: str, notice: bool = True

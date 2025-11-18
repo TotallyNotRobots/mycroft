@@ -1,17 +1,21 @@
 from __future__ import annotations
 
+from contextlib import AbstractContextManager
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy import Table, create_engine
+from sqlalchemy.orm import close_all_sessions, scoped_session, sessionmaker
 
 from cloudbot.util.database import Session
 
 if TYPE_CHECKING:
+    from types import TracebackType
+
     from sqlalchemy import Table
+    from typing_extensions import Self
 
 
-class MockDB:
+class MockDB(AbstractContextManager):
     def __init__(self, path="sqlite:///:memory:", force_session=False) -> None:
         self.engine = create_engine(path, future=True)
         if force_session:
@@ -20,6 +24,22 @@ class MockDB:
             )
         else:
             self.session = Session
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        self.close()
+
+    def close(self) -> None:
+        self.session.remove()
+        close_all_sessions()
+        self.engine.dispose()
 
     def get_data(self, table):
         return self.session().execute(table.select()).fetchall()

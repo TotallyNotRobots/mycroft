@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock, call
 
 import pytest
@@ -19,6 +19,7 @@ from tests.util import wrap_hook_response
 from tests.util.mock_conn import MockConn
 
 if TYPE_CHECKING:
+    import sqlalchemy as sa
     import sqlalchemy.orm as sa_orm
 
     from tests.util.mock_db import MockDB
@@ -113,9 +114,9 @@ def test_remove_permission_user(mock_db) -> None:
 
     session = mock_db.session()
 
-    group_table = Group.__table__
-    group_member_table = GroupMember.__table__
-    permission_table = GroupPermission.__table__
+    group_table = cast("sa.Table", Group.__table__)
+    group_member_table = cast("sa.Table", GroupMember.__table__)
+    permission_table = cast("sa.Table", GroupPermission.__table__)
 
     group_table.create(mock_db.engine)
     group_member_table.create(mock_db.engine)
@@ -188,9 +189,9 @@ def test_remove_permission_user_too_many_args(mock_db) -> None:
 
     session = mock_db.session()
 
-    group_table = Group.__table__
-    group_member_table = GroupMember.__table__
-    permission_table = GroupPermission.__table__
+    group_table = cast("sa.Table", Group.__table__)
+    group_member_table = cast("sa.Table", GroupMember.__table__)
+    permission_table = cast("sa.Table", GroupPermission.__table__)
 
     group_table.create(mock_db.engine)
     group_member_table.create(mock_db.engine)
@@ -261,9 +262,9 @@ def test_remove_permission_user_too_few_args(mock_db) -> None:
 
     session = mock_db.session()
 
-    group_table = Group.__table__
-    group_member_table = GroupMember.__table__
-    permission_table = GroupPermission.__table__
+    group_table = cast("sa.Table", Group.__table__)
+    group_member_table = cast("sa.Table", GroupMember.__table__)
+    permission_table = cast("sa.Table", GroupPermission.__table__)
 
     group_table.create(mock_db.engine)
     group_member_table.create(mock_db.engine)
@@ -335,9 +336,9 @@ def test_get_permission_groups(mock_db: MockDB) -> None:
 
     session: sa_orm.Session = mock_db.session()
 
-    group_table = Group.__table__
-    group_member_table = GroupMember.__table__
-    permission_table = GroupPermission.__table__
+    group_table = cast("sa.Table", Group.__table__)
+    group_member_table = cast("sa.Table", GroupMember.__table__)
+    permission_table = cast("sa.Table", GroupPermission.__table__)
 
     group_table.create(mock_db.engine)
     group_member_table.create(mock_db.engine)

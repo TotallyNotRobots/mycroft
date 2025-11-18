@@ -1,4 +1,5 @@
 import datetime
+from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock, call, patch
 
 from irclib.parser import Prefix
@@ -6,10 +7,13 @@ from irclib.parser import Prefix
 from plugins import tell
 from tests.util.mock_conn import MockConn
 
+if TYPE_CHECKING:
+    import sqlalchemy as sa
+
 
 def init_tables(mock_db) -> None:
     db_engine = mock_db.engine
-    tell.TellMessage.__table__.create(db_engine)
+    cast("sa.Table", tell.TellMessage.__table__).create(db_engine)
     tell.disable_table.create(db_engine)
     tell.ignore_table.create(db_engine)
     session = mock_db.session()

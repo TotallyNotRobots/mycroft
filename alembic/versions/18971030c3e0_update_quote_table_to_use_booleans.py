@@ -56,7 +56,7 @@ def upgrade() -> None:
             sa.PrimaryKeyConstraint("chan", "nick", "msg"),
         )
         op.bulk_insert(
-            new_table.name,
+            new_table,
             [
                 {
                     "chan": row.chan,
@@ -82,7 +82,7 @@ def downgrade() -> None:
         sa.column("add_nick", sa.String(25)),
         sa.column("msg", sa.String(500)),
         sa.column("time", sa.REAL),
-        sa.column("deleted", sa.Boolean, default=False),
+        sa.column("deleted", sa.Boolean),
     )
 
     if inspector.has_table(new_table.name):
@@ -102,7 +102,7 @@ def downgrade() -> None:
         )
 
         op.bulk_insert(
-            old_table.name,
+            old_table,
             [
                 {
                     "chan": row.chan,

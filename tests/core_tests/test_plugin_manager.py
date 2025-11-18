@@ -10,8 +10,8 @@ from unittest.mock import MagicMock
 
 import pytest
 import pytest_asyncio
-import sqlalchemy as sa
 from sqlalchemy import Column, String, Table, inspect
+from sqlalchemy.orm import Mapped, mapped_column
 
 from cloudbot import hook, plugin
 from cloudbot.event import CommandEvent, EventType
@@ -75,7 +75,7 @@ def test_find_tables(mock_manager) -> None:
     class TestTable(database.Base):
         __tablename__ = "foo"
 
-        test_id = sa.Column(sa.Integer, primary_key=True)
+        test_id: Mapped[int] = mapped_column(primary_key=True)
 
     mod = MockModule(tbl=TestTable)
     obj = Plugin(
