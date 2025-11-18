@@ -1,3 +1,4 @@
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
 import pytest
@@ -5,7 +6,10 @@ from requests import RequestException
 
 from cloudbot.event import CommandEvent
 from plugins import wikipedia
-from tests.util import HookResult, wrap_hook_response
+from tests.util import wrap_hook_response
+
+if TYPE_CHECKING:
+    from tests.util import HookResult
 
 
 def do_search(query, results=None):

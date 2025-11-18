@@ -1,11 +1,16 @@
+from __future__ import annotations
+
 import datetime
 import re
 import time
+from typing import TYPE_CHECKING
 
 import requests
 
 from cloudbot import hook
-from cloudbot.bot import CloudBot
+
+if TYPE_CHECKING:
+    from cloudbot.bot import CloudBot
 
 # Define some constants
 base_url = "https://maps.googleapis.com/maps/api/"
@@ -39,7 +44,7 @@ def check_status(status, api):
 
 
 @hook.command("time")
-def time_command(text: str, reply, bot: "CloudBot") -> str:
+def time_command(text: str, reply, bot: CloudBot) -> str:
     """<location> - Gets the current time in <location>."""
     dev_key = bot.config.get_api_key("google_dev_key")
     if not dev_key:

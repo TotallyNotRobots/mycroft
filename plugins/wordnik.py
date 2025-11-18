@@ -1,17 +1,22 @@
+from __future__ import annotations
+
 import logging
 import random
 import re
 import urllib.parse
-from collections.abc import Generator
 from json import JSONDecodeError
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import requests
 
 from cloudbot import hook
 from cloudbot.bot import bot_instance
 from cloudbot.util import colors, web
-from cloudbot.util.http import GetParams
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from cloudbot.util.http import GetParams
 
 logger = logging.getLogger("cloudbot")
 
@@ -108,7 +113,7 @@ def api_request(endpoint: str, params=(), **kwargs) -> list[dict[str, Any]]:
 
 
 def api_request_single(endpoint: str, params=(), **kwargs) -> dict[str, Any]:
-    return cast(dict[str, Any], api_request(endpoint, params, **kwargs))
+    return cast("dict[str, Any]", api_request(endpoint, params, **kwargs))
 
 
 class WordLookupRequest:
@@ -157,7 +162,7 @@ class WordLookupRequest:
 
     def get_filtered_results(
         self, min_results: int = 1
-    ) -> Generator[dict[str, Any], None, None]:
+    ) -> Generator[dict[str, Any]]:
         count = 0
         tries = 0
         results = []

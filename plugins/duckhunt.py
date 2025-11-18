@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 import operator
 import random
 from collections import defaultdict
-from collections.abc import Callable
 from threading import Lock
 from time import sleep, time
-from typing import NamedTuple, TypeVar
+from typing import TYPE_CHECKING, NamedTuple, TypeVar
 
 from sqlalchemy import (
     Boolean,
@@ -16,15 +17,20 @@ from sqlalchemy import (
     and_,
     desc,
 )
-from sqlalchemy.orm import Session
 from sqlalchemy.sql import select
 
 from cloudbot import hook
-from cloudbot.client import Client
 from cloudbot.event import EventType
 from cloudbot.util import database
 from cloudbot.util.formatting import pluralize_auto, truncate
 from cloudbot.util.func_utils import call_with_args
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from sqlalchemy.orm import Session
+
+    from cloudbot.client import Client
 
 duck_tail = "\u30fb\u309c\u309c\u30fb\u3002\u3002\u30fb\u309c\u309c"
 duck = [
@@ -626,7 +632,7 @@ DISPLAY_FUNCS: dict[str | None, Callable[..., dict[str, int] | None]] = {
 
 
 def display_scores(
-    score_type: ScoreType, event, text: str, chan: str, conn: "Client", db
+    score_type: ScoreType, event, text: str, chan: str, conn: Client, db
 ):
     if is_opt_out(conn.name, chan):
         return None

@@ -1,11 +1,14 @@
 import socket
+from typing import TYPE_CHECKING
 
 # TODO(linuxdaemon): Implement bedrock support
 from mcstatus import JavaServer as MinecraftServer
-from mcstatus.responses import JavaStatusResponse
 
 from cloudbot import hook
 from cloudbot.util import colors
+
+if TYPE_CHECKING:
+    from mcstatus.responses import JavaStatusResponse
 
 mc_colors = [
     ("\xa7f", "\x0300"),

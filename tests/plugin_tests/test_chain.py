@@ -1,3 +1,4 @@
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, call
 
 import pytest
@@ -8,8 +9,10 @@ from cloudbot.plugin import Plugin
 from cloudbot.plugin_hooks import CommandHook
 from cloudbot.util import HOOK_ATTR
 from plugins import chain
-from tests.util.mock_bot import MockBot
 from tests.util.mock_module import MockModule
+
+if TYPE_CHECKING:
+    from tests.util.mock_bot import MockBot
 
 
 def _get_hook(func, name):

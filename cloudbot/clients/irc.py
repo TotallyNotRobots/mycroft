@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 import random
@@ -5,17 +7,19 @@ import re
 import socket
 import ssl
 import traceback
-from collections.abc import Mapping
 from functools import partial
 from itertools import chain
 from pathlib import Path
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from irclib.parser import Message
 
 from cloudbot.client import Client, ClientConnectError, client
 from cloudbot.event import Event, EventType, IrcOutEvent
 from cloudbot.util import colors
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 logger = logging.getLogger("cloudbot")
 
@@ -144,7 +148,7 @@ class IrcClient(Client):
 
         # transport and protocol
         self._transport: asyncio.Transport | None = None
-        self._protocol: "_IrcProtocol" | None = None
+        self._protocol: _IrcProtocol | None = None
 
         self._connecting = False
 
@@ -414,7 +418,7 @@ class IrcClient(Client):
 class _IrcProtocol(asyncio.Protocol):
     """ """
 
-    def __init__(self, conn: "IrcClient") -> None:
+    def __init__(self, conn: IrcClient) -> None:
         """ """
         self.loop = conn.loop
         self.bot = conn.bot

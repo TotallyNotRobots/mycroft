@@ -5,6 +5,8 @@ Requires:
 server_info.py
 """
 
+from __future__ import annotations
+
 import gc
 import json
 import logging
@@ -14,18 +16,23 @@ from collections.abc import Iterable, Mapping
 from contextlib import suppress
 from numbers import Number
 from operator import attrgetter
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from irclib.parser import Prefix, TagList
+from irclib.parser import Prefix
 
-import cloudbot.bot
 from cloudbot import hook
 from cloudbot.client import Client
 from cloudbot.clients.irc import IrcClient
 from cloudbot.hook import Priority
 from cloudbot.util import web
-from cloudbot.util.irc import ChannelMode, StatusMode, parse_mode_string
+from cloudbot.util.irc import parse_mode_string
 from cloudbot.util.mapping import KeyFoldDict, KeyFoldWeakValueDict
+
+if TYPE_CHECKING:
+    from irclib.parser import TagList
+
+    import cloudbot.bot
+    from cloudbot.util.irc import ChannelMode, StatusMode
 
 logger = logging.getLogger("cloudbot")
 

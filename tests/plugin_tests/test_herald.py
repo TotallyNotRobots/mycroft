@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from datetime import timedelta
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, call
 
 import pytest
@@ -6,7 +9,9 @@ import pytest
 from cloudbot.event import Event
 from plugins import herald
 from tests.util import wrap_hook_response
-from tests.util.mock_db import MockDB
+
+if TYPE_CHECKING:
+    from tests.util.mock_db import MockDB
 
 
 @pytest.fixture()

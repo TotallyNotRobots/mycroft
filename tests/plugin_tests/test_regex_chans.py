@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from re import Match
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
 import pytest
@@ -10,7 +13,9 @@ from cloudbot.plugin_hooks import CommandHook, EventHook, RegexHook
 from plugins.core import regex_chans
 from tests.util import wrap_hook_response
 from tests.util.mock_conn import MockClient
-from tests.util.mock_db import MockDB
+
+if TYPE_CHECKING:
+    from tests.util.mock_db import MockDB
 
 
 @pytest.fixture()

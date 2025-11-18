@@ -1,14 +1,20 @@
+from __future__ import annotations
+
 import logging
-from collections.abc import Awaitable
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from watchdog.observers import Observer
 
 from cloudbot.bot import AbstractBot, CloudBot
-from cloudbot.client import Client
 from cloudbot.plugin import PluginManager
 from tests.util.mock_config import MockConfig
-from tests.util.mock_db import MockDB
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable
+    from pathlib import Path
+
+    from cloudbot.client import Client
+    from tests.util.mock_db import MockDB
 
 
 class MockBot(AbstractBot):

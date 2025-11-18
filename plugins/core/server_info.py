@@ -2,11 +2,16 @@
 Tracks various server info like ISUPPORT tokens
 """
 
-from collections.abc import Callable, MutableMapping
-from typing import TypeVar
+from __future__ import annotations
+
+from collections.abc import MutableMapping
+from typing import TYPE_CHECKING, TypeVar
 
 from cloudbot import hook
 from cloudbot.util.irc import ChannelMode, ModeType, StatusMode
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 DEFAULT_STATUS = (
     StatusMode.make("@", "o", 2),

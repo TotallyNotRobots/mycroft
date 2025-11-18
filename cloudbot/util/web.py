@@ -13,21 +13,28 @@ License:
     GPL v3
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import time
-from collections.abc import Iterable, Iterator
 from operator import attrgetter
-from typing import Generic, TypeVar
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 import requests
 from requests import (
     HTTPError,
-    PreparedRequest,
-    Request,
     RequestException,
-    Response,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator
+
+    from requests import (
+        PreparedRequest,
+        Request,
+        Response,
+    )
 
 # Constants
 DEFAULT_SHORTENER = "is.gd"

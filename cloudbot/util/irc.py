@@ -1,8 +1,13 @@
+from __future__ import annotations
+
 import logging
-from collections.abc import Mapping
 from enum import Enum
+from typing import TYPE_CHECKING
 
 import attrs
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +67,7 @@ class StatusMode(ChannelMode):
     level: int
 
     @classmethod
-    def make(cls, prefix: str, char: str, level: int) -> "StatusMode":
+    def make(cls, prefix: str, char: str, level: int) -> StatusMode:
         return cls(
             prefix=prefix, level=level, character=char, type=ModeType.Status
         )

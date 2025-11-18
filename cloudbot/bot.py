@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import collections
 import gc
@@ -9,16 +11,14 @@ import warnings
 from concurrent.futures.thread import ThreadPoolExecutor
 from functools import partial
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import Table, create_engine
+from sqlalchemy import create_engine
 from sqlalchemy import inspect as sa_inspect
-from sqlalchemy.engine import Engine
-from sqlalchemy.orm import Session, scoped_session, sessionmaker
+from sqlalchemy.orm import scoped_session, sessionmaker
 from typing_extensions import override
 from watchdog.observers import Observer
 
-from cloudbot.client import Client
 from cloudbot.config import Config
 from cloudbot.event import CommandEvent, Event, EventType, RegexEvent
 from cloudbot.hook import Action
@@ -26,6 +26,13 @@ from cloudbot.plugin import PluginManager
 from cloudbot.reloader import ConfigReloader, PluginReloader
 from cloudbot.util import CLIENT_ATTR, database, formatting
 from cloudbot.util.mapping import KeyFoldDict
+
+if TYPE_CHECKING:
+    from sqlalchemy import Table
+    from sqlalchemy.engine import Engine
+    from sqlalchemy.orm import Session
+
+    from cloudbot.client import Client
 
 __all__ = [
     "bot",
@@ -67,7 +74,7 @@ class AbstractBot:
     def plugin_manager(self) -> PluginManager:
         return self.get_plugin_manager()
 
-    async def process(self, event: "Event") -> None:
+    async def process(self, event: Event) -> None:
         raise NotImplementedError
 
 

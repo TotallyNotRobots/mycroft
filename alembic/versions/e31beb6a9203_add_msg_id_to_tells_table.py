@@ -6,12 +6,17 @@ Create Date: 2025-11-17 21:20:53.433195
 
 """
 
-from collections.abc import Sequence
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
 from alembic import op
 
 from cloudbot.util.database import Session
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 # revision identifiers, used by Alembic.
 revision: str = "e31beb6a9203"

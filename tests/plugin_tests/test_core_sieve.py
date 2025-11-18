@@ -1,4 +1,6 @@
-from collections.abc import Iterator
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -6,6 +8,9 @@ import pytest
 from cloudbot.event import CommandEvent, Event, RegexEvent
 from cloudbot.util.tokenbucket import TokenBucket
 from plugins.core import core_sieve
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 
 @pytest.fixture(autouse=True)

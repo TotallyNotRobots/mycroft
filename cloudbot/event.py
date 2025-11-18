@@ -1,13 +1,18 @@
+from __future__ import annotations
+
 import concurrent.futures
 import enum
 import logging
-from collections.abc import Iterator, Mapping
+from collections.abc import Mapping
 from functools import partial
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from irclib.parser import Message
 
 from cloudbot.util.database import Session
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 logger = logging.getLogger("cloudbot")
 

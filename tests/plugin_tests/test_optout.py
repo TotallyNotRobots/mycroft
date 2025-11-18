@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock, call, patch
 
 import pytest
@@ -5,7 +8,9 @@ import pytest
 from cloudbot.event import CommandEvent
 from plugins.core import optout
 from tests.util import wrap_hook_response_async
-from tests.util.mock_db import MockDB
+
+if TYPE_CHECKING:
+    from tests.util.mock_db import MockDB
 
 
 def test_conn_case() -> None:

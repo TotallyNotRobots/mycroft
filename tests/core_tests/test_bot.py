@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 import asyncio
-from collections.abc import Callable
 from itertools import product
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock, call, patch
 
 import pytest
@@ -15,8 +16,12 @@ from cloudbot.hook import Action, Priority
 from cloudbot.plugin_hooks import CommandHook, ConfigHook, EventHook, RawHook
 from cloudbot.util import database
 from tests.util.async_mock import AsyncMock
-from tests.util.mock_bot import MockBot
 from tests.util.mock_db import MockDB
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from tests.util.mock_bot import MockBot
 
 
 @pytest.mark.asyncio

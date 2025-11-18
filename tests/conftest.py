@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import asyncio
 import datetime
 import importlib
 import logging
-from collections.abc import Generator
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import freezegun
@@ -18,6 +20,9 @@ from cloudbot.util import database
 from cloudbot.util.database import Session
 from tests.util.mock_bot import MockBot
 from tests.util.mock_db import MockDB
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 
 @pytest.fixture()
@@ -39,7 +44,7 @@ def tmp_logs(tmp_path) -> None:
 @pytest.fixture()
 def caplog_bot(
     caplog: pytest.LogCaptureFixture,
-) -> Generator[pytest.LogCaptureFixture, None, None]:
+) -> Generator[pytest.LogCaptureFixture]:
     caplog.set_level(logging.WARNING, "asyncio")
     caplog.set_level(logging.WARNING, "alembic")
     caplog.set_level(0, "cloudbot")

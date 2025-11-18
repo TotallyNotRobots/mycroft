@@ -2,14 +2,20 @@
 database - contains variables set by cloudbot to be easily access
 """
 
-from sqlalchemy import MetaData
-from sqlalchemy.engine import Engine
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from sqlalchemy.orm import (
     close_all_sessions,
     declarative_base,
     scoped_session,
     sessionmaker,
 )
+
+if TYPE_CHECKING:
+    from sqlalchemy import MetaData
+    from sqlalchemy.engine import Engine
 
 __all__ = ("metadata", "base", "Base", "Session", "configure")
 

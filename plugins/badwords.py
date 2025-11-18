@@ -1,12 +1,17 @@
+from __future__ import annotations
+
 import re
 from collections import defaultdict
-from re import Pattern
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Column, PrimaryKeyConstraint, String, Table, select
 
 from cloudbot import hook
 from cloudbot.event import EventType
 from cloudbot.util import database
+
+if TYPE_CHECKING:
+    from re import Pattern
 
 table = Table(
     "badwords",

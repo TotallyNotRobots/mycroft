@@ -1,6 +1,7 @@
 import operator
 import re
 from collections import defaultdict
+from typing import TYPE_CHECKING
 
 import sqlalchemy
 from sqlalchemy import (
@@ -12,10 +13,12 @@ from sqlalchemy import (
     and_,
     select,
 )
-from sqlalchemy.sql.base import Executable
 
 from cloudbot import hook
 from cloudbot.util import database
+
+if TYPE_CHECKING:
+    from sqlalchemy.sql.base import Executable
 
 karmaplus_re = re.compile(r"^.*\+\+$")
 karmaminus_re = re.compile("^.*--$")

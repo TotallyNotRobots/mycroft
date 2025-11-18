@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 from asyncio import CancelledError
 from typing import TYPE_CHECKING, Any
@@ -7,12 +9,13 @@ import pytest
 
 from cloudbot.client import ClientConnectError
 from cloudbot.clients import irc
-from cloudbot.event import Event, EventType
+from cloudbot.event import EventType
 from tests.util.async_mock import AsyncMock
 
 if TYPE_CHECKING:
     from asyncio import Future
-    from typing import Tuple
+
+    from cloudbot.event import Event
 
 
 def make_mock_conn(*, name="testconn"):
@@ -621,7 +624,7 @@ class TestConnect:
     async def test_create_socket(self, caplog_bot, mock_db) -> None:
         client, bot = await self.make_client()
         bot.loop.create_connection = mock = MagicMock()
-        fut: "Future[Tuple[None, None]]" = asyncio.Future(loop=client.loop)
+        fut: Future[tuple[None, None]] = asyncio.Future(loop=client.loop)
         fut.set_result((None, None))
         mock.return_value = fut
 

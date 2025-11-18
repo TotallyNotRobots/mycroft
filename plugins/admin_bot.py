@@ -1,10 +1,15 @@
+from __future__ import annotations
+
 import re
+from typing import TYPE_CHECKING
 
 from cloudbot import hook
-from cloudbot.bot import CloudBot
-from cloudbot.clients.irc import IrcClient
-from cloudbot.event import CommandEvent
 from cloudbot.util import formatting
+
+if TYPE_CHECKING:
+    from cloudbot.bot import CloudBot
+    from cloudbot.clients.irc import IrcClient
+    from cloudbot.event import CommandEvent
 
 
 @hook.command(

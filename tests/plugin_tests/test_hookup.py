@@ -1,12 +1,17 @@
+from __future__ import annotations
+
 import random
 from datetime import timedelta
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from cloudbot.util import database
 from plugins import hookup, seen
-from tests.util.mock_db import MockDB
+
+if TYPE_CHECKING:
+    from tests.util.mock_db import MockDB
 
 
 @pytest.mark.asyncio

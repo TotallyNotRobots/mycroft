@@ -1,10 +1,15 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, call
 
 import pytest
 
 from cloudbot.clients.irc import IrcClient
 from plugins import badwords
-from tests.util.mock_db import MockDB
+
+if TYPE_CHECKING:
+    from tests.util.mock_db import MockDB
 
 
 @pytest.fixture()

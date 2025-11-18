@@ -1,13 +1,18 @@
+from __future__ import annotations
+
 import re
-from collections.abc import Callable
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 import requests
-from bs4 import BeautifulSoup
 
 from cloudbot import hook
 from cloudbot.hook import Action, Priority
 from cloudbot.util.http import parse_soup
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from bs4 import BeautifulSoup
 
 MAX_TITLE = 100
 

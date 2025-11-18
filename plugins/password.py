@@ -1,8 +1,13 @@
+from __future__ import annotations
+
 import secrets
 import string
+from typing import TYPE_CHECKING
 
 from cloudbot import hook
-from cloudbot.bot import CloudBot
+
+if TYPE_CHECKING:
+    from cloudbot.bot import CloudBot
 
 gen = secrets.SystemRandom()
 common_words: list[str] = []

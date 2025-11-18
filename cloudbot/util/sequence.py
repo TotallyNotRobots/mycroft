@@ -2,15 +2,17 @@
 Sequence utilities - Various util functions for working with lists, sets, tuples, etc
 """
 
-from collections.abc import Generator, Sequence
-from typing import TypeVar
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, TypeVar
+
+if TYPE_CHECKING:
+    from collections.abc import Generator, Sequence
 
 _T = TypeVar("_T")
 
 
-def chunk_iter(
-    data: Sequence[_T], chunk_size: int
-) -> Generator[Sequence[_T], None, None]:
+def chunk_iter(data: Sequence[_T], chunk_size: int) -> Generator[Sequence[_T]]:
     """
     Splits a sequence in to chunks
 

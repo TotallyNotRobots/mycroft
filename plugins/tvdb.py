@@ -1,24 +1,30 @@
+from __future__ import annotations
+
 import datetime
 import logging
-from collections.abc import Container, Iterable, Iterator, Sized
+from collections.abc import Container, Iterable, Sized
 from enum import Enum
 from functools import wraps
-from typing import Any, Generic, TypeVar, Union, cast, overload
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast, overload
 
 import requests
 
 from cloudbot import hook
-from cloudbot.bot import CloudBot
-from cloudbot.event import Event
 from cloudbot.util import func_utils
-from cloudbot.util.http import GetParams
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from cloudbot.bot import CloudBot
+    from cloudbot.event import Event
+    from cloudbot.util.http import GetParams
 
 logger = logging.getLogger(__name__)
 token_lifetime = datetime.timedelta(hours=1)
 
-JsonPrimitive = Union[int, str, bool, None]
+JsonPrimitive = int | str | bool | None
 JsonObject = dict[
-    str, Union[JsonPrimitive, list[JsonPrimitive], dict[str, JsonPrimitive]]
+    str, JsonPrimitive | list[JsonPrimitive] | dict[str, JsonPrimitive]
 ]
 
 
@@ -45,7 +51,7 @@ class TvdbApi:
 
     def set_api_key(self, bot: CloudBot) -> None:
         res = cast(
-            dict[str, str],
+            "dict[str, str]",
             self._post(
                 "/login", json={"apikey": bot.config.get_api_key("tvdb")}
             ),
@@ -58,7 +64,7 @@ class TvdbApi:
             return
 
         try:
-            res = cast(dict[str, str], self._get("/refresh_token"))
+            res = cast("dict[str, str]", self._get("/refresh_token"))
         except requests.HTTPError as e:
             if e.response.status_code == 401:
                 self.set_api_key(bot)
@@ -78,7 +84,7 @@ class TvdbApi:
             self.base_url + path, headers=self.headers, params=params or {}
         ) as response:
             response.raise_for_status()
-            return cast(JsonObject, response.json())
+            return cast("JsonObject", response.json())
 
     def _get_paged(
         self,
@@ -89,7 +95,7 @@ class TvdbApi:
         params = params or {}
         params["page"] = 1
         first_page = self._get(path, params)
-        links = cast(dict[str, int], first_page.get("links", {}))
+        links = cast("dict[str, int]", first_page.get("links", {}))
         last_num = links.get("last", 1)
         if last_num == 1:
             yield first_page
@@ -106,7 +112,7 @@ class TvdbApi:
             res = self._get(path, params)
             yield res
 
-            links = cast(dict[str, int], res["links"])
+            links = cast("dict[str, int]", res["links"])
             if reverse:
                 if page == 2:
                     break
@@ -126,7 +132,7 @@ class TvdbApi:
             self.base_url + path, headers=self.headers, json=json
         ) as response:
             response.raise_for_status()
-            return cast(JsonObject, response.json())
+            return cast("JsonObject", response.json())
 
     @property
     def headers(self) -> dict[str, str]:
@@ -142,7 +148,7 @@ class TvdbApi:
     def find_series(self, name: str) -> list[JsonObject]:
         try:
             return cast(
-                list[JsonObject],
+                "list[JsonObject]",
                 self._get("/search/series", params={"name": name})["data"],
             )
         except requests.HTTPError as e:
@@ -158,7 +164,7 @@ class TvdbApi:
             for page in self._get_paged(
                 f"/series/{series_id}/episodes", reverse=reverse
             ):
-                data = cast(list[JsonObject], page["data"])
+                data = cast("list[JsonObject]", page["data"])
                 if not reverse:
                     yield from data
                 else:
@@ -207,17 +213,17 @@ class Holder(Generic[T]):
         self._set = False
 
     @classmethod
-    def empty(cls) -> "Holder[T]":
+    def empty(cls) -> Holder[T]:
         return cls()
 
     @classmethod
-    def of(cls, item: T) -> "Holder[T]":
+    def of(cls, item: T) -> Holder[T]:
         obj = cls()
         obj.set(item)
         return obj
 
     @classmethod
-    def of_optional(cls, item: T | None) -> "Holder[T]":
+    def of_optional(cls, item: T | None) -> Holder[T]:
         obj = cls()
         if item is not None:
             obj.set(item)
@@ -232,7 +238,7 @@ class Holder(Generic[T]):
             raise MissingItem()
 
         # if self._set is True, then set() was called, so return the value
-        return cast(T, self._item)
+        return cast("T", self._item)
 
 
 class LazyCollection(Sized, Iterable[T], Container[T]):
@@ -361,7 +367,7 @@ class EpisodeInfo:
         self.name = name
 
     @classmethod
-    def from_json(cls, json: dict[str, Any]) -> "EpisodeInfo":
+    def from_json(cls, json: dict[str, Any]) -> EpisodeInfo:
         first_aired = json.get("firstAired")
         if not first_aired:
             air_date = None
@@ -421,9 +427,9 @@ def get_episodes_for_series(series_name: str) -> SeriesInfo:
     series = search_results[0]
     status = Status(series["status"])
 
-    episodes = api.get_episodes(cast(str, series["id"]))
+    episodes = api.get_episodes(cast("str", series["id"]))
 
-    return SeriesInfo(cast(str, series["seriesName"]), episodes, status)
+    return SeriesInfo(cast("str", series["seriesName"]), episodes, status)
 
 
 def check_and_get_series(

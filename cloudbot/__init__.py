@@ -105,7 +105,7 @@ def _setup(base_path: Path | None = None) -> None:
 
     def _get_level_value(level: str | int) -> int:
         if isinstance(level, str):
-            return cast(int, getattr(logging, level))
+            return cast("int", getattr(logging, level))
 
         return level
 
@@ -113,7 +113,7 @@ def _setup(base_path: Path | None = None) -> None:
     # that would route nowhere don't get made
     default_logger_level = min(
         [
-            _get_level_value(cast(str | int, handler["level"]))
+            _get_level_value(cast("str | int", handler["level"]))
             for handler in handler_configs.values()
         ]
         + [logging.WARNING]

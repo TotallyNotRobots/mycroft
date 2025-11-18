@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import alembic
 import alembic.config
@@ -6,7 +9,9 @@ import pytest
 
 from cloudbot.db import db_init, get_db_version, get_schema_version
 from cloudbot.util import database
-from tests.util.mock_db import MockDB
+
+if TYPE_CHECKING:
+    from tests.util.mock_db import MockDB
 
 
 @pytest.mark.asyncio

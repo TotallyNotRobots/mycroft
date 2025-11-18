@@ -1,12 +1,18 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
 import pytest
 import requests
-from responses import RequestsMock
 from responses.matchers import query_param_matcher
 
 from plugins import horoscope
-from tests.util.mock_db import MockDB
+
+if TYPE_CHECKING:
+    from responses import RequestsMock
+
+    from tests.util.mock_db import MockDB
 
 BASE_URL = (
     "http://www.horoscope.com/us/horoscopes/general/"

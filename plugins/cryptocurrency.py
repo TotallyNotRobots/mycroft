@@ -10,24 +10,31 @@ License:
     GPL v3
 """
 
+from __future__ import annotations
+
 import time
-from collections.abc import Callable
 from decimal import Decimal
 from operator import itemgetter
 from threading import RLock
-from typing import Any, ContextManager, Generic, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
 import requests
 from pydantic import BaseModel, Field, computed_field
-from requests import Response
 from typing_extensions import Self
 from yarl import URL
 
 from cloudbot import hook
-from cloudbot.bot import AbstractBot
-from cloudbot.event import CommandEvent
 from cloudbot.util import colors, web
 from cloudbot.util.func_utils import call_with_args
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from contextlib import AbstractContextManager
+
+    from requests import Response
+
+    from cloudbot.bot import AbstractBot
+    from cloudbot.event import CommandEvent
 
 
 class APIError(Exception):
@@ -51,8 +58,8 @@ class UnknownFiatCurrencyError(APIError):
 class APIResponse:
     def __init__(
         self,
-        api: "CoinMarketCapAPI",
-        data: "UntypedResponse",
+        api: CoinMarketCapAPI,
+        data: UntypedResponse,
         response: Response,
     ) -> None:
         self.api = api
@@ -60,7 +67,7 @@ class APIResponse:
         self.response = response
 
     @classmethod
-    def from_response(cls, api: "CoinMarketCapAPI", response: Response) -> Self:
+    def from_response(cls, api: CoinMarketCapAPI, response: Response) -> Self:
         return cls(
             api, UntypedResponse.model_validate(response.json()), response
         )
@@ -193,7 +200,9 @@ class CacheEntry(Generic[_T]):
 
 
 class Cache(Generic[_K, _V]):
-    def __init__(self, lock_cls: type[ContextManager[Any]] = RLock) -> None:
+    def __init__(
+        self, lock_cls: type[AbstractContextManager[Any]] = RLock
+    ) -> None:
         self._data: dict[_K, CacheEntry[_V]] = {}
         self._lock = lock_cls()
 
@@ -283,7 +292,7 @@ class CoinMarketCapAPI:
             currencies = self.request(endpoint).data.cast_to(fmt)
             out = self.cache.put(name, currencies, ttl)
 
-        return cast(_ModelT, out.value)
+        return cast("_ModelT", out.value)
 
     def request(self, endpoint: str, **params: str) -> APIResponse:
         url = str(self.api_url / endpoint)
@@ -305,13 +314,13 @@ api = CoinMarketCapAPI()
 
 def get_plugin_config(conf: dict[str, Any], name: str, default: _T) -> _T:
     try:
-        return cast(_T, conf["plugins"]["cryptocurrency"][name])
+        return cast("_T", conf["plugins"]["cryptocurrency"][name])
     except LookupError:
         return default
 
 
 @hook.on_start()
-def init_api(bot: "AbstractBot") -> None:
+def init_api(bot: AbstractBot) -> None:
     api.api_key = bot.config.get_api_key("coinmarketcap")
 
     # Enabling this requires a paid CoinMarketCap API plan

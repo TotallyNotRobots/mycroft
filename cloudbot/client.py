@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import collections
 import logging
@@ -37,7 +39,7 @@ class Client:
 
     def __init__(
         self,
-        bot: "AbstractBot",
+        bot: AbstractBot,
         _type: str,
         name: str,
         nick: str,

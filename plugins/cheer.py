@@ -1,8 +1,13 @@
+from __future__ import annotations
+
 import random
 import re
+from typing import TYPE_CHECKING
 
 from cloudbot import hook
-from cloudbot.bot import CloudBot
+
+if TYPE_CHECKING:
+    from cloudbot.bot import CloudBot
 
 cheer_re = re.compile(r"\\o/", re.IGNORECASE)
 

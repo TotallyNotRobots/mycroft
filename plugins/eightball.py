@@ -1,8 +1,13 @@
+from __future__ import annotations
+
 import random
+from typing import TYPE_CHECKING
 
 from cloudbot import hook
-from cloudbot.bot import CloudBot
 from cloudbot.util import colors
+
+if TYPE_CHECKING:
+    from cloudbot.bot import CloudBot
 
 responses: list[str] = []
 

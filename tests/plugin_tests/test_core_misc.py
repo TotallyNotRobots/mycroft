@@ -36,7 +36,7 @@ async def test_do_joins(mock_bot_factory, mock_db) -> None:
 
     await core_misc.do_joins(client)
 
-    assert cast(MagicMock, client.join).mock_calls == [
+    assert cast("MagicMock", client.join).mock_calls == [
         call("#foo", None),
         call("#bar", "key"),
         call("#baz", "key1"),
@@ -53,7 +53,7 @@ async def test_invite_join(mock_bot_factory, mock_db) -> None:
     )
     core_misc.invite(ParamList("foo", "#bar"), conn)
 
-    assert cast(MagicMock, conn.send).mock_calls == [call("JOIN #bar")]
+    assert cast("MagicMock", conn.send).mock_calls == [call("JOIN #bar")]
 
 
 @pytest.mark.asyncio
@@ -67,7 +67,7 @@ async def test_invite_join_disabled(mock_bot_factory, mock_db) -> None:
     )
     core_misc.invite(ParamList("foo", "#bar"), conn)
 
-    assert cast(MagicMock, conn.send).mock_calls == []
+    assert cast("MagicMock", conn.send).mock_calls == []
 
 
 @pytest.mark.asyncio()
@@ -114,4 +114,4 @@ async def test_on_connect(config, calls, mock_db) -> None:
 
     assert res is None
 
-    assert cast(MagicMock, conn.send).mock_calls == calls
+    assert cast("MagicMock", conn.send).mock_calls == calls

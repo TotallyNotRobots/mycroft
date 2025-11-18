@@ -1,12 +1,17 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
 import pytest
 from requests import HTTPError
-from responses import RequestsMock
 
 from cloudbot.event import CommandEvent, Event
 from plugins import reddit_info
 from tests.util import HookResult, wrap_hook_response
+
+if TYPE_CHECKING:
+    from responses import RequestsMock
 
 
 @pytest.mark.parametrize(

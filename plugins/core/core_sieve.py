@@ -1,11 +1,16 @@
+from __future__ import annotations
+
 import logging
 from time import time
+from typing import TYPE_CHECKING
 
 from cloudbot import hook
-from cloudbot.bot import CloudBot
-from cloudbot.event import CommandEvent, Event
-from cloudbot.plugin_hooks import Hook
 from cloudbot.util.tokenbucket import TokenBucket
+
+if TYPE_CHECKING:
+    from cloudbot.bot import CloudBot
+    from cloudbot.event import CommandEvent, Event
+    from cloudbot.plugin_hooks import Hook
 
 ready = False
 buckets: dict[str, TokenBucket] = {}

@@ -1,9 +1,14 @@
-from typing import Any
+from __future__ import annotations
 
-from sqlalchemy import Table, create_engine
+from typing import TYPE_CHECKING, Any
+
+from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 from cloudbot.util.database import Session
+
+if TYPE_CHECKING:
+    from sqlalchemy import Table
 
 
 class MockDB:

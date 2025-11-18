@@ -1,42 +1,51 @@
+from __future__ import annotations
+
 import asyncio
 import importlib
 import logging
-import os
 import sys
 from collections import defaultdict
-from collections.abc import MutableMapping
 from functools import partial
 from operator import attrgetter
 from pathlib import Path
-from re import Pattern
-from typing import Any, Optional, TypedDict, cast
+from typing import TYPE_CHECKING, Any, TypedDict, cast
 from weakref import WeakValueDictionary
 
 import sqlalchemy
-from sqlalchemy import Table
 
-from cloudbot.event import Event, EventType, PostHookEvent
+from cloudbot.event import Event, PostHookEvent
 from cloudbot.plugin_hooks import (
-    CapHook,
-    CommandHook,
-    ConfigHook,
-    EventHook,
-    IrcOutHook,
-    OnCapAckHook,
-    OnCapAvaliableHook,
-    OnConnectHook,
-    OnStartHook,
-    OnStopHook,
-    PeriodicHook,
-    PermHook,
-    PostHookHook,
-    RawHook,
-    RegexHook,
-    SieveHook,
     hook_name_to_plugin,
 )
 from cloudbot.util import HOOK_ATTR, LOADED_ATTR, database
 from cloudbot.util.func_utils import call_with_args
+
+if TYPE_CHECKING:
+    import os
+    from collections.abc import MutableMapping
+    from re import Pattern
+
+    from sqlalchemy import Table
+
+    from cloudbot.event import EventType
+    from cloudbot.plugin_hooks import (
+        CapHook,
+        CommandHook,
+        ConfigHook,
+        EventHook,
+        IrcOutHook,
+        OnCapAckHook,
+        OnCapAvaliableHook,
+        OnConnectHook,
+        OnStartHook,
+        OnStopHook,
+        PeriodicHook,
+        PermHook,
+        PostHookHook,
+        RawHook,
+        RegexHook,
+        SieveHook,
+    )
 
 logger = logging.getLogger("cloudbot")
 
@@ -74,7 +83,7 @@ def find_hooks(parent, module) -> HookDict:
             # delete the hook to free memory
             delattr(func, HOOK_ATTR)
 
-    return cast(HookDict, hooks)
+    return cast("HookDict", hooks)
 
 
 def find_tables(code) -> list[sqlalchemy.Table]:
@@ -87,7 +96,7 @@ def find_tables(code) -> list[sqlalchemy.Table]:
             # if it's a Table, and it's using our metadata, append it to the list
             tables.append(obj)
         elif isinstance(obj, type) and issubclass(obj, database.Base):
-            obj = cast(type[database.Base], obj)
+            obj = cast("type[database.Base]", obj)
             tables.append(obj.__table__)
 
     return tables
@@ -160,11 +169,11 @@ class PluginManager:
         self.perm_hooks: dict[str, list[PermHook]] = defaultdict(list)
         self.config_hooks: list[ConfigHook] = []
 
-    def _add_plugin(self, plugin: "Plugin") -> None:
+    def _add_plugin(self, plugin: Plugin) -> None:
         self.plugins[plugin.file_path] = plugin
         self._plugin_name_map[plugin.title] = plugin
 
-    def _rem_plugin(self, plugin: "Plugin") -> None:
+    def _rem_plugin(self, plugin: Plugin) -> None:
         del self.plugins[plugin.file_path]
         del self._plugin_name_map[plugin.title]
 
@@ -189,7 +198,7 @@ class PluginManager:
         plugin_path = file_path.relative_to(self.bot.base_dir)
         return ".".join(plugin_path.parts).rsplit(".", 1)[0]
 
-    def get_plugin(self, path) -> Optional["Plugin"]:
+    def get_plugin(self, path) -> Plugin | None:
         """
         Find a loaded plugin from its filename
 

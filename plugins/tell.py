@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 from collections import defaultdict
-from collections.abc import Iterable
 from datetime import datetime
 from fnmatch import fnmatch
+from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
 from sqlalchemy import (
@@ -22,6 +24,9 @@ from cloudbot import hook
 from cloudbot.event import EventType
 from cloudbot.util import database, timeformat, web
 from cloudbot.util.formatting import gen_markdown_table
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 class TellMessage(database.Base):
