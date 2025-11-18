@@ -1,4 +1,4 @@
-attrs == 23.2.0
+attrs ==25.4.0
 beautifulsoup4 ==4.14.2
 isodate == 0.6.1
 lxml ==5.2.2
