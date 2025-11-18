@@ -2,7 +2,7 @@ attrs ==25.4.0
 beautifulsoup4 ==4.14.2
 isodate == 0.6.1
 lxml ==5.4.0
-multidict == 6.0.5
+multidict ==6.7.0
 PBinCLI ==0.2.1
 psutil ==7.1.3
 py-irclib == 0.3.0
