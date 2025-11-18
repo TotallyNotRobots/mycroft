@@ -9,6 +9,8 @@ import attrs
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
+    from typing_extensions import Self
+
 logger = logging.getLogger(__name__)
 
 
@@ -67,7 +69,7 @@ class StatusMode(ChannelMode):
     level: int
 
     @classmethod
-    def make(cls, prefix: str, char: str, level: int) -> StatusMode:
+    def make(cls, prefix: str, char: str, level: int) -> Self:
         return cls(
             prefix=prefix, level=level, character=char, type=ModeType.Status
         )

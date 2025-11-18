@@ -15,6 +15,8 @@ from cloudbot.util import func_utils
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
+    from typing_extensions import Self
+
     from cloudbot.bot import CloudBot
     from cloudbot.event import Event
     from cloudbot.util.http import GetParams
@@ -213,17 +215,17 @@ class Holder(Generic[T]):
         self._set = False
 
     @classmethod
-    def empty(cls) -> Holder[T]:
+    def empty(cls) -> Self:
         return cls()
 
     @classmethod
-    def of(cls, item: T) -> Holder[T]:
+    def of(cls, item: T) -> Self:
         obj = cls()
         obj.set(item)
         return obj
 
     @classmethod
-    def of_optional(cls, item: T | None) -> Holder[T]:
+    def of_optional(cls, item: T | None) -> Self:
         obj = cls()
         if item is not None:
             obj.set(item)
@@ -367,7 +369,7 @@ class EpisodeInfo:
         self.name = name
 
     @classmethod
-    def from_json(cls, json: dict[str, Any]) -> EpisodeInfo:
+    def from_json(cls, json: dict[str, Any]) -> Self:
         first_aired = json.get("firstAired")
         if not first_aired:
             air_date = None
