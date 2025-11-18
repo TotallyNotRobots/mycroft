@@ -50,6 +50,7 @@ def caplog_bot(
     caplog.set_level(0, "cloudbot")
     caplog.set_level(0, "plugins")
     caplog.set_level(0)
+    logging.getLogger("cloudbot").propagate = True
     yield caplog
 
 
