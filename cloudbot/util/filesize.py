@@ -109,7 +109,7 @@ I = iec
 S = si
 
 
-def size(b: float | int, system: System = traditional) -> str | None:
+def size(b: float, system: System = traditional) -> str | None:
     """Human-readable file size.
 
     Using the traditional system, where a factor of 1024 is used::

@@ -403,7 +403,7 @@ def crypto_command(text: str, event: CommandEvent) -> str:
     )
 
 
-def format_price(price: int | float) -> str:
+def format_price(price: float) -> str:
     price = float(price)
     if price < 1:
         prec = max(2, min(10, len(str(Decimal(str(price)))) - 2))

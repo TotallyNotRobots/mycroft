@@ -225,7 +225,6 @@ ignore = [
     "PTH123", # use Path.open()
     "PTH201", # don't pass current dir to path
     "PTH208", # use pathlib iterdir
-    "PYI041", # use float instead of int|float
     "RET501", # explicit return None
     "RET502", # implicit return None
     "RET503", # missing explicit return
