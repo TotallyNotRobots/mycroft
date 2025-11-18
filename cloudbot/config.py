@@ -4,7 +4,7 @@ import sys
 import time
 from collections import OrderedDict
 from pathlib import Path
-from typing import Optional, cast
+from typing import cast
 
 logger = logging.getLogger("cloudbot")
 
@@ -25,7 +25,7 @@ class Config(OrderedDict):
             return self._api_keys[name]
         except LookupError:
             value = cast(
-                "Optional[str]", self.get("api_keys", {}).get(name, default)
+                "str | None", self.get("api_keys", {}).get(name, default)
             )
 
             self._api_keys[name] = value

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 import requests
@@ -37,7 +39,7 @@ def check_status(status):
 
 
 @hook.command("locate", "maps")
-def locate(text: str, bot: "CloudBot") -> str:
+def locate(text: str, bot: CloudBot) -> str:
     """<location> - Finds <location> on Google Maps."""
     dev_key = bot.config.get_api_key("google_dev_key")
     if not dev_key:

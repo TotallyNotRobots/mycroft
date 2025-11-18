@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import signal
 import sys
 import threading
 import traceback
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from cloudbot import hook
 from cloudbot.util import web
@@ -24,7 +26,7 @@ except ImportError:
     objgraph = None
 
 
-def create_tracker() -> Optional["SummaryTracker"]:
+def create_tracker() -> SummaryTracker | None:
     if pympler is None:
         return None
 

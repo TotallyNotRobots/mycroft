@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import re
 import time
@@ -42,7 +44,7 @@ def check_status(status, api):
 
 
 @hook.command("time")
-def time_command(text: str, reply, bot: "CloudBot") -> str:
+def time_command(text: str, reply, bot: CloudBot) -> str:
     """<location> - Gets the current time in <location>."""
     dev_key = bot.config.get_api_key("google_dev_key")
     if not dev_key:

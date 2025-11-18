@@ -16,7 +16,7 @@ import time
 from decimal import Decimal
 from operator import itemgetter
 from threading import RLock
-from typing import TYPE_CHECKING, Any, ContextManager, Generic, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
 import requests
 from pydantic import BaseModel, Field, computed_field
@@ -29,6 +29,7 @@ from cloudbot.util.func_utils import call_with_args
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from contextlib import AbstractContextManager
 
     from requests import Response
 
@@ -199,7 +200,9 @@ class CacheEntry(Generic[_T]):
 
 
 class Cache(Generic[_K, _V]):
-    def __init__(self, lock_cls: type[ContextManager[Any]] = RLock) -> None:
+    def __init__(
+        self, lock_cls: type[AbstractContextManager[Any]] = RLock
+    ) -> None:
         self._data: dict[_K, CacheEntry[_V]] = {}
         self._lock = lock_cls()
 

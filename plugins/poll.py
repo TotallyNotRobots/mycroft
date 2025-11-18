@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 from re import findall
 
 from cloudbot import hook
 from cloudbot.util.formatting import get_text_list
 
-polls: dict[str, "Poll"] = {}
+polls: dict[str, Poll] = {}
 
 
 class PollError(Exception):

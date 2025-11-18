@@ -261,20 +261,16 @@ ignore = [
     "TRY003", # avoid specifying long messages outside of the exception class
     "TRY300", # use try-except-else
     "TRY400", # use logging.exception
-    "UP006", # lowercase builtin type names
     "UP007", # use union syntax
     "UP024", # aliased errors
     "UP031", # replace % with .format
     "UP032", # use f-string
-    "UP035", # typing.Tuple deprecated
-    "UP037", # quoted type annotations
     "UP041", # aliased errors
-    "UP045", # replace Optional[] with | None
 ]
 select = [
     "ALL",
 ]
-extend-safe-fixes = ["TC"]
+extend-safe-fixes = ["TC", "UP"]
 future-annotations = true
 fixable = ["ALL"]
 

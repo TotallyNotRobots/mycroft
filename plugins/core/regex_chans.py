@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import logging
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Column, String, Table, UniqueConstraint
 
@@ -90,7 +92,7 @@ def delete_status(db, conn, chan) -> None:
     load_cache(db)
 
 
-def get_status(conn: "Client", chan: str) -> bool:
+def get_status(conn: Client, chan: str) -> bool:
     return status_cache.get((conn.name, chan), default_enabled)
 
 
@@ -119,9 +121,7 @@ def change_status(db, event, status) -> None:
 
 
 @hook.sieve()
-def sieve_regex(
-    bot: "CloudBot", event: "Event", _hook: "Hook"
-) -> Optional["Event"]:
+def sieve_regex(bot: CloudBot, event: Event, _hook: Hook) -> Event | None:
     if (
         _hook.type == "regex"
         and event.chan.startswith("#")
@@ -175,7 +175,7 @@ def resetregex(text, db, conn, chan, nick, message, notice) -> None:
 
 
 @hook.command(autohelp=False, permissions=["botcontrol"])
-def regexstatus(text: str, conn: "Client", chan: str) -> str:
+def regexstatus(text: str, conn: Client, chan: str) -> str:
     """[chan] - Get status of regex hooks in [chan] (default: current channel)"""
     channel = parse_args(text, chan)
     status = get_status(conn, channel)
@@ -183,7 +183,7 @@ def regexstatus(text: str, conn: "Client", chan: str) -> str:
 
 
 @hook.command(autohelp=False, permissions=["botcontrol"])
-def listregex(conn: "Client") -> str:
+def listregex(conn: Client) -> str:
     """- List non-default regex statuses for channels"""
     values = []
     for (conn_name, chan), status in status_cache.items():
