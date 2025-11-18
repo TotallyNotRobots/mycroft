@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from json import JSONDecodeError
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
 import pytest
@@ -10,7 +13,9 @@ from responses.matchers import query_param_matcher
 from cloudbot.event import CommandEvent
 from plugins import lastfm
 from tests.util import wrap_hook_response
-from tests.util.mock_db import MockDB
+
+if TYPE_CHECKING:
+    from tests.util.mock_db import MockDB
 
 
 def test_get_account(mock_db, mock_requests) -> None:

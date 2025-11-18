@@ -1,4 +1,5 @@
 # convenience wrapper for urllib2 & friends
+from __future__ import annotations
 
 import http.cookiejar
 import json
@@ -6,14 +7,16 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import warnings
-from collections.abc import Mapping
-from typing import Any, Union
+from typing import TYPE_CHECKING, Any, Union
 from urllib.parse import quote_plus as _quote_plus
 
 from bs4 import BeautifulSoup
 from lxml import etree, html
 from multidict import MultiDict
 from yarl import URL
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 # security
 parser = etree.XMLParser(resolve_entities=False, no_network=True)

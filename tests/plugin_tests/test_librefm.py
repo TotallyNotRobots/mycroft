@@ -1,15 +1,22 @@
-from collections.abc import Callable
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
 import pytest
-from responses import RequestsMock
 from responses.matchers import query_param_matcher
 
 from cloudbot.event import CommandEvent
 from plugins import librefm
 from tests.util import wrap_hook_response
-from tests.util.mock_bot import MockBot
-from tests.util.mock_db import MockDB
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from responses import RequestsMock
+
+    from tests.util.mock_bot import MockBot
+    from tests.util.mock_db import MockDB
 
 
 def test_get_account(mock_db, mock_requests) -> None:

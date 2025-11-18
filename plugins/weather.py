@@ -1,15 +1,18 @@
 import math
 from fractions import Fraction
+from typing import TYPE_CHECKING
 
 import googlemaps
 import pyowm
 from googlemaps.exceptions import ApiError
 from pyowm import OWM
-from pyowm.weatherapi30.weather import Weather
 from sqlalchemy import Column, PrimaryKeyConstraint, String, Table
 
 from cloudbot import hook
 from cloudbot.util import colors, database
+
+if TYPE_CHECKING:
+    from pyowm.weatherapi30.weather import Weather
 
 
 class ApiNotConfigured(Exception):

@@ -1,10 +1,14 @@
+from __future__ import annotations
+
 import json
 import random
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from cloudbot import hook
-from cloudbot.bot import CloudBot
 from cloudbot.util import formatting, web
+
+if TYPE_CHECKING:
+    from cloudbot.bot import CloudBot
 
 drink_data: list[dict[str, Any]] = []
 

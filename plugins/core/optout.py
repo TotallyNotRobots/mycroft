@@ -2,10 +2,12 @@
 Bot wide hook opt-out for channels
 """
 
+from __future__ import annotations
+
 from collections import defaultdict
-from collections.abc import MutableMapping
 from functools import total_ordering
 from threading import RLock
+from typing import TYPE_CHECKING
 
 from irclib.util.compare import match_mask
 from sqlalchemy import (
@@ -24,6 +26,9 @@ from cloudbot.util.formatting import gen_markdown_table
 from cloudbot.util.mapping import DefaultKeyFoldDict
 from cloudbot.util.text import parse_bool
 
+if TYPE_CHECKING:
+    from collections.abc import MutableMapping
+
 optout_table = Table(
     "optout",
     database.metadata,
@@ -34,7 +39,7 @@ optout_table = Table(
     PrimaryKeyConstraint("network", "chan", "hook"),
 )
 
-optout_cache: MutableMapping[str, list["OptOut"]] = DefaultKeyFoldDict(list)
+optout_cache: MutableMapping[str, list[OptOut]] = DefaultKeyFoldDict(list)
 
 cache_lock = RLock()
 

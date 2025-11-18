@@ -1,6 +1,10 @@
+from __future__ import annotations
+
 import inspect
-from collections.abc import Callable, Iterable, Mapping
-from typing import Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable, Mapping
 
 
 class ParameterError(Exception):

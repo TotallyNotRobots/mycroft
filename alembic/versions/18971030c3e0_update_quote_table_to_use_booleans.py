@@ -6,13 +6,19 @@ Create Date: 2025-11-17 19:28:52.970673
 
 """
 
-from collections.abc import Sequence
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
 from alembic import op
-from sqlalchemy.sql import TableClause
 
 from cloudbot.util.database import Session
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from sqlalchemy.sql import TableClause
 
 # revision identifiers, used by Alembic.
 revision: str = "18971030c3e0"

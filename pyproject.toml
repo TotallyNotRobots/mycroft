@@ -182,7 +182,6 @@ ignore = [
     "COM812", # trailing comma
     "FBT002", # boolean positional arg
     "FBT003", # boolean positional arg
-    "TC", # type checking blocks
     "ARG001", # unused function arg
     "ARG002", # Unused arg
     "ARG003", # unused arg in class method
@@ -275,9 +274,9 @@ ignore = [
 select = [
     "ALL",
 ]
-extend-safe-fixes = []
+extend-safe-fixes = ["TC"]
 future-annotations = true
-fixable = []
+fixable = ["ALL"]
 
 [tool.alembic]
 # path to migration scripts.

@@ -1,16 +1,21 @@
+from __future__ import annotations
+
 import re
 from collections.abc import Iterable, Mapping
-from re import Match
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 import isodate
 import requests
-from requests import Response
 
 from cloudbot import hook
 from cloudbot.bot import bot_instance
 from cloudbot.util import colors, timeformat
 from cloudbot.util.formatting import pluralize_suffix
+
+if TYPE_CHECKING:
+    from re import Match
+
+    from requests import Response
 
 youtube_re = re.compile(
     r"(?:youtube.*?(?:v=|/v/)|youtu\.be/|yooouuutuuube.*?id=)([-_a-zA-Z0-9]+)",

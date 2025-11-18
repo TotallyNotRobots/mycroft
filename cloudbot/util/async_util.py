@@ -2,15 +2,19 @@
 Wraps various asyncio functions
 """
 
+from __future__ import annotations
+
 import asyncio
 import inspect
-from collections.abc import Callable, Coroutine, Mapping
-from concurrent.futures import Executor
-from typing import Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from typing_extensions import ParamSpec, TypeIs
 
 from cloudbot.util.func_utils import call_with_args
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Coroutine, Mapping
+    from concurrent.futures import Executor
 
 _P = ParamSpec("_P")
 _T = TypeVar("_T")

@@ -1,11 +1,16 @@
+from __future__ import annotations
+
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 import requests
 from sqlalchemy import Column, PrimaryKeyConstraint, String, Table
-from sqlalchemy.orm import Session
 
 from cloudbot import hook
 from cloudbot.util import database, timeformat, web
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
 
 api_url = "https://libre.fm/2.0/?format=json"
 

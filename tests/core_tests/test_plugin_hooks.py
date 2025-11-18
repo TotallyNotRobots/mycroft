@@ -8,13 +8,12 @@ import re
 from functools import wraps
 from numbers import Number
 from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING, cast
 from unittest.mock import patch
 
 import pytest
 
 import cloudbot.bot
-from cloudbot.bot import CloudBot
 from cloudbot.event import (
     CapEvent,
     CommandEvent,
@@ -46,6 +45,9 @@ from cloudbot.plugin import Plugin
 from cloudbot.plugin_hooks import Hook, hook_name_to_plugin
 from cloudbot.util import HOOK_ATTR
 from tests.util.mock_bot import MockBot
+
+if TYPE_CHECKING:
+    from cloudbot.bot import CloudBot
 
 DOC_RE = re.compile(r"^(?:[<{\[][^-]+?[>}\]][^-]+?)*?-\s.+$")
 PLUGINS: list[Plugin] = []
@@ -91,7 +93,7 @@ def load_plugin(plugin_path):
 def get_plugins():
     if not PLUGINS:
         bot = MockBot(base_dir=Path().resolve())
-        cloudbot.bot.bot_instance.set(cast(CloudBot, bot))
+        cloudbot.bot.bot_instance.set(cast("CloudBot", bot))
         PLUGINS.extend(map(load_plugin, gather_plugins()))
         cloudbot.bot.bot_instance.set(None)
         bot.close()

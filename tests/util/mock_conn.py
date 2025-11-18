@@ -1,13 +1,19 @@
-from typing import Any
-from unittest.mock import MagicMock, _CallList
+from __future__ import annotations
 
-from cloudbot.bot import AbstractBot
+from typing import TYPE_CHECKING, Any
+from unittest.mock import MagicMock
+
 from cloudbot.client import Client
-from cloudbot.permissions import PermissionManager
+
+if TYPE_CHECKING:
+    from unittest.mock import _CallList
+
+    from cloudbot.bot import AbstractBot
+    from cloudbot.permissions import PermissionManager
 
 
 class MockClient(Client):
-    def __init__(self, *, bot: "AbstractBot", nick=None, name=None) -> None:
+    def __init__(self, *, bot: AbstractBot, nick=None, name=None) -> None:
         super().__init__(
             bot=bot,
             _type="mock",

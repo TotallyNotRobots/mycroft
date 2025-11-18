@@ -255,7 +255,7 @@ class PermissionManager:
 
     def get_group(self, group_id: str) -> Group | None:
         return cast(
-            Group | None,
+            "Group | None",
             Session().get(
                 Group,
                 {"name": group_id.lower(), "connection": self.name.lower()},

@@ -1,10 +1,15 @@
+from __future__ import annotations
+
 import random
+from typing import TYPE_CHECKING
 
 import responses
-from responses import RequestsMock
 from responses.matchers import query_param_matcher
 
 from plugins import imgur
+
+if TYPE_CHECKING:
+    from responses import RequestsMock
 
 
 def test_imgur_no_api(mock_requests: RequestsMock, mock_api_keys) -> None:

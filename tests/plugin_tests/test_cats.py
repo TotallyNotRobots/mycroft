@@ -1,8 +1,12 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
-from responses import RequestsMock
-
 from plugins import cats
+
+if TYPE_CHECKING:
+    from responses import RequestsMock
 
 
 def test_cats(mock_requests: RequestsMock) -> None:

@@ -1,13 +1,18 @@
+from __future__ import annotations
+
 import datetime
 import random
 import time
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, call, patch
 
 import pytest
 
 from plugins import duckhunt
 from tests.util.mock_conn import MockConn
-from tests.util.mock_db import MockDB
+
+if TYPE_CHECKING:
+    from tests.util.mock_db import MockDB
 
 
 @pytest.mark.parametrize(

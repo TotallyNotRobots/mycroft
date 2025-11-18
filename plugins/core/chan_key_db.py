@@ -5,20 +5,25 @@ Author:
 - linuxdaemon
 """
 
-from itertools import zip_longest
-from typing import Any
+from __future__ import annotations
 
-from irclib.parser import Message
+from itertools import zip_longest
+from typing import TYPE_CHECKING, Any
+
 from sqlalchemy import Column, PrimaryKeyConstraint, String, Table, and_, select
-from sqlalchemy.orm import Session
-from sqlalchemy.sql.elements import BooleanClauseList, ClauseElement
 
 from cloudbot import hook
-from cloudbot.client import Client
-from cloudbot.clients.irc import IrcClient
 from cloudbot.util import database
 from cloudbot.util.irc import parse_mode_string
 from plugins.core import server_info
+
+if TYPE_CHECKING:
+    from irclib.parser import Message
+    from sqlalchemy.orm import Session
+    from sqlalchemy.sql.elements import BooleanClauseList, ClauseElement
+
+    from cloudbot.client import Client
+    from cloudbot.clients.irc import IrcClient
 
 table = Table(
     "channel_keys",

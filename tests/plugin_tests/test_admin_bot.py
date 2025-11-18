@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import asyncio
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, call
 
 import pytest
-import sqlalchemy.orm as sa_orm
 
 from cloudbot.event import CommandEvent
 from cloudbot.permissions import (
@@ -15,7 +17,11 @@ from cloudbot.util import func_utils
 from plugins import admin_bot
 from tests.util import wrap_hook_response
 from tests.util.mock_conn import MockConn
-from tests.util.mock_db import MockDB
+
+if TYPE_CHECKING:
+    import sqlalchemy.orm as sa_orm
+
+    from tests.util.mock_db import MockDB
 
 
 @pytest.mark.parametrize(

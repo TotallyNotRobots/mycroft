@@ -1,7 +1,12 @@
+from __future__ import annotations
+
 import random
+from typing import TYPE_CHECKING
 
 from cloudbot import hook
-from cloudbot.bot import CloudBot
+
+if TYPE_CHECKING:
+    from cloudbot.bot import CloudBot
 
 fmklist: list[str] = []
 

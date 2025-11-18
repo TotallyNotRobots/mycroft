@@ -1,17 +1,22 @@
+from __future__ import annotations
+
 import collections
 import collections.abc
 import inspect
 import re
 import warnings
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
 from enum import Enum, IntEnum, unique
-from re import Pattern
-from typing import Any, TypeVar, overload
+from typing import TYPE_CHECKING, Any, TypeVar, overload
 
 from typing_extensions import ParamSpec
 
 from cloudbot.event import EventType
 from cloudbot.util import HOOK_ATTR
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+    from re import Pattern
 
 valid_command_re = re.compile(r"^\w+$")
 

@@ -1,7 +1,11 @@
+from typing import TYPE_CHECKING
+
 import requests
 
 from cloudbot import hook
-from cloudbot.bot import CloudBot
+
+if TYPE_CHECKING:
+    from cloudbot.bot import CloudBot
 
 # Define some constants
 base_url = "https://maps.googleapis.com/maps/api/"

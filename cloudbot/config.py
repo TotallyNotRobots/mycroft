@@ -25,7 +25,7 @@ class Config(OrderedDict):
             return self._api_keys[name]
         except LookupError:
             value = cast(
-                Optional[str], self.get("api_keys", {}).get(name, default)
+                "Optional[str]", self.get("api_keys", {}).get(name, default)
             )
 
             self._api_keys[name] = value

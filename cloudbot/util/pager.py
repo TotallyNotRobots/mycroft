@@ -1,11 +1,15 @@
-from collections.abc import Iterable, Sequence
+from __future__ import annotations
+
 from threading import RLock
-from typing import TypeVar, overload
+from typing import TYPE_CHECKING, TypeVar, overload
 
 from typing_extensions import Self
 
 from cloudbot.util.formatting import chunk_str
 from cloudbot.util.sequence import chunk_iter
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
 
 
 class Pager:

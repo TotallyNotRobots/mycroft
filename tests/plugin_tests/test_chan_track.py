@@ -1,14 +1,18 @@
-from typing import Any
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 import pytest
 from irclib.parser import Prefix, TagList
 
-from cloudbot.client import Client
 from cloudbot.clients.irc import _IrcProtocol
 from cloudbot.util.func_utils import call_with_args
 from plugins.core import chan_track, server_info
 from tests.util.mock_conn import MockClient
 from tests.util.mock_irc_client import MockIrcClient
+
+if TYPE_CHECKING:
+    from cloudbot.client import Client
 
 
 class MockConn:

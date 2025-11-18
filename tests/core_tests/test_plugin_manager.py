@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 import asyncio
 import itertools
 import logging
 import re
-from asyncio import Task
-from collections.abc import Callable
 from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
 import pytest
@@ -16,8 +17,13 @@ from cloudbot import hook, plugin
 from cloudbot.event import CommandEvent, EventType
 from cloudbot.plugin import Plugin
 from cloudbot.util import database
-from tests.util.mock_bot import MockBot
 from tests.util.mock_module import MockModule
+
+if TYPE_CHECKING:
+    from asyncio import Task
+    from collections.abc import Callable
+
+    from tests.util.mock_bot import MockBot
 
 
 @pytest_asyncio.fixture()
