@@ -5,7 +5,7 @@ import logging
 from collections.abc import Container, Iterable, Sized
 from enum import Enum
 from functools import wraps
-from typing import TYPE_CHECKING, Any, Generic, TypeVar, Union, cast, overload
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast, overload
 
 import requests
 
@@ -22,9 +22,9 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 token_lifetime = datetime.timedelta(hours=1)
 
-JsonPrimitive = Union[int, str, bool, None]
+JsonPrimitive = int | str | bool | None
 JsonObject = dict[
-    str, Union[JsonPrimitive, list[JsonPrimitive], dict[str, JsonPrimitive]]
+    str, JsonPrimitive | list[JsonPrimitive] | dict[str, JsonPrimitive]
 ]
 
 

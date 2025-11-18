@@ -261,7 +261,6 @@ ignore = [
     "TRY003", # avoid specifying long messages outside of the exception class
     "TRY300", # use try-except-else
     "TRY400", # use logging.exception
-    "UP007", # use union syntax
     "UP024", # aliased errors
     "UP031", # replace % with .format
     "UP032", # use f-string

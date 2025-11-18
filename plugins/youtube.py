@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Iterable, Mapping
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import isodate
 import requests
@@ -75,7 +75,7 @@ def make_short_url(video_id: str) -> str:
     return f"http://youtu.be/{video_id}"
 
 
-ParamValues = Union[int, str]
+ParamValues = int | str
 ParamMap = Mapping[str, ParamValues]
 Parts = Iterable[str]
 
