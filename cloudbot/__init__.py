@@ -136,6 +136,7 @@ def _setup(base_path: Path | None = None) -> None:
             name: {
                 "level": default_logger_level,
                 "handlers": default_handlers.copy(),
+                "propagate": False,
             }
             for name in logger_names
         },
