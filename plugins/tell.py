@@ -20,7 +20,6 @@ from sqlalchemy.sql import select
 
 from cloudbot import hook
 from cloudbot.event import EventType
-from cloudbot.hook import Priority
 from cloudbot.util import database, timeformat, web
 from cloudbot.util.formatting import gen_markdown_table
 
@@ -74,36 +73,6 @@ ignore_cache: dict[str, dict[str, list[str]]] = defaultdict(
     lambda: defaultdict(list)
 )
 tell_cache: list[tuple[str, str]] = []
-
-
-@hook.on_start(priority=Priority.HIGHEST)
-def migrate_tables(db):
-    inspector = sa.inspect(db.bind)
-    if not inspector.has_table("tells"):
-        return
-
-    table = sa.Table(
-        "tells",
-        database.metadata,
-        autoload_with=db.bind,
-    )
-
-    if (
-        inspector.has_table(TellMessage.__tablename__)
-        and db.query(TellMessage).count() > 0
-    ):
-        raise Exception(
-            f"Can't migrate table {table.name} to {TellMessage.__tablename__}, destination already exists"
-        )
-
-    data = [dict(row) for row in db.execute(table.select()).mappings()]
-    for item in data:
-        item["conn"] = item.pop("connection")
-
-    db.bulk_insert_mappings(TellMessage, data, return_defaults=True)
-    db.commit()
-
-    table.drop(db.bind)
 
 
 @hook.on_start()
