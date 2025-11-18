@@ -153,7 +153,7 @@ def coin(text, notice, action):
     mu = 0.5 * amount
     sigma = (0.75 * amount) ** 0.5
     n = random.normalvariate(mu, sigma)
-    heads = clamp(int(round(n)), 0, amount)
+    heads = clamp(round(n), 0, amount)
     tails = amount - heads
     action(f"flips {amount} coins and gets {heads} heads and {tails} tails.")
     return None

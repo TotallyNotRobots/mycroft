@@ -306,7 +306,7 @@ def dict_format(args, formats):
     for f in formats:
         try:
             # Check if values can be mapped
-            m = f.format(**args)
+            m = f.format_map(args)
             # Insert match and number of matched values (max matched values if already in dict)
             matches[m] = max(
                 [matches.get(m, 0), len(re.findall(r"({.*?\})", f))]
@@ -368,12 +368,7 @@ def get_text_list(list_, last_word="or"):
     if len(list_) == 1:
         return list_[0]
 
-    return "{} {} {}".format(
-        # Translators: This string is used as a separator between list elements
-        ", ".join([i for i in list_][:-1]),
-        last_word,
-        list_[-1],
-    )
+    return f"{', '.join([i for i in list_][:-1])} {last_word} {list_[-1]}"
 
 
 def gen_markdown_table(headers, rows):

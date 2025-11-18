@@ -441,9 +441,7 @@ def lastfmcompare(text, nick, bot):
         f"\x02In Common:\x02 {', '.join(artists)}" if artists else ""
     )
 
-    return "Musical compatibility between \x02{}\x02 and \x02{}\x02: {} (\x02{}%\x02) {}".format(
-        format_user(user1), format_user(user2), level, score, artist_string
-    )
+    return f"Musical compatibility between \x02{format_user(user1)}\x02 and \x02{format_user(user2)}\x02: {level} (\x02{score}%\x02) {artist_string}"
 
 
 @hook.command("ltop", "ltt", autohelp=False)

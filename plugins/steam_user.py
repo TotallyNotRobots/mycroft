@@ -97,6 +97,6 @@ def steamid(text, reply) -> str:
         reply(f"{e}")
         raise
 
-    return "{name} ({state}): \x02ID64:\x02 {id_64}, \x02ID32:\x02 {id_32}, \x02ID3:\x02 {id_3}".format(
-        **data
+    return "{name} ({state}): \x02ID64:\x02 {id_64}, \x02ID32:\x02 {id_32}, \x02ID3:\x02 {id_3}".format_map(
+        data
     )

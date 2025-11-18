@@ -235,7 +235,6 @@ ignore = [
     "RUF006", # store result from asyncio.ensure_future
     "RUF022", # unsorted __all__
     "RUF023", # sort slots
-    "RUF046", # unnecessary cast
     "S101", # use of assert
     "S105", # possible hardcoded password
     "S113", # requests without timeout
@@ -261,15 +260,11 @@ ignore = [
     "TRY003", # avoid specifying long messages outside of the exception class
     "TRY300", # use try-except-else
     "TRY400", # use logging.exception
-    "UP024", # aliased errors
-    "UP031", # replace % with .format
-    "UP032", # use f-string
-    "UP041", # aliased errors
 ]
 select = [
     "ALL",
 ]
-extend-safe-fixes = ["TC", "UP"]
+extend-safe-fixes = ["TC", "UP", "RUF046"]
 future-annotations = true
 fixable = ["ALL"]
 

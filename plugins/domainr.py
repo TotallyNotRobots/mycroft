@@ -15,7 +15,7 @@ def format_domain(domain):
         domainformat = formats[domain["availability"]]
     else:
         domainformat = formats["other"]
-    return domainformat.format(**domain)
+    return domainformat.format_map(domain)
 
 
 @hook.command("domain", "domainr")
@@ -26,7 +26,9 @@ def domainr(text) -> str:
     except (URLError, HTTPError):
         return "Unable to get data for some reason. Try again later."
     if data["query"] == "":
-        return "An error occurred: {status} - {message}".format(**data["error"])
+        return "An error occurred: {status} - {message}".format_map(
+            data["error"]
+        )
 
     domains = [format_domain(domain) for domain in data["results"]]
     return f"Domains: {', '.join(domains)}"

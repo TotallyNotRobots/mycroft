@@ -34,15 +34,9 @@ def system(reply, message) -> None:
     sys_cpu_count = platform.machine()
 
     reply(
-        "OS: \x02{}\x02, "
-        "Python: \x02{} {}\x02, "
-        "Architecture: \x02{}\x02 (\x02{}\x02)".format(
-            sys_os,
-            python_implementation,
-            python_version,
-            sys_architecture,
-            sys_cpu_count,
-        )
+        f"OS: \x02{sys_os}\x02, "
+        f"Python: \x02{python_implementation} {python_version}\x02, "
+        f"Architecture: \x02{sys_architecture}\x02 (\x02{sys_cpu_count}\x02)"
     )
 
     if psutil:
@@ -55,12 +49,10 @@ def system(reply, message) -> None:
         uptime = timedelta(seconds=round(time.time() - process.create_time()))
 
         message(
-            "Uptime: \x02{}\x02, "
-            "Threads: \x02{}\x02, "
-            "CPU Usage: \x02{}\x02, "
-            "Memory Usage: \x02{}\x02".format(
-                uptime, thread_count, cpu_usage, memory_usage
-            )
+            f"Uptime: \x02{uptime}\x02, "
+            f"Threads: \x02{thread_count}\x02, "
+            f"CPU Usage: \x02{cpu_usage}\x02, "
+            f"Memory Usage: \x02{memory_usage}\x02"
         )
 
 
@@ -70,5 +62,5 @@ def sauce(bot) -> str:
     return (
         "Check out my source code! I am a fork of cloudbot: "
         "https://github.com/CloudBotIRC/CloudBot/ and my source is here: "
-        "{}".format(bot.repo_link)
+        f"{bot.repo_link}"
     )

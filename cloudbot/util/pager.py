@@ -110,14 +110,16 @@ class CommandPager(Pager):
                 index += len(self) + 1
 
             if index < 1:
-                out = "Please specify a valid page number between 1 and {}."
-                return [out.format(len(self))]
+                return [
+                    f"Please specify a valid page number between 1 and {len(self)}."
+                ]
 
             try:
                 return self[index - 1]
             except IndexError:
-                out = "Please specify a valid page number between 1 and {}."
-                return [out.format(len(self))]
+                return [
+                    f"Please specify a valid page number between 1 and {len(self)}."
+                ]
 
         if (page := self.next()) is not None:
             return page

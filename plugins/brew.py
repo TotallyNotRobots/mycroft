@@ -46,17 +46,7 @@ def brew(text, reply, bot):
             if "website" in brewery:
                 url = brewery["website"]
 
-            content = {
-                "name": beer["nameDisplay"],
-                "style": style,
-                "abv": abv,
-                "brewer": brewery["name"],
-                "url": url,
-            }
-
-            output = "{name} by {brewer} ({style}, {abv}% ABV) - {url}".format(
-                **content
-            )
+            output = f"{beer['nameDisplay']} by {brewery['name']} ({style}, {abv}% ABV) - {url}"
 
     except Exception:
         reply("Error parsing results.")

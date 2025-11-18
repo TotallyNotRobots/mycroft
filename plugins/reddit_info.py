@@ -94,7 +94,7 @@ def format_output(item, show_url=False):
     return colors.parse(
         "$(b){title} : {subreddit}$(b) - {comments}, {points}"
         " - $(b){author}$(b) {timesince} ago{url}{warning}"
-    ).format(**item)
+    ).format_map(item)
 
 
 def statuscheck(status, item):
@@ -364,9 +364,9 @@ def subinfo(text, reply):
     sub_age = datetime.now() - datetime.fromtimestamp(data["data"]["created"])
     age, age_unit = time_format(sub_age.days)
     out = (
-        "/r/$(b){}$(clear) - {} - a community for {}{}, there are {:,} subscribers and {:,} people online "
+        f"/r/$(b){name}$(clear) - {title} - a community for {age}{age_unit}, there are {subscribers:,} subscribers and {active:,} people online "
         "now."
-    ).format(name, title, age, age_unit, subscribers, active)
+    )
     if nsfw:
         out += " $(red)NSFW$(clear)"
     return colors.parse(out)

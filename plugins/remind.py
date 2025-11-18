@@ -136,10 +136,8 @@ async def check_reminders(bot, async_call, db) -> None:
             if delta > timedelta(minutes=30):
                 late_time = time_since(remind_time, count=2)
                 late = (
-                    "(I'm sorry for delivering this message $(b){}$(clear) late,"
-                    " it seems I was unable to deliver it on time)".format(
-                        late_time
-                    )
+                    f"(I'm sorry for delivering this message $(b){late_time}$(clear) late,"
+                    " it seems I was unable to deliver it on time)"
                 )
                 conn.message(user, colors.parse(late))
 

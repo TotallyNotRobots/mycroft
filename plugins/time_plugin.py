@@ -95,7 +95,7 @@ def time_command(text: str, reply, bot: CloudBot) -> str:
     location = result["geometry"]["location"]
 
     # Now we have the coordinates, we use the Timezone API to get the timezone
-    formatted_location = "{lat},{lng}".format(**location)
+    formatted_location = "{lat},{lng}".format_map(location)
 
     epoch = time.time()
 

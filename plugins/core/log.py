@@ -87,7 +87,7 @@ def format_event(event):
     # Try formatting with non-connection-specific formats
 
     if event.type in base_formats:
-        return base_formats[event.type].format(**args)
+        return base_formats[event.type].format_map(args)
 
     # Try formatting with IRC-formats, if this is an IRC event
     if event.irc_command is not None:
@@ -112,7 +112,7 @@ def format_irc_event(event, args):
     # Try formatting with the IRC command
 
     if event.irc_command in irc_formats:
-        return irc_formats[event.irc_command].format(**args)
+        return irc_formats[event.irc_command].format_map(args)
 
     # Try formatting with the CTCP command
 
@@ -123,14 +123,14 @@ def format_irc_event(event, args):
 
         if ctcp_command in ("VERSION", "PING", "TIME", "FINGER"):
             if ctcp_message:
-                return ctcp_known_with_message.format(**args)
+                return ctcp_known_with_message.format_map(args)
 
             return ctcp_known.format(**args)
 
         if ctcp_message:
-            return ctcp_unknown_with_message.format(**args)
+            return ctcp_unknown_with_message.format_map(args)
 
-        return ctcp_unknown.format(**args)
+        return ctcp_unknown.format_map(args)
 
     # No formats have been found, resort to the default
 

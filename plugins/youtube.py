@@ -249,11 +249,8 @@ def youtime(text: str, reply) -> str:
     length_text = timeformat.format_time(l_sec, simple=True)
     total_text = timeformat.format_time(total, accuracy=8)
 
-    return (
-        "The video \x02{}\x02 has a length of {} and has been viewed {:,} times for "
-        "a total run time of {}!".format(
-            snippet["title"], length_text, views, total_text
-        )
+    return "The video \x02{}\x02 has a length of {} and has been viewed {:,} times for a total run time of {}!".format(
+        snippet["title"], length_text, views, total_text
     )
 
 

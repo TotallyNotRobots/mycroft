@@ -62,15 +62,7 @@ OPT = lambda x: rf"(?:{x})?"
 OPT_SEP = lambda x: rf"(?:{x}\s*(?:{SEPARATORS}\s*)?)?"
 
 TIME_FORMATS = [
-    r"{WEEKS}\s*{DAYS}\s*{HOURS}\s*{MINS}\s*{SECS}".format(
-        # YEARS=OPT_SEP(YEARS),
-        # MONTHS=OPT_SEP(MONTHS),
-        WEEKS=OPT_SEP(WEEKS),
-        DAYS=OPT_SEP(DAYS),
-        HOURS=OPT_SEP(HOURS),
-        MINS=OPT_SEP(MINS),
-        SECS=OPT(SECS),
-    ),
+    rf"{OPT_SEP(WEEKS)}\s*{OPT_SEP(DAYS)}\s*{OPT_SEP(HOURS)}\s*{OPT_SEP(MINS)}\s*{OPT(SECS)}",
     rf"{MIN_CLOCK}",
     rf"{OPT_SEP(WEEKS)}\s*{OPT_SEP(DAYS)}\s*{HOUR_CLOCK}",
     rf"{DAY_CLOCK}",

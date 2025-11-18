@@ -62,10 +62,15 @@ def format_game(app_id, show_url=True):
 
         # the steam API sends prices as an int like "9999" for $19.99, we divmod to get the actual price
         if price["final"] == price["initial"]:
-            out.append("\x02$%d.%02d\x02" % divmod(price["final"], 100))
+            dollars, cents = divmod(price["final"], 100)
+            out.append(f"\x02${int(dollars)}.{int(cents):02}\x02")
         else:
-            price_now = "$%d.%02d" % divmod(price["final"], 100)
-            price_original = "$%d.%02d" % divmod(price["initial"], 100)
+            dollars, cents = divmod(price["final"], 100)
+            price_now = f"${int(dollars)}.{int(cents):02}"
+            original_dollars, original_cents = divmod(price["initial"], 100)
+            price_original = (
+                f"${int(original_dollars)}.{int(original_cents):02}"
+            )
 
             out.append(f"\x02{price_now}\x02 (was \x02{price_original}\x02)")
 
