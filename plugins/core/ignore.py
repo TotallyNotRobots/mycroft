@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from collections import OrderedDict
+from typing import TYPE_CHECKING
 
 from irclib.util.compare import match_mask
 from sqlalchemy import (
@@ -14,6 +17,9 @@ from sqlalchemy import (
 
 from cloudbot import hook
 from cloudbot.util import database, web
+
+if TYPE_CHECKING:
+    from cloudbot.client import Client
 
 table = Table(
     "ignored",
@@ -42,7 +48,7 @@ def load_cache(db) -> None:
     ignore_cache.extend(new_cache)
 
 
-def find_ignore(conn, chan, mask):
+def find_ignore(conn: str, chan, mask):
     search = (conn.casefold(), chan.casefold(), mask.casefold())
     for _conn, _chan, _mask in ignore_cache:
         if search == (_conn.casefold(), _chan.casefold(), _mask.casefold()):
@@ -51,14 +57,14 @@ def find_ignore(conn, chan, mask):
     return None
 
 
-def ignore_in_cache(conn, chan, mask) -> bool:
+def ignore_in_cache(conn: str, chan, mask) -> bool:
     if find_ignore(conn, chan, mask):
         return True
 
     return False
 
 
-def add_ignore(db, conn, chan, mask) -> None:
+def add_ignore(db, conn: str, chan, mask) -> None:
     if ignore_in_cache(conn, chan, mask):
         return
 
@@ -67,7 +73,7 @@ def add_ignore(db, conn, chan, mask) -> None:
     load_cache(db)
 
 
-def remove_ignore(db, conn, chan, mask) -> bool:
+def remove_ignore(db, conn: str, chan, mask) -> bool:
     item = find_ignore(conn, chan, mask)
     if not item:
         return False
@@ -85,7 +91,7 @@ def remove_ignore(db, conn, chan, mask) -> bool:
     return True
 
 
-def is_ignored(conn, chan, mask) -> bool:
+def is_ignored(conn: str, chan, mask) -> bool:
     chan_key = (conn.casefold(), chan.casefold())
     mask_cf = mask.casefold()
     for _conn, _chan, _mask in ignore_cache:
@@ -128,7 +134,7 @@ async def ignore_sieve(bot, event, _hook):
     return event
 
 
-def get_user(conn, text):
+def get_user(conn: Client, text):
     users = conn.memory.get("users", {})
     user = users.get(text)
 
@@ -144,7 +150,7 @@ def get_user(conn, text):
 
 
 @hook.command(permissions=["ignore", "chanop"])
-def ignore(text, db, chan, conn, notice, admin_log, nick) -> None:
+def ignore(text, db, chan, conn: Client, notice, admin_log, nick) -> None:
     """<nick|mask> - ignores all input from <nick|mask> in this channel."""
     target = get_user(conn, text)
 
@@ -157,7 +163,7 @@ def ignore(text, db, chan, conn, notice, admin_log, nick) -> None:
 
 
 @hook.command(permissions=["ignore", "chanop"])
-def unignore(text, db, chan, conn, notice, nick, admin_log) -> None:
+def unignore(text, db, chan, conn: Client, notice, nick, admin_log) -> None:
     """<nick|mask> - un-ignores all input from <nick|mask> in this channel."""
     target = get_user(conn, text)
 
@@ -171,7 +177,7 @@ def unignore(text, db, chan, conn, notice, nick, admin_log) -> None:
 
 
 @hook.command(permissions=["ignore", "chanop"], autohelp=False)
-def listignores(db, conn, chan):
+def listignores(db, conn: Client, chan):
     """- List all active ignores for the current channel"""
 
     rows = db.execute(
@@ -190,7 +196,7 @@ def listignores(db, conn, chan):
 
 
 @hook.command(permissions=["botcontrol"])
-def global_ignore(text, db, conn, notice, nick, admin_log) -> None:
+def global_ignore(text, db, conn: Client, notice, nick, admin_log) -> None:
     """<nick|mask> - ignores all input from <nick|mask> in ALL channels."""
     target = get_user(conn, text)
 
@@ -205,7 +211,7 @@ def global_ignore(text, db, conn, notice, nick, admin_log) -> None:
 
 
 @hook.command(permissions=["botcontrol"])
-def global_unignore(text, db, conn, notice, nick, admin_log) -> None:
+def global_unignore(text, db, conn: Client, notice, nick, admin_log) -> None:
     """<nick|mask> - un-ignores all input from <nick|mask> in ALL channels."""
     target = get_user(conn, text)
 
@@ -220,13 +226,13 @@ def global_unignore(text, db, conn, notice, nick, admin_log) -> None:
 
 
 @hook.command(permissions=["botcontrol", "snoonetstaff"], autohelp=False)
-def list_global_ignores(db, conn):
+def list_global_ignores(db, conn: Client):
     """- List all global ignores for the current network"""
     return listignores(db, conn, "*")
 
 
 @hook.command(permissions=["botcontrol", "snoonetstaff"], autohelp=False)
-def list_all_ignores(db, conn, text):
+def list_all_ignores(db, conn: Client, text):
     """<chan> - List all ignores for <chan>, requires elevated permissions"""
     whereclause = table.c.connection == conn.name.lower()
 

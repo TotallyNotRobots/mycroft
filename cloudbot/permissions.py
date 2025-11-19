@@ -13,6 +13,8 @@ from cloudbot.util.database import Session
 if TYPE_CHECKING:
     import sqlalchemy as sa
 
+    from cloudbot.client import Client
+
 logger = logging.getLogger("cloudbot")
 
 # put your hostmask here for magic
@@ -99,7 +101,7 @@ class GroupPermission(database.Base):
 
 
 class PermissionManager:
-    def __init__(self, conn) -> None:
+    def __init__(self, conn: Client) -> None:
         logger.info(
             "[%s|permissions] Created permission manager for %s.",
             conn.name,

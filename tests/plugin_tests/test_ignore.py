@@ -3,11 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from plugins.core import ignore
-
-
-class MockConn:
-    def __init__(self, name) -> None:
-        self.name = name
+from tests.util.mock_conn import MockClient
 
 
 def setup_db(mock_db) -> None:
@@ -15,17 +11,17 @@ def setup_db(mock_db) -> None:
 
     sess = mock_db.session()
 
-    sess.execute(ignore.table.delete())
-
     ignore.load_cache(sess)
 
 
-def test_ignore(mock_db, patch_paste) -> None:
+@pytest.mark.asyncio
+async def test_ignore(mock_db, patch_paste, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     setup_db(mock_db)
 
     sess = mock_db.session()
 
-    conn = MockConn("testconn")
+    conn = MockClient(bot=bot, name="testconn")
 
     ignore.add_ignore(sess, conn.name, "#chan", "*!*@host")
     ignore.add_ignore(sess, conn.name, "#chan", "*!*@host")

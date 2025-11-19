@@ -14,6 +14,7 @@ import sqlalchemy as sa
 from sqlalchemy import Column, PrimaryKeyConstraint, String, Table, select
 
 from cloudbot import hook
+from cloudbot.client import Client
 from cloudbot.util import database
 from cloudbot.util.irc import parse_mode_string
 from plugins.core import server_info
@@ -107,7 +108,7 @@ def make_clause(conn: Client, chan: str) -> sa.ColumnElement[bool]:
     )
 
 
-def clear_key(db: Session, conn, chan: str) -> None:
+def clear_key(db: Session, conn: Client, chan: str) -> None:
     """
     Remove a channel's key from the DB
     """

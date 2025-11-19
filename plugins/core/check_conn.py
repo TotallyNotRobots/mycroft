@@ -1,11 +1,17 @@
+from __future__ import annotations
+
 import asyncio
 import time
+from typing import TYPE_CHECKING
 
 from cloudbot import hook
 from cloudbot.util import colors
 
+if TYPE_CHECKING:
+    from cloudbot.client import Client
 
-async def do_reconnect(conn, auto=True) -> str:
+
+async def do_reconnect(conn: Client, auto=True) -> str:
     if conn.connected:
         conn.quit("Reconnecting...")
         await asyncio.sleep(5)
@@ -30,7 +36,7 @@ async def do_reconnect(conn, auto=True) -> str:
 
 
 @hook.command(autohelp=False, permissions=["botcontrol"], singlethread=True)
-async def reconnect(conn, text, bot):
+async def reconnect(conn: Client, text, bot):
     """[connection] - Reconnects to [connection] or the current connection if not specified"""
     if not text:
         to_reconnect = conn
@@ -50,7 +56,7 @@ async def check_conns(bot) -> None:
             await do_reconnect(conn)
 
 
-def format_conn(conn):
+def format_conn(conn: Client):
     lag = conn.memory["lag"]
     try:
         warning = conn.config["ping_settings"]["warn"]
@@ -80,7 +86,7 @@ def list_conns(bot) -> str:
 
 
 @hook.connect()
-def on_connect(conn) -> None:
+def on_connect(conn: Client) -> None:
     now = time.time()
     conn.memory["lag_sent"] = 0
     conn.memory["ping_recv"] = now
@@ -130,7 +136,7 @@ async def reconnect_loop(bot) -> None:
 
 
 @hook.irc_raw("PONG")
-def on_pong(conn, irc_paramlist) -> None:
+def on_pong(conn: Client, irc_paramlist) -> None:
     now = time.time()
     conn.memory["ping_recv"] = now
     timestamp = irc_paramlist[-1]
@@ -149,6 +155,6 @@ def on_pong(conn, irc_paramlist) -> None:
 
 
 @hook.irc_raw("*")
-async def on_act(conn) -> None:
+async def on_act(conn: Client) -> None:
     now = time.time()
     conn.memory["last_activity"] = now

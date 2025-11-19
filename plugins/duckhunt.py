@@ -20,6 +20,7 @@ from sqlalchemy import (
 from sqlalchemy.sql import select
 
 from cloudbot import hook
+from cloudbot.client import Client
 from cloudbot.event import EventType
 from cloudbot.util import database
 from cloudbot.util.formatting import pluralize_auto, truncate
@@ -31,6 +32,7 @@ if TYPE_CHECKING:
     from sqlalchemy.orm import Session
 
     from cloudbot.client import Client
+    from cloudbot.clients.irc import IrcClient
 
 duck_tail = "\u30fb\u309c\u309c\u30fb\u3002\u3002\u30fb\u309c\u309c"
 duck = [
@@ -101,7 +103,7 @@ class ChannelState:
         self.messages = 0
         self.masks.clear()
 
-    def should_deploy(self, conn):
+    def should_deploy(self, conn: Client):
         """Should we deploy a duck?"""
         msg_delay = get_config(conn, "minimum_messages", 10)
         mask_req = get_config(conn, "minimum_users", 5)
@@ -134,7 +136,7 @@ def _get_conf_value(conf, field):
     return conf["plugins"]["duckhunt"][field]
 
 
-def get_config(conn, field, default):
+def get_config(conn: Client, field, default):
     try:
         return _get_conf_value(conn.config, field)
     except LookupError:
@@ -216,7 +218,7 @@ def save_status(db, _sleep=True) -> None:
                 sleep(5)
 
 
-def set_game_state(db, conn, chan, active=None, duck_kick=None) -> None:
+def set_game_state(db, conn: Client, chan, active=None, duck_kick=None) -> None:
     status = get_state_table(conn.name, chan)
     if active is not None:
         status.game_on = active
@@ -228,7 +230,7 @@ def set_game_state(db, conn, chan, active=None, duck_kick=None) -> None:
 
 
 @hook.event([EventType.message, EventType.action], singlethread=True)
-def increment_msg_counter(event, conn) -> None:
+def increment_msg_counter(event, conn: Client) -> None:
     """Increment the number of messages said in an active game channel. Also keep track of the unique masks that are
     speaking.
     """
@@ -245,7 +247,7 @@ def increment_msg_counter(event, conn) -> None:
 @hook.command(
     "starthunt", autohelp=False, permissions=["chanop", "op", "botcontrol"]
 )
-def start_hunt(db, chan, message, conn):
+def start_hunt(db, chan, message, conn: Client):
     """- This command starts a duckhunt in your channel, to stop the hunt use .stophunt"""
     if is_opt_out(conn.name, chan):
         return None
@@ -269,7 +271,7 @@ def start_hunt(db, chan, message, conn):
     return None
 
 
-def set_ducktime(chan, conn) -> None:
+def set_ducktime(chan, conn: str) -> None:
     status: ChannelState = get_state_table(conn, chan)
     status.next_duck_time = random.randint(
         int(time()) + 480, int(time()) + 3600
@@ -283,7 +285,7 @@ def set_ducktime(chan, conn) -> None:
 @hook.command(
     "stophunt", autohelp=False, permissions=["chanop", "op", "botcontrol"]
 )
-def stop_hunt(db, chan, conn):
+def stop_hunt(db, chan, conn: Client):
     """- This command stops the duck hunt in your channel. Scores will be preserved"""
     if is_opt_out(conn.name, chan):
         return None
@@ -296,7 +298,7 @@ def stop_hunt(db, chan, conn):
 
 
 @hook.command("duckkick", permissions=["chanop", "op", "botcontrol"])
-def no_duck_kick(db, text, chan, conn, notice_doc):
+def no_duck_kick(db, text, chan, conn: Client, notice_doc):
     """<enable|disable> - If the bot has OP or half-op in the channel you can specify .duckkick enable|disable so that
     people are kicked for shooting or befriending a non-existent goose. Default is off.
     """
@@ -368,7 +370,7 @@ def hit_or_miss(deploy, shoot):
     return 1
 
 
-def dbadd_entry(nick, chan, db, conn, shoot, friend) -> None:
+def dbadd_entry(nick, chan, db, conn: Client, shoot, friend) -> None:
     """Takes care of adding a new row to the database."""
     query = table.insert().values(
         network=conn.name,
@@ -382,7 +384,7 @@ def dbadd_entry(nick, chan, db, conn, shoot, friend) -> None:
     db.commit()
 
 
-def dbupdate(nick, chan, db, conn, shoot, friend):
+def dbupdate(nick, chan, db, conn: Client, shoot, friend):
     """update a db row"""
     values = {}
     if shoot:
@@ -410,7 +412,7 @@ def dbupdate(nick, chan, db, conn, shoot, friend):
     db.commit()
 
 
-def update_score(nick, chan, db, conn, shoot=0, friend=0):
+def update_score(nick, chan, db, conn: Client, shoot=0, friend=0):
     score = db.execute(
         select(table.c.shot, table.c.befriend)
         .where(table.c.network == conn.name)
@@ -426,7 +428,7 @@ def update_score(nick, chan, db, conn, shoot=0, friend=0):
     return {"shoot": shoot, "friend": friend}
 
 
-def attack(event, nick, chan, db, conn, attack_type):
+def attack(event, nick, chan, db, conn: IrcClient, attack_type):
     if is_opt_out(conn.name, chan):
         return None
 
@@ -513,15 +515,15 @@ def attack(event, nick, chan, db, conn, attack_type):
     return None
 
 
-@hook.command("bang", autohelp=False)
-def bang(nick, chan, db, conn, event):
+@hook.command("bang", autohelp=False, clients=["irc"])
+def bang(nick, chan, db, conn: IrcClient, event):
     """- when there is a duck on the loose use this command to shoot it."""
     with chan_locks[conn.name][chan.casefold()]:
         return attack(event, nick, chan, db, conn, "shoot")
 
 
-@hook.command("befriend", autohelp=False)
-def befriend(nick, chan, db, conn, event):
+@hook.command("befriend", autohelp=False, clients=["irc"])
+def befriend(nick, chan, db, conn: IrcClient, event):
     """- when there is a duck on the loose use this command to befriend it before someone else shoots it."""
     with chan_locks[conn.name][chan.casefold()]:
         return attack(event, nick, chan, db, conn, "befriend")
@@ -572,7 +574,7 @@ class ScoreType:
         self.verb = verb
 
 
-def get_channel_scores(db, score_type: ScoreType, conn, chan):
+def get_channel_scores(db, score_type: ScoreType, conn: Client, chan):
     scores_dict: dict[str, int] = defaultdict(int)
     scores = get_scores(db, score_type.column_name, conn.name, chan)
     if not scores:
@@ -587,7 +589,7 @@ def get_channel_scores(db, score_type: ScoreType, conn, chan):
     return scores_dict
 
 
-def _get_global_scores(db, score_type: ScoreType, conn):
+def _get_global_scores(db, score_type: ScoreType, conn: Client):
     scores_dict: dict[str, int] = defaultdict(int)
     chancount: dict[str, int] = defaultdict(int)
     scores = get_scores(db, score_type.column_name, conn.name)
@@ -604,11 +606,11 @@ def _get_global_scores(db, score_type: ScoreType, conn):
     return scores_dict, chancount
 
 
-def get_global_scores(db, score_type: ScoreType, conn):
+def get_global_scores(db, score_type: ScoreType, conn: Client):
     return _get_global_scores(db, score_type, conn)[0]
 
 
-def get_average_scores(db, score_type: ScoreType, conn):
+def get_average_scores(db, score_type: ScoreType, conn: Client):
     scores_dict, chancount = _get_global_scores(db, score_type, conn)
     if not scores_dict:
         return None
@@ -666,7 +668,7 @@ def display_scores(
 
 
 @hook.command("friends", autohelp=False)
-def friends(text, event, chan, conn, db):
+def friends(text, event, chan, conn: Client, db):
     """[{global|average}] - Prints a list of the top duck friends in the
     channel, if 'global' is specified all channels in the database are
     included.
@@ -675,7 +677,7 @@ def friends(text, event, chan, conn, db):
 
 
 @hook.command("killers", autohelp=False)
-def killers(text, event, chan, conn, db):
+def killers(text, event, chan, conn: Client, db):
     """[{global|average}] - Prints a list of the top duck killers in the
     channel, if 'global' is specified all channels in the database are
     included.
@@ -694,7 +696,7 @@ def duckforgive(text) -> str:
 
 
 @hook.command("hunt_opt_out", permissions=["op", "ignore"], autohelp=False)
-def hunt_opt_out(text, chan, db, conn):
+def hunt_opt_out(text, chan, db, conn: Client):
     """[{add <chan>|remove <chan>|list}] - Running this command without any arguments displays the status of the
     current channel. hunt_opt_out add #channel will disable all duck hunt commands in the specified channel.
     hunt_opt_out remove #channel will re-enable the game for the specified channel.
@@ -738,7 +740,7 @@ def hunt_opt_out(text, chan, db, conn):
 
 
 @hook.command("duckmerge", permissions=["botcontrol", "duckmerge"])
-def duck_merge(text, conn, db, message):
+def duck_merge(text, conn: Client, db, message):
     """<user1> <user2> - Moves the duck scores from one nick to another nick. Accepts two nicks as input the first will
     have their duck scores removed the second will have the first score added. Warning this cannot be undone.
     """
@@ -825,7 +827,7 @@ def duck_merge(text, conn, db, message):
 
 
 @hook.command("ducks", autohelp=False)
-def ducks_user(text, nick, chan, conn, db, message):
+def ducks_user(text, nick, chan, conn: Client, db, message):
     """<nick> - Prints a users duck stats. If no nick is input it will check the calling username."""
     name = nick.lower()
     if text:
@@ -895,7 +897,7 @@ def ducks_user(text, nick, chan, conn, db, message):
 
 
 @hook.command("duckstats", autohelp=False)
-def duck_stats(chan, conn, db, message):
+def duck_stats(chan, conn: Client, db, message):
     """- Prints duck statistics for the entire channel and totals for the network."""
     scores = db.execute(
         select(

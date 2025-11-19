@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import logging
 import random
 from collections import defaultdict
 from threading import RLock
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Column, String, Table
 from sqlalchemy.exc import SQLAlchemyError
@@ -9,6 +12,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from cloudbot import hook
 from cloudbot.util import database
 from cloudbot.util.pager import CommandPager, paginated_list
+
+if TYPE_CHECKING:
+    from cloudbot.client import Client
 
 search_pages: dict[str, dict[str, CommandPager]] = defaultdict(dict)
 
@@ -45,7 +51,7 @@ def load_cache(db) -> None:
 
 
 @hook.command("moregrab", autohelp=False)
-def moregrab(text, chan, conn):
+def moregrab(text, chan, conn: Client):
     """[page] - if a grab search has lots of results the results are pagintated. If the most recent search is paginated
     the pages are stored for retrieval. If no argument is given the next page will be returned else a page number can
     be specified."""
@@ -75,8 +81,8 @@ def grab_add(nick, time, msg, chan, db) -> None:
     load_cache(db)
 
 
-def get_latest_line(conn, chan, nick):
-    history = conn.history.get(chan, [])
+def get_latest_line(conn: Client, chan: str, nick: str):
+    history = conn.history[chan]
     for name, timestamp, msg in reversed(history):
         if nick.casefold() == name.casefold():
             return name, timestamp, msg
@@ -85,7 +91,7 @@ def get_latest_line(conn, chan, nick):
 
 
 @hook.command()
-def grab(text, nick, chan, db, conn) -> str:
+def grab(text, nick, chan, db, conn: Client) -> str:
     """<nick> - grabs the last message from the specified nick and adds it to the quote database"""
     if text.lower() == nick.lower():
         return "Didn't your mother teach you not to grab yourself?"
@@ -180,7 +186,7 @@ def grabrandom(text, chan, message):
 
 
 @hook.command("grabsearch", "grabs", autohelp=False)
-def grabsearch(text, chan, conn):
+def grabsearch(text, chan, conn: Client):
     """[text] - matches "text" against nicks or grab strings in the database"""
     result: list[tuple[str, str]] = []
     lower_text = text.lower()

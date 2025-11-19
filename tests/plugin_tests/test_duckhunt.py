@@ -9,7 +9,8 @@ from unittest.mock import MagicMock, call, patch
 import pytest
 
 from plugins import duckhunt
-from tests.util.mock_conn import MockConn
+from tests.util.mock_conn import MockClient
+from tests.util.mock_irc_client import MockIrcClient
 
 if TYPE_CHECKING:
     from tests.util.mock_db import MockDB
@@ -33,7 +34,9 @@ def test_top_list(prefix, items, result, mock_db) -> None:
     assert duckhunt.top_list(prefix, items.items()) == result
 
 
-def test_update_score(mock_db) -> None:
+@pytest.mark.asyncio
+async def test_update_score(mock_db, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     duckhunt.table.create(mock_db.engine)
     mock_db.add_row(
         duckhunt.table,
@@ -45,19 +48,21 @@ def test_update_score(mock_db) -> None:
     )
     session = mock_db.session()
 
-    conn = MockConn(name="net")
+    conn = MockClient(bot=bot, name="net")
     chan = "#chan"
     res = duckhunt.update_score("nick", chan, session, conn, shoot=1)
     assert res == {"shoot": 2, "friend": 3}
     assert mock_db.get_data(duckhunt.table) == [("net", "nick", 2, 3, "#chan")]
 
 
-def test_display_scores(mock_db) -> None:
+@pytest.mark.asyncio
+async def test_display_scores(mock_db, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     duckhunt.table.create(mock_db.engine)
 
     session = mock_db.session()
 
-    conn = MockConn()
+    conn = MockClient(bot=bot)
 
     chan = "#TestChannel"
     chan1 = "#TestChannel1"
@@ -179,12 +184,14 @@ def test_ignore_integration(mock_db) -> None:
     assert tbl.masks == [event.host]
 
 
-def test_no_duck_kick_opt_out(mock_db) -> None:
+@pytest.mark.asyncio
+async def test_no_duck_kick_opt_out(mock_db, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     duckhunt.status_table.create(mock_db.engine)
     with patch.object(duckhunt, "is_opt_out") as mocked:
         mocked.return_value = True
         db = mock_db.session()
-        conn = MockConn()
+        conn = MockClient(bot=bot)
         event = MagicMock()
         chan = "#foo"
         res = duckhunt.no_duck_kick(db, "foo", chan, conn, event.notice_doc)
@@ -193,24 +200,28 @@ def test_no_duck_kick_opt_out(mock_db) -> None:
         assert event.mock_calls == []
 
 
-def test_stop_hunt_opt_out(mock_db) -> None:
+@pytest.mark.asyncio
+async def test_stop_hunt_opt_out(mock_db, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     duckhunt.status_table.create(mock_db.engine)
     with patch.object(duckhunt, "is_opt_out") as mocked:
         mocked.return_value = True
         db = mock_db.session()
-        conn = MockConn()
+        conn = MockClient(bot=bot)
         chan = "#foo"
         res = duckhunt.stop_hunt(db, chan, conn)
         assert res is None
         assert mock_db.get_data(duckhunt.status_table) == []
 
 
-def test_start_hunt_opt_out(mock_db) -> None:
+@pytest.mark.asyncio
+async def test_start_hunt_opt_out(mock_db, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     duckhunt.status_table.create(mock_db.engine)
     with patch.object(duckhunt, "is_opt_out") as mocked:
         mocked.return_value = True
         db = mock_db.session()
-        conn = MockConn()
+        conn = MockClient(bot=bot)
         event = MagicMock()
         chan = "#foo"
         res = duckhunt.start_hunt(db, chan, event.message, conn)
@@ -219,10 +230,12 @@ def test_start_hunt_opt_out(mock_db) -> None:
         assert mock_db.get_data(duckhunt.status_table) == []
 
 
-def test_start_hunt(mock_db) -> None:
+@pytest.mark.asyncio
+async def test_start_hunt(mock_db, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     duckhunt.status_table.create(mock_db.engine)
     db = mock_db.session()
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     event = MagicMock()
     chan = "#foo"
     res = duckhunt.start_hunt(db, chan, event.message, conn)
@@ -238,9 +251,11 @@ def test_start_hunt(mock_db) -> None:
     ]
 
 
-def test_duck_migrate_no_data(mock_db) -> None:
+@pytest.mark.asyncio
+async def test_duck_migrate_no_data(mock_db, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     duckhunt.table.create(mock_db.engine)
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     event = MagicMock()
     db = mock_db.session()
     text = "a b"
@@ -251,9 +266,11 @@ def test_duck_migrate_no_data(mock_db) -> None:
     assert mock_db.get_data(duckhunt.table) == []
 
 
-def test_duck_migrate(mock_db) -> None:
+@pytest.mark.asyncio
+async def test_duck_migrate(mock_db, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     duckhunt.table.create(mock_db.engine)
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     conn.name = "foo"
     mock_db.add_row(
         duckhunt.table,
@@ -300,11 +317,13 @@ def test_duck_migrate(mock_db) -> None:
     assert res is None
 
 
-def test_duck_stats_user_single_chan(mock_db) -> None:
+@pytest.mark.asyncio
+async def test_duck_stats_user_single_chan(mock_db, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     duckhunt.table.create(mock_db.engine)
     chan = "#foo"
     nick = "foobar"
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     mock_db.add_row(
         duckhunt.table,
         network=conn.name,
@@ -326,9 +345,11 @@ def test_duck_stats_user_single_chan(mock_db) -> None:
     ]
 
 
-def test_duck_stats_no_data(mock_db) -> None:
+@pytest.mark.asyncio
+async def test_duck_stats_no_data(mock_db, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     duckhunt.table.create(mock_db.engine)
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     event = MagicMock()
     chan = "#foo"
     db = mock_db.session()
@@ -348,7 +369,9 @@ class TestOptOut:
         assert duckhunt.is_opt_out("net", "#chan")
         assert not duckhunt.is_opt_out("net2", "#chan")
 
-    def test_set_opt_out_on(self, mock_db) -> None:
+    @pytest.mark.asyncio
+    async def test_set_opt_out_on(self, mock_db, mock_bot_factory) -> None:
+        bot = mock_bot_factory(db=mock_db)
         duckhunt.table.create(mock_db.engine)
         duckhunt.optout.create(mock_db.engine)
         duckhunt.status_table.create(mock_db.engine)
@@ -356,14 +379,16 @@ class TestOptOut:
         duckhunt.load_optout(mock_db.session())
         duckhunt.load_status(mock_db.session())
 
-        conn = MockConn(name="net")
+        conn = MockClient(bot=bot, name="net")
         res = duckhunt.hunt_opt_out(
             "add #chan", "#chan", mock_db.session(), conn
         )
         assert res == "The duckhunt has been successfully disabled in #chan."
         assert mock_db.get_data(duckhunt.optout) == [("net", "#chan")]
 
-    def test_set_opt_out_off(self, mock_db) -> None:
+    @pytest.mark.asyncio
+    async def test_set_opt_out_off(self, mock_db, mock_bot_factory) -> None:
+        bot = mock_bot_factory(db=mock_db)
         duckhunt.table.create(mock_db.engine)
         duckhunt.optout.create(mock_db.engine)
         duckhunt.status_table.create(mock_db.engine)
@@ -372,7 +397,7 @@ class TestOptOut:
         duckhunt.load_optout(mock_db.session())
         duckhunt.load_status(mock_db.session())
 
-        conn = MockConn(name="net")
+        conn = MockClient(bot=bot, name="net")
         assert duckhunt.is_opt_out("net", "#chan")
         res = duckhunt.hunt_opt_out(
             "remove #chan", "#chan", mock_db.session(), conn
@@ -397,11 +422,13 @@ class TestStatus:
         assert state.game_on
         assert state.no_duck_kick
 
-    def test_save_and_load(self, mock_db) -> None:
+    @pytest.mark.asyncio
+    async def test_save_and_load(self, mock_db, mock_bot_factory) -> None:
+        bot = mock_bot_factory(db=mock_db)
         duckhunt.game_status.clear()
         duckhunt.status_table.create(mock_db.engine)
         duckhunt.load_status(mock_db.session())
-        conn = MockConn(name="net")
+        conn = MockClient(bot=bot, name="net")
         duckhunt.set_game_state(mock_db.session(), conn, "#foo", active=True)
         state = duckhunt.get_state_table("net", "#foo")
         assert state.game_on
@@ -433,13 +460,15 @@ class TestStatus:
 
 
 class TestStartHunt:
-    def test_start_hunt(self, mock_db) -> None:
+    @pytest.mark.asyncio
+    async def test_start_hunt(self, mock_db, mock_bot_factory) -> None:
+        bot = mock_bot_factory(db=mock_db)
         duckhunt.optout.create(mock_db.engine)
         duckhunt.load_optout(mock_db.session())
         duckhunt.game_status.clear()
         duckhunt.status_table.create(mock_db.engine)
         duckhunt.load_status(mock_db.session())
-        conn = MockConn(name="net")
+        conn = MockClient(bot=bot, name="net")
         message = MagicMock()
         res = duckhunt.start_hunt(mock_db.session(), "#chan", message, conn)
         assert mock_db.get_data(duckhunt.status_table) == [
@@ -455,7 +484,9 @@ class TestStartHunt:
 
 
 class TestStopHunt:
-    def test_stop_hunt(self, mock_db) -> None:
+    @pytest.mark.asyncio
+    async def test_stop_hunt(self, mock_db, mock_bot_factory) -> None:
+        bot = mock_bot_factory(db=mock_db)
         duckhunt.optout.create(mock_db.engine)
         duckhunt.load_optout(mock_db.session())
         duckhunt.game_status.clear()
@@ -468,7 +499,7 @@ class TestStopHunt:
             duck_kick=False,
         )
         duckhunt.load_status(mock_db.session())
-        conn = MockConn(name="net")
+        conn = MockClient(bot=bot, name="net")
         res = duckhunt.stop_hunt(mock_db.session(), "#chan", conn)
         assert mock_db.get_data(duckhunt.status_table) == [
             ("net", "#chan", False, False)
@@ -477,7 +508,9 @@ class TestStopHunt:
 
 
 class TestDuckKick:
-    def test_enable_duck_kick(self, mock_db) -> None:
+    @pytest.mark.asyncio
+    async def test_enable_duck_kick(self, mock_db, mock_bot_factory) -> None:
+        bot = mock_bot_factory(db=mock_db)
         duckhunt.optout.create(mock_db.engine)
         duckhunt.load_optout(mock_db.session())
         duckhunt.game_status.clear()
@@ -490,7 +523,7 @@ class TestDuckKick:
             duck_kick=False,
         )
         duckhunt.load_status(mock_db.session())
-        conn = MockConn(name="net")
+        conn = MockClient(bot=bot, name="net")
         notice_doc = MagicMock()
         res = duckhunt.no_duck_kick(
             mock_db.session(), "enable", "#chan", conn, notice_doc
@@ -504,7 +537,9 @@ class TestDuckKick:
         )
         assert notice_doc.mock_calls == []
 
-    def test_disable_duck_kick(self, mock_db) -> None:
+    @pytest.mark.asyncio
+    async def test_disable_duck_kick(self, mock_db, mock_bot_factory) -> None:
+        bot = mock_bot_factory(db=mock_db)
         duckhunt.optout.create(mock_db.engine)
         duckhunt.load_optout(mock_db.session())
         duckhunt.game_status.clear()
@@ -517,7 +552,7 @@ class TestDuckKick:
             duck_kick=True,
         )
         duckhunt.load_status(mock_db.session())
-        conn = MockConn(name="net")
+        conn = MockClient(bot=bot, name="net")
         notice_doc = MagicMock()
         res = duckhunt.no_duck_kick(
             mock_db.session(), "disable", "#chan", conn, notice_doc
@@ -530,7 +565,9 @@ class TestDuckKick:
 
 
 class TestAttack:
-    def test_shoot(self, mock_db, freeze_time) -> None:
+    @pytest.mark.asyncio
+    async def test_shoot(self, mock_db, freeze_time, mock_bot_factory) -> None:
+        bot = mock_bot_factory(db=mock_db)
         duckhunt.table.create(mock_db.engine)
         duckhunt.optout.create(mock_db.engine)
         duckhunt.status_table.create(mock_db.engine)
@@ -546,7 +583,12 @@ class TestAttack:
         state.duck_status = 1
         state.duck_time = datetime.datetime.now().timestamp() - 3600.0
 
-        conn = MockConn(name="net")
+        conn = MockIrcClient(
+            bot=bot,
+            name="net",
+            nick="bot",
+            config={"connection": {"server": "foo.invalid"}},
+        )
         event = MagicMock()
         with patch.object(duckhunt, "hit_or_miss") as p:
             p.return_value = 0
@@ -562,7 +604,11 @@ class TestAttack:
             ("net", "nick", 1, 0, "#chan")
         ]
 
-    def test_befriend(self, mock_db, freeze_time) -> None:
+    @pytest.mark.asyncio
+    async def test_befriend(
+        self, mock_db, freeze_time, mock_bot_factory
+    ) -> None:
+        bot = mock_bot_factory(db=mock_db)
         duckhunt.table.create(mock_db.engine)
         duckhunt.optout.create(mock_db.engine)
         duckhunt.status_table.create(mock_db.engine)
@@ -578,7 +624,7 @@ class TestAttack:
         state.duck_status = 1
         state.duck_time = datetime.datetime.now().timestamp() - 3600.0
 
-        conn = MockConn(name="net")
+        conn = MockIrcClient(bot=bot, name="net", nick="bot", config={})
         event = MagicMock()
         with patch.object(duckhunt, "hit_or_miss") as p:
             p.return_value = 1
@@ -596,7 +642,11 @@ class TestAttack:
             ("net", "nick", 0, 1, "#chan")
         ]
 
-    def test_miss(self, mock_db: MockDB, freeze_time) -> None:
+    @pytest.mark.asyncio
+    async def test_miss(
+        self, mock_db: MockDB, freeze_time, mock_bot_factory
+    ) -> None:
+        bot = mock_bot_factory(db=mock_db)
         random.seed(0)
         duckhunt.table.create(mock_db.engine)
         duckhunt.optout.create(mock_db.engine)
@@ -613,7 +663,7 @@ class TestAttack:
         state.duck_status = 1
         state.duck_time = datetime.datetime.now().timestamp() - 3600.0
 
-        conn = MockConn(name="net")
+        conn = MockIrcClient(bot=bot, name="net", nick="bot", config={})
         event = MagicMock()
         with patch.object(duckhunt, "hit_or_miss") as p:
             p.return_value = 0.06
@@ -633,7 +683,11 @@ class TestAttack:
         assert mock_db.get_data(duckhunt.table) == []
         duckhunt.scripters.clear()
 
-    def test_miss_scripter(self, mock_db: MockDB, freeze_time) -> None:
+    @pytest.mark.asyncio
+    async def test_miss_scripter(
+        self, mock_db: MockDB, freeze_time, mock_bot_factory
+    ) -> None:
+        bot = mock_bot_factory(db=mock_db)
         random.seed(0)
         duckhunt.table.create(mock_db.engine)
         duckhunt.optout.create(mock_db.engine)
@@ -650,7 +704,7 @@ class TestAttack:
         state.duck_status = 1
         state.duck_time = datetime.datetime.now().timestamp() - 0.5
 
-        conn = MockConn(name="net")
+        conn = MockIrcClient(bot=bot, name="net", nick="bot", config={})
         event = MagicMock()
         res = duckhunt.befriend(
             "nick",

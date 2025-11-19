@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import asyncio
-import collections
 import logging
 import random
+from collections import defaultdict, deque
 from typing import TYPE_CHECKING, Any
 
 from cloudbot.permissions import PermissionManager
@@ -56,7 +56,7 @@ class Client:
         self.nick = nick
         self._type = _type
 
-        self.channels: list[str] = []
+        self.channels = list[str]()
 
         if channels is None:
             self.config_channels = []
@@ -68,14 +68,16 @@ class Client:
         else:
             self.config = config
 
-        self.vars: dict[str, Any] = {}
-        self.history: dict[str, tuple[str, float, str]] = {}
+        self.vars = dict[str, Any]()
+        self.history = defaultdict[str, deque[tuple[str, float, str]]](
+            lambda: deque[tuple[str, float, str]](maxlen=100)
+        )
 
         # create permissions manager
         self.permissions = PermissionManager(self)
 
         # for plugins to abuse
-        self.memory: dict[str, Any] = collections.defaultdict()
+        self.memory = defaultdict[str, Any]()
 
         # set when on_load in core_misc is done
         self.ready = False

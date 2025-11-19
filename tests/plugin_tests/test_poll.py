@@ -1,13 +1,13 @@
 from unittest.mock import MagicMock, call
 
 from plugins import poll
-from tests.util.mock_conn import MockConn
+from tests.util.mock_conn import MockClient
 
 
-def test_poll_close() -> None:
+def test_poll_close(mock_bot) -> None:
     poll.polls.clear()
     text = "close"
-    conn = MockConn()
+    conn = MockClient(bot=mock_bot)
     nick = "foo"
     chan = "#bar"
     event = MagicMock()
@@ -26,10 +26,10 @@ def test_poll_close() -> None:
     assert uid not in poll.polls
 
 
-def test_poll_create() -> None:
+def test_poll_create(mock_bot) -> None:
     poll.polls.clear()
     text = "thing?: yes yes no"
-    conn = MockConn()
+    conn = MockClient(bot=mock_bot)
     nick = "foo"
     chan = "#bar"
     event = MagicMock()
@@ -47,10 +47,10 @@ def test_poll_create() -> None:
     assert uid in poll.polls
 
 
-def test_poll_create_default() -> None:
+def test_poll_create_default(mock_bot) -> None:
     poll.polls.clear()
     text = "thing?"
-    conn = MockConn()
+    conn = MockClient(bot=mock_bot)
     nick = "foo"
     chan = "#bar"
     event = MagicMock()
@@ -68,10 +68,10 @@ def test_poll_create_default() -> None:
     assert uid in poll.polls
 
 
-def test_vote_invalid_input() -> None:
+def test_vote_invalid_input(mock_bot) -> None:
     poll.polls.clear()
     text = "foo"
-    conn = MockConn()
+    conn = MockClient(bot=mock_bot)
     nick = "foo"
     chan = "#bar"
     event = MagicMock()
@@ -84,10 +84,10 @@ def test_vote_invalid_input() -> None:
     assert event.mock_calls == []
 
 
-def test_vote() -> None:
+def test_vote(mock_bot) -> None:
     poll.polls.clear()
     text = "foo yes"
-    conn = MockConn()
+    conn = MockClient(bot=mock_bot)
     nick = "foo"
     chan = "#bar"
     uid = f"{conn.name}:{chan}:{nick}".lower()
@@ -102,10 +102,10 @@ def test_vote() -> None:
     assert p.format_results() == "Yes: 1, No: 0"
 
 
-def test_vote_unknown_opttion() -> None:
+def test_vote_unknown_opttion(mock_bot) -> None:
     poll.polls.clear()
     text = "foo bar"
-    conn = MockConn()
+    conn = MockClient(bot=mock_bot)
     nick = "foo"
     chan = "#bar"
     uid = f"{conn.name}:{chan}:{nick}".lower()
@@ -118,10 +118,10 @@ def test_vote_unknown_opttion() -> None:
     assert p.format_results() == "Yes: 0, No: 0"
 
 
-def test_vote_no_poll() -> None:
+def test_vote_no_poll(mock_bot) -> None:
     poll.polls.clear()
     text = "foo yes"
-    conn = MockConn()
+    conn = MockClient(bot=mock_bot)
     nick = "foo"
     chan = "#bar"
     event = MagicMock()
@@ -131,10 +131,10 @@ def test_vote_no_poll() -> None:
     assert event.mock_calls == []
 
 
-def test_results() -> None:
+def test_results(mock_bot) -> None:
     poll.polls.clear()
     text = ""
-    conn = MockConn()
+    conn = MockClient(bot=mock_bot)
     nick = "foo"
     chan = "#bar"
     uid = f"{conn.name}:{chan}:{nick}".lower()

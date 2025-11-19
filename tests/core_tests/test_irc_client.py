@@ -15,6 +15,7 @@ from tests.util.async_mock import AsyncMock
 if TYPE_CHECKING:
     from asyncio import Future
 
+    from cloudbot.client import Client
     from cloudbot.event import Event
 
 
@@ -58,7 +59,7 @@ async def test_send_closed(mock_db) -> None:
 
 class TestLineParsing:
     @staticmethod
-    async def wait_tasks(conn, cancel=False):
+    async def wait_tasks(conn: Client, cancel=False):
         current = asyncio.current_task()
         tasks = {t for t in asyncio.all_tasks() if t is not current}
 

@@ -125,8 +125,8 @@ repos:
     stages:
     - pre-commit
     args:
-    # - --annotate-named-param
-    # - conn:cloudbot.client.Client
+    - --annotate-named-param
+    - conn:cloudbot.client.Client
     - --safe
 - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
   rev: '19b28a9f0a0102b30776f054bea4176e7af50dbe'    # frozen: v2.15.0

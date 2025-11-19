@@ -1,12 +1,18 @@
+from __future__ import annotations
+
 import datetime
 import random
 import re
 from collections import defaultdict
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Column, PrimaryKeyConstraint, String, Table
 
 from cloudbot import hook
 from cloudbot.util import database
+
+if TYPE_CHECKING:
+    from cloudbot.client import Client
 
 table = Table(
     "herald",
@@ -136,13 +142,13 @@ def deleteherald(text, chan, db, reply) -> None:
     load_cache(db)
 
 
-def should_send(conn, chan, nick, join_time) -> bool:
+def should_send(conn: str, chan, nick, join_time) -> bool:
     chan_data = user_join[conn.lower()][chan.lower()]
     return chan_data.can_send(nick, join_time)
 
 
 @hook.irc_raw("JOIN", singlethread=True)
-def welcome(nick, message, bot, chan, conn) -> None:
+def welcome(nick, message, bot, chan, conn: Client) -> None:
     decoy = re.compile(
         "[\xd2o\u25cbO0\xf6\xf8\xf3\u022f\xf4\u0151\u014f\u1d0f\u014d\u03bf][<>\uff1c]"
     )

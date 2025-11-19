@@ -11,8 +11,11 @@ License:
     GPL v3
 """
 
+from __future__ import annotations
+
 import time
 from datetime import datetime, timedelta
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Column, DateTime, PrimaryKeyConstraint, String, Table
 
@@ -20,6 +23,9 @@ from cloudbot import hook
 from cloudbot.util import colors, database
 from cloudbot.util.timeformat import format_time, time_since
 from cloudbot.util.timeparse import time_parse
+
+if TYPE_CHECKING:
+    from cloudbot.client import Client
 
 table = Table(
     "reminders",
@@ -146,7 +152,7 @@ async def check_reminders(bot, async_call, db) -> None:
 
 
 @hook.command("remind", "reminder", "in")
-async def remind(text, nick, chan, db, conn, event, async_call):
+async def remind(text, nick, chan, db, conn: Client, event, async_call):
     """<1 minute, 30 seconds>: <do task> - reminds you to <do task> in <1 minute, 30 seconds>"""
 
     count = len(

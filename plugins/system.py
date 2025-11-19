@@ -1,11 +1,17 @@
+from __future__ import annotations
+
 import os
 import platform
 import time
 from datetime import timedelta
+from typing import TYPE_CHECKING
 
 import cloudbot
 from cloudbot import hook
 from cloudbot.util.filesize import size as format_bytes
+
+if TYPE_CHECKING:
+    from cloudbot.client import Client
 
 try:
     import psutil
@@ -14,7 +20,7 @@ except ImportError:
 
 
 @hook.command(autohelp=False)
-def about(text, conn, bot) -> str:
+def about(text, conn: Client, bot) -> str:
     """- Gives information about CloudBot. Use .about license for licensing information"""
     if text.lower() in ("license", "gpl", "source"):
         return f"CloudBot Refresh is released under the GPL v3 license, get the source code at {bot.repo_link}"

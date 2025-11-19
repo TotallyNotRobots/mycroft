@@ -3,21 +3,7 @@ from unittest.mock import MagicMock, call, patch
 import pytest
 
 from cloudbot.client import Client
-
-
-class MockClient(Client):
-    _connected = False
-
-    def __init__(self, bot, *args, **kwargs) -> None:
-        super().__init__(bot, "TestClient", *args, **kwargs)
-        self.active = True
-
-    @property
-    def connected(self):
-        return self._connected
-
-    async def connect(self, timeout=None) -> None:
-        self._connected = True
+from tests.util.mock_conn import MockClient
 
 
 class FailingMockClient(MockClient):
@@ -34,17 +20,23 @@ class FailingMockClient(MockClient):
 @pytest.mark.asyncio
 async def test_reload(mock_bot_factory, mock_db) -> None:
     client = MockClient(
-        mock_bot_factory(db=mock_db), "foo", "foobot", channels=["#foo"]
+        bot=mock_bot_factory(db=mock_db),
+        name="foo",
+        nick="foobot",
+        channels=["#foo"],
     )
     client.permissions = MagicMock()
-    client.reload()
+    Client.reload(client)
     assert client.permissions.mock_calls == [call.reload()]
 
 
 @pytest.mark.asyncio
 async def test_client_no_config(mock_bot_factory, mock_db) -> None:
     client = MockClient(
-        mock_bot_factory(db=mock_db), "foo", "foobot", channels=["#foo"]
+        bot=mock_bot_factory(db=mock_db),
+        name="foo",
+        nick="foobot",
+        channels=["#foo"],
     )
     assert client.config.get("a") is None
 
@@ -54,22 +46,22 @@ async def test_client_no_loop(mock_bot_factory, mock_db) -> None:
     bot = mock_bot_factory(db=mock_db)
     bot.loop = None
     with pytest.raises(ValueError, match="Missing event loop on bot"):
-        _ = MockClient(bot, "foo", "foobot", channels=["#foo"])
+        _ = MockClient(bot=bot, name="foo", nick="foobot", channels=["#foo"])
 
 
 @pytest.mark.asyncio
 async def test_client(mock_bot_factory, mock_db) -> None:
     client = MockClient(
-        mock_bot_factory(db=mock_db),
-        "foo",
-        "foobot",
+        bot=mock_bot_factory(db=mock_db),
+        name="foo",
+        nick="foobot",
         channels=["#foo"],
         config={"name": "foo"},
     )
 
     assert client.config_channels == ["#foo"]
     assert client.config["name"] == "foo"
-    assert client.type == "TestClient"
+    assert client.type == "mock"
 
     assert client.active is True
     client.active = False
@@ -83,9 +75,9 @@ async def test_client(mock_bot_factory, mock_db) -> None:
 async def test_client_connect_exc(mock_bot_factory, mock_db) -> None:
     with patch("random.randrange", return_value=1):
         client = FailingMockClient(
-            mock_bot_factory(db=mock_db),
-            "foo",
-            "foobot",
+            bot=mock_bot_factory(db=mock_db),
+            name="foo",
+            nick="foobot",
             channels=["#foo"],
             config={"name": "foo"},
             fail_count=1,
@@ -96,9 +88,9 @@ async def test_client_connect_exc(mock_bot_factory, mock_db) -> None:
 @pytest.mark.asyncio()
 async def test_try_connect(mock_bot_factory, mock_db) -> None:
     client = MockClient(
-        mock_bot_factory(db=mock_db),
-        "foo",
-        "foobot",
+        bot=mock_bot_factory(db=mock_db),
+        name="foo",
+        nick="foobot",
         channels=["#foo"],
         config={"name": "foo"},
     )
@@ -110,11 +102,12 @@ async def test_try_connect(mock_bot_factory, mock_db) -> None:
 @pytest.mark.asyncio
 async def test_auto_reconnect(mock_bot_factory, mock_db) -> None:
     client = MockClient(
-        mock_bot_factory(db=mock_db),
-        "foo",
-        "foobot",
+        bot=mock_bot_factory(db=mock_db),
+        name="foo",
+        nick="foobot",
         channels=["#foo"],
         config={"name": "foo"},
+        connected=False,
     )
 
     client.active = False

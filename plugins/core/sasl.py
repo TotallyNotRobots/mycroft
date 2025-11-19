@@ -1,19 +1,26 @@
+from __future__ import annotations
+
 import base64
 import logging
+from typing import TYPE_CHECKING
 
 from cloudbot import hook
+
+if TYPE_CHECKING:
+    from cloudbot.client import Client
+    from cloudbot.clients.irc import IrcClient
 
 logger = logging.getLogger("cloudbot")
 
 
 @hook.on_cap_available("sasl")
-def sasl_available(conn):
+def sasl_available(conn: Client):
     sasl_conf = conn.config.get("sasl")
     return bool(sasl_conf and sasl_conf.get("enabled", True))
 
 
 @hook.on_cap_ack("sasl")
-async def sasl_ack(conn) -> None:
+async def sasl_ack(conn: IrcClient) -> None:
     sasl_auth = conn.config.get("sasl")
     if sasl_auth and sasl_auth.get("enabled", True):
         sasl_mech = sasl_auth.get("mechanism", "PLAIN").upper()
@@ -49,14 +56,14 @@ async def sasl_ack(conn) -> None:
 
 
 @hook.irc_raw(["AUTHENTICATE", "908"])
-async def auth(irc_command, conn, irc_paramlist) -> None:
+async def auth(irc_command, conn: Client, irc_paramlist) -> None:
     future = conn.memory.get("sasl_auth_future")
     if future and not future.done():
         future.set_result((irc_command, irc_paramlist))
 
 
 @hook.irc_raw(["902", "903", "904", "905", "906", "907"])
-async def sasl_numerics(irc_command, conn) -> None:
+async def sasl_numerics(irc_command, conn: Client) -> None:
     future = conn.memory.get("sasl_numeric_future")
     if future and not future.done():
         future.set_result(irc_command)

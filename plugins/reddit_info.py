@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import random
 import re
 from collections import defaultdict
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 import requests
 from requests import HTTPError
@@ -11,6 +14,9 @@ from cloudbot import hook
 from cloudbot.util import colors, formatting, timeformat
 from cloudbot.util.formatting import pluralize_auto
 from cloudbot.util.pager import CommandPager, paginated_list
+
+if TYPE_CHECKING:
+    from cloudbot.client import Client
 
 search_pages: dict[str, dict[str, CommandPager]] = defaultdict(dict)
 user_re = re.compile(
@@ -113,7 +119,7 @@ def statuscheck(status, item):
 
 
 @hook.command("moremod", autohelp=False)
-def moremod(text, chan, conn):
+def moremod(text, chan, conn: Client):
     """[page] - if a sub or mod list has lots of results the results are pagintated. If the most recent search is
     paginated the pages are stored for retrieval. If no argument is given the next page will be returned else a page
     number can be specified."""
@@ -188,7 +194,7 @@ def reddit(text, reply):
 
 
 @hook.command("subs", "moderates", singlethread=True)
-def moderates(text, chan, conn, reply):
+def moderates(text, chan, conn: Client, reply):
     """<username> - This plugin prints the list of subreddits a user moderates listed in a reddit users profile.
     Private subreddits will not be listed."""
     user = get_user(text)
@@ -312,7 +318,7 @@ def get_sub_data(url, sub, reply):
 
 
 @hook.command("submods", "mods", "rmods", singlethread=True)
-def submods(text, chan, conn, reply):
+def submods(text, chan, conn: Client, reply):
     """<subreddit> - prints the moderators of the specified subreddit."""
     sub = get_sub(text)
     url = f"{subreddit_url}about/moderators.json"

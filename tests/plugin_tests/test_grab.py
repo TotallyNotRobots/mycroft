@@ -1,9 +1,10 @@
+from collections import deque
 from unittest.mock import MagicMock, call
 
 import pytest
 
 from plugins import grab
-from tests.util.mock_conn import MockConn
+from tests.util.mock_conn import MockClient
 
 
 def test_grab_add(mock_db) -> None:
@@ -13,24 +14,30 @@ def test_grab_add(mock_db) -> None:
     assert mock_db.get_data(grab.table) == [("foo", "123", "foobar", "#foo")]
 
 
-def test_grab_self(mock_db) -> None:
+@pytest.mark.asyncio
+async def test_grab_self(mock_db, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     grab.table.create(bind=mock_db.engine)
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     db = mock_db.session()
     nick = "foo"
     res = grab.grab(nick, nick, "#foo", db, conn)
     assert res == "Didn't your mother teach you not to grab yourself?"
 
 
-def test_grab_no_data(mock_db) -> None:
+@pytest.mark.asyncio
+async def test_grab_no_data(mock_db, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     grab.table.create(bind=mock_db.engine)
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     db = mock_db.session()
     res = grab.grab("bar", "foo", "#foo", db, conn)
     assert res == "I couldn't find anything from bar in recent history."
 
 
-def test_grab_duplicate(mock_db) -> None:
+@pytest.mark.asyncio
+async def test_grab_duplicate(mock_db, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     grab.table.create(bind=mock_db.engine)
     nick = "foo"
     quote = "foo bar baz"
@@ -39,10 +46,12 @@ def test_grab_duplicate(mock_db) -> None:
     mock_db.add_row(
         grab.table, name=target_nick, time="123", quote=quote, chan=chan
     )
-    conn = MockConn()
-    conn.history[chan] = [
-        (target_nick, 1234, quote),
-    ]
+    conn = MockClient(bot=bot)
+    conn.history[chan] = deque(
+        [
+            (target_nick, 1234, quote),
+        ]
+    )
     db = mock_db.session()
     grab.load_cache(db)
     res = grab.grab(target_nick, nick, chan, db, conn)
@@ -51,21 +60,30 @@ def test_grab_duplicate(mock_db) -> None:
     )
 
 
-def test_grab_error(mock_db, caplog_bot) -> None:
+@pytest.mark.asyncio
+async def test_grab_error(mock_db, caplog_bot, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     nick = "foo"
     quote = "foo bar baz"
     chan = "#foo"
     target_nick = "bar"
-    conn = MockConn()
-    conn.history[chan] = [
-        (target_nick, 1234, quote),
-    ]
+    conn = MockClient(bot=bot)
+    conn.history[chan] = deque(
+        [
+            (target_nick, 1234, quote),
+        ]
+    )
     grab.grab_cache.clear()
     db = mock_db.session()
     res = grab.grab(target_nick, nick, chan, db, conn)
     assert res == "Error occurred."
     assert caplog_bot.record_tuples == [
-        ("cloudbot", 40, "Error occurred when grabbing bar in #foo")
+        (
+            "cloudbot",
+            20,
+            "[testconn|permissions] Created permission manager for testconn.",
+        ),
+        ("cloudbot", 40, "Error occurred when grabbing bar in #foo"),
     ]
 
 
@@ -110,12 +128,12 @@ def test_grabrandom_no_text() -> None:
     assert event.mock_calls == [call.message("<f\u200boo> bar baz")]
 
 
-def test_grabsearch() -> None:
+def test_grabsearch(mock_bot) -> None:
     chan = "#foo"
     grab.grab_cache.clear()
     grab.grab_cache[chan] = {"foo": ["bar baz"]}
     event = MagicMock()
-    conn = MockConn()
+    conn = MockClient(bot=mock_bot)
     res = grab.grabsearch("bar", chan, conn)
     assert res == ["<f\u200boo> bar baz"]
     assert event.mock_calls == []
@@ -154,13 +172,13 @@ def test_last_grab(mock_db) -> None:
     assert event.mock_calls == [call.message("<b\u200bar> bar baz", "#foo")]
 
 
-def test_grabsearch_nick() -> None:
+def test_grabsearch_nick(mock_bot) -> None:
     chan = "#foo"
     grab.grab_cache.clear()
     target_nick = "foo"
     grab.grab_cache[chan] = {target_nick: ["bar baz"]}
     event = MagicMock()
-    conn = MockConn()
+    conn = MockClient(bot=mock_bot)
     res = grab.grabsearch(target_nick, chan, conn)
     assert res == ["<f\u200boo> bar baz"]
     assert event.mock_calls == []

@@ -1,44 +1,47 @@
+from collections import deque
 from unittest.mock import MagicMock, call
 
 from plugins import mock as mock_plugin
-from tests.util.mock_conn import MockConn
+from tests.util.mock_conn import MockClient
 
 
-def test_mock_no_message() -> None:
-    conn = MockConn()
+def test_mock_no_message(mock_bot) -> None:
+    conn = MockClient(bot=mock_bot)
     event = MagicMock()
     res = mock_plugin.mock("bar", "#foo", conn, event.message)
     assert res == "Nothing found in recent history for bar"
     assert event.mock_calls == []
 
 
-def test_mock_no_matching_message() -> None:
-    conn = MockConn()
+def test_mock_no_matching_message(mock_bot) -> None:
+    conn = MockClient(bot=mock_bot)
     event = MagicMock()
     chan = "#foo"
     target = "bar"
-    conn.history[chan] = [("baz", 123, "Hello this is a test")]
+    conn.history[chan] = deque([("baz", 123, "Hello this is a test")])
     res = mock_plugin.mock(target, chan, conn, event.message)
     assert res == "Nothing found in recent history for bar"
     assert event.mock_calls == []
 
 
-def test_mock() -> None:
-    conn = MockConn()
+def test_mock(mock_bot) -> None:
+    conn = MockClient(bot=mock_bot)
     chan = "#foo"
     target = "bar"
-    conn.history[chan] = [(target, 123, "Hello this is a test")]
+    conn.history[chan] = deque([(target, 123, "Hello this is a test")])
     event = MagicMock()
     res = mock_plugin.mock(target, chan, conn, event.message)
     assert res is None
     assert event.mock_calls == [call.message("<bar> hElLo tHiS Is a tEsT")]
 
 
-def test_mock_action() -> None:
-    conn = MockConn()
+def test_mock_action(mock_bot) -> None:
+    conn = MockClient(bot=mock_bot)
     chan = "#foo"
     target = "bar"
-    conn.history[chan] = [(target, 123, "\1ACTION Hello this is a test\1")]
+    conn.history[chan] = deque(
+        [(target, 123, "\1ACTION Hello this is a test\1")]
+    )
     event = MagicMock()
     res = mock_plugin.mock(target, chan, conn, event.message)
     assert res is None

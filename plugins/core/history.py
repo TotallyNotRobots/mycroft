@@ -1,11 +1,17 @@
+from __future__ import annotations
+
 import time
 from collections import deque
+from typing import TYPE_CHECKING
 
 from cloudbot import hook
 from cloudbot.event import EventType
 
+if TYPE_CHECKING:
+    from cloudbot.client import Client
 
-def track_history(event, message_time, conn) -> None:
+
+def track_history(event, message_time, conn: Client) -> None:
     try:
         history = conn.history[event.chan]
     except KeyError:
@@ -19,7 +25,7 @@ def track_history(event, message_time, conn) -> None:
 
 
 @hook.event([EventType.message, EventType.action], singlethread=True)
-def chat_tracker(event, conn) -> None:
+def chat_tracker(event, conn: Client) -> None:
     if event.type is EventType.action:
         event.content = f"\x01ACTION {event.content}\x01"
 
@@ -28,7 +34,7 @@ def chat_tracker(event, conn) -> None:
 
 
 @hook.command(autohelp=False)
-async def resethistory(event, conn) -> str:
+async def resethistory(event, conn: Client) -> str:
     """- resets chat history for the current channel"""
     try:
         conn.history[event.chan].clear()
