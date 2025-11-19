@@ -10,9 +10,9 @@ from tests.util.mock_irc_client import MockIrcClient
 def make_conn(mock_bot_factory, loop=None):
     bot = mock_bot_factory(loop=loop)
     conn = MockIrcClient(
-        bot,
-        "conn",
-        "foobot",
+        bot=bot,
+        name="conn",
+        nick="foobot",
         config={
             "connection": {
                 "server": "host.invalid",
@@ -138,4 +138,7 @@ async def test_key_use(mock_bot_factory, mock_db) -> None:
     chan_key_db.load_keys(conn, db)
     conn.join("#foo")
     conn.join("#bar")
-    assert conn.send.mock_calls == [call("JOIN #foo foobar"), call("JOIN #bar")]
+    assert conn.mock_calls() == [
+        call.send("JOIN #foo foobar"),
+        call.send("JOIN #bar"),
+    ]

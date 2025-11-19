@@ -1,9 +1,16 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 import socket
 from copy import copy
+from typing import TYPE_CHECKING
 
 from cloudbot import hook
+
+if TYPE_CHECKING:
+    from cloudbot.client import Client
+    from cloudbot.clients.irc import IrcClient
 
 socket.setdefaulttimeout(10)
 logger = logging.getLogger("cloudbot")
@@ -11,7 +18,7 @@ logger = logging.getLogger("cloudbot")
 
 # Auto-join on Invite (Configurable, defaults to True)
 @hook.irc_raw("INVITE")
-def invite(irc_paramlist, conn) -> None:
+def invite(irc_paramlist, conn: Client) -> None:
     invite_join = conn.config.get("invite_join", True)
     chan = irc_paramlist[-1]
 
@@ -20,13 +27,13 @@ def invite(irc_paramlist, conn) -> None:
 
 
 @hook.irc_raw("JOIN")
-def on_join(chan, conn, nick) -> None:
+def on_join(chan, conn: IrcClient, nick) -> None:
     if conn.nick.casefold() == nick.casefold():
         conn.cmd("MODE", chan)
 
 
 @hook.irc_raw("324")
-def check_mode(irc_paramlist, conn, message) -> None:
+def check_mode(irc_paramlist, conn: Client, message) -> None:
     # message(", ".join(irc_paramlist), "bloodygonzo")
     mode = irc_paramlist[2]
     require_reg = conn.config.get("require_registered_channels", False)
@@ -36,7 +43,7 @@ def check_mode(irc_paramlist, conn, message) -> None:
 
 
 @hook.irc_raw("MODE")
-def on_mode_change(conn, irc_paramlist, message) -> None:
+def on_mode_change(conn: Client, irc_paramlist, message) -> None:
     require_reg = conn.config.get("require_registered_channels", False)
     chan = irc_paramlist[0]
     modes = irc_paramlist[1]
@@ -57,7 +64,7 @@ def on_mode_change(conn, irc_paramlist, message) -> None:
 
 # Identify to NickServ (or other service)
 @hook.irc_raw("004")
-async def onjoin(conn, bot) -> None:
+async def onjoin(conn: IrcClient, bot) -> None:
     logger.info(
         "[%s|misc] Bot is sending join commands for network.", conn.name
     )
@@ -122,7 +129,7 @@ async def onjoin(conn, bot) -> None:
 
 
 @hook.irc_raw("376")
-async def do_joins(conn) -> None:
+async def do_joins(conn: IrcClient) -> None:
     """
     Join config defined channels
 
@@ -157,13 +164,13 @@ async def do_joins(conn) -> None:
 
 
 @hook.irc_raw("433")
-def on_nick_in_use(conn, irc_paramlist) -> None:
+def on_nick_in_use(conn: IrcClient, irc_paramlist) -> None:
     conn.nick = f"{irc_paramlist[1]}_"
     conn.cmd("NICK", conn.nick)
 
 
 @hook.irc_raw("432", singlethread=True)
-async def on_invalid_nick(conn) -> None:
+async def on_invalid_nick(conn: IrcClient) -> None:
     nick = conn.config["nick"]
     conn.nick = nick
     conn.cmd("NICK", conn.nick)

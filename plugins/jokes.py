@@ -8,6 +8,8 @@ from cloudbot import hook
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from cloudbot.client import Client
+
 joke_lines = {}
 
 
@@ -43,7 +45,7 @@ def load_jokes(bot) -> None:
 
 
 @hook.command()
-def yomomma(text, nick, conn, is_nick_valid) -> str:
+def yomomma(text, nick, conn: Client, is_nick_valid) -> str:
     """<nick> - Tells a yo momma joke to <nick>."""
     target = text.strip()
     if not is_nick_valid(target) or target.lower() == conn.nick.lower():

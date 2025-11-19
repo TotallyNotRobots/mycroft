@@ -13,6 +13,8 @@ from cloudbot.util import database
 if TYPE_CHECKING:
     from re import Pattern
 
+    from cloudbot.clients.irc import IrcClient
+
 table = Table(
     "badwords",
     database.metadata,
@@ -108,8 +110,10 @@ def list_bad(text):
     return "|".join(badcache[text])
 
 
-@hook.event([EventType.message, EventType.action], singlethread=True)
-def check_badwords(conn, message, chan, content, nick) -> None:
+@hook.event(
+    [EventType.message, EventType.action], singlethread=True, clients=["irc"]
+)
+def check_badwords(conn: IrcClient, message, chan, content, nick) -> None:
     if not matcher.regex:
         return
 

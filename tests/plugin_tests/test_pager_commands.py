@@ -7,11 +7,7 @@ from cloudbot.event import CommandEvent
 from cloudbot.util.pager import CommandPager
 from plugins import profile
 from tests.util import wrap_hook_response
-
-
-class MockConn:
-    def __init__(self, name) -> None:
-        self.name = name
+from tests.util.mock_conn import MockClient
 
 
 @pytest.mark.parametrize(
@@ -21,14 +17,16 @@ class MockConn:
         ["reddit_info", "moremod", "search_pages", "modlist"],
     ],
 )
-def test_page_commands(plugin_name, hook_name, pages_name, page_type) -> None:
+def test_page_commands(
+    plugin_name, hook_name, pages_name, page_type, mock_bot
+) -> None:
     plugin = importlib.import_module(f"plugins.{plugin_name}")
 
     hook = getattr(plugin, hook_name)
 
     pages = getattr(plugin, pages_name)
 
-    conn = MockConn("testconn")
+    conn = MockClient(bot=mock_bot, name="testconn")
 
     pages.clear()
     no_grabs = f"There are no {page_type} pages to show."

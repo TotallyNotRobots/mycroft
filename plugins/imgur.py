@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import random
 import re
 from contextlib import suppress
@@ -10,6 +12,8 @@ from cloudbot.util import web
 
 if TYPE_CHECKING:
     from re import Match
+
+    from cloudbot.client import Client
 
 # imgurpython has an issue where it does not allow anonymous album creation
 # to fix this we monkeypatch logged_in to disable login checking
@@ -131,7 +135,7 @@ def imgur(text):
 
 
 @hook.command("imguralbum", "multiimgur", "imgalbum", "album", autohelp=False)
-def imguralbum(text, conn):
+def imguralbum(text, conn: Client):
     """[search term] / [/r/subreddit] / [/user/username] / memes / random - returns a link to lots of random images
     based on your input. if no input is given the bot will get images from the imgur frontpage
     """

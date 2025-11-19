@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import pytest
 from irclib.parser import Prefix, TagList
@@ -13,26 +13,6 @@ from tests.util.mock_irc_client import MockIrcClient
 
 if TYPE_CHECKING:
     from cloudbot.client import Client
-
-
-class MockConn:
-    def __init__(self, bot=None, loop=None) -> None:
-        self.name = "foo"
-        self.memory: dict[str, Any] = {
-            "server_info": {
-                "statuses": {},
-            },
-            "server_caps": {
-                "userhost-in-names": True,
-                "multi-prefix": True,
-            },
-        }
-        self.nick = "BotFoo"
-        self.bot = bot
-        if self.bot:
-            self.loop = self.bot.loop
-        else:
-            self.loop = loop
 
 
 def get_statuses(conn: Client, chars: str):

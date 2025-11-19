@@ -29,6 +29,8 @@ from cloudbot.util.text import parse_bool
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
 
+    from cloudbot.client import Client
+
 optout_table = Table(
     "optout",
     database.metadata,
@@ -119,7 +121,7 @@ def format_optout_list(opts):
     return gen_markdown_table(headers, table)
 
 
-def set_optout(db, conn, chan, pattern, allowed) -> None:
+def set_optout(db, conn: str, chan, pattern, allowed) -> None:
     conn_cf = conn.casefold()
     chan_cf = chan.casefold()
     pattern_cf = pattern.casefold()
@@ -140,7 +142,7 @@ def set_optout(db, conn, chan, pattern, allowed) -> None:
     load_cache(db)
 
 
-def del_optout(db, conn, chan, pattern):
+def del_optout(db, conn: str, chan, pattern):
     conn_cf = conn.casefold()
     chan_cf = chan.casefold()
     pattern_cf = pattern.casefold()
@@ -157,7 +159,7 @@ def del_optout(db, conn, chan, pattern):
     return res.rowcount > 0
 
 
-def clear_optout(db, conn, chan=None):
+def clear_optout(db, conn: str, chan=None):
     conn_cf = conn.casefold()
     if chan:
         chan_cf = chan.casefold()
@@ -208,7 +210,7 @@ def optout_sieve(bot, event, _hook):
 
 
 @hook.command()
-async def optout(text, event, chan, db, conn):
+async def optout(text, event, chan, db, conn: Client):
     """[chan] <pattern> [allow] - Set the global allow option for hooks matching <pattern> in [chan], or the current
     channel if not specified
     """
@@ -242,7 +244,7 @@ async def optout(text, event, chan, db, conn):
 
 
 @hook.command()
-async def deloptout(text, event, chan, db, conn):
+async def deloptout(text, event, chan, db, conn: Client):
     """[chan] <pattern> - Delete global optout hooks matching <pattern> in [chan], or the current channel if not
     specified"""
     args = text.split()
@@ -294,7 +296,7 @@ async def check_global_perms(event):
 
 
 @hook.command("listoptout", autohelp=False)
-async def list_optout(conn, event, async_call):
+async def list_optout(conn: Client, event, async_call):
     """[channel] - View the opt out data for <channel> or the current channel if not specified. Specify "global" to
     view all data for this network
     """
@@ -310,7 +312,7 @@ async def list_optout(conn, event, async_call):
 
 
 @hook.command("clearoptout", autohelp=False)
-async def clear(conn, event, db, async_call):
+async def clear(conn: Client, event, db, async_call):
     """[channel] - Clears the optout list for a channel. Specify "global" to clear all data for this network"""
     chan, allowed = await check_global_perms(event)
 

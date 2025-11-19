@@ -1,4 +1,11 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from cloudbot import hook
+
+if TYPE_CHECKING:
+    from cloudbot.clients.irc import IrcClient
 
 # Messages
 NO_MODE = "Mode character {char!r} does not seem to exist on this network."
@@ -153,8 +160,8 @@ def deop(text, event) -> None:
     mode_cmd("-o", "deop", text, event)
 
 
-@hook.command(permissions=["op_topic", "op", "chanop"])
-def topic(text, conn, chan, nick, event) -> None:
+@hook.command(permissions=["op_topic", "op", "chanop"], clients=["irc"])
+def topic(text, conn: IrcClient, chan, nick, event) -> None:
     """[channel] <topic> - changes the topic to <topic> in [channel], or in the caller's channel
     if no channel is specified"""
     split = text.split(" ")
@@ -168,8 +175,8 @@ def topic(text, conn, chan, nick, event) -> None:
     conn.send(f"TOPIC {chan} :{msg}")
 
 
-@hook.command(permissions=["op_kick", "op", "chanop"])
-def kick(text, chan, conn, nick, event) -> None:
+@hook.command(permissions=["op_kick", "op", "chanop"], clients=["irc"])
+def kick(text, chan, conn: IrcClient, nick, event) -> None:
     """[channel] <user> - kicks <user> from [channel], or from the caller's channel if no channel is specified"""
     split = text.split(" ")
 
@@ -195,8 +202,8 @@ def kick(text, chan, conn, nick, event) -> None:
     conn.send(out)
 
 
-@hook.command(permissions=["op_rem", "op", "chanop"])
-def remove(text, chan, conn, nick, event) -> None:
+@hook.command(permissions=["op_rem", "op", "chanop"], clients=["irc"])
+def remove(text, chan, conn: IrcClient, nick, event) -> None:
     """<user> - force removes <user> from the caller's channel."""
     split = text.split(" ")
     user = split[0]

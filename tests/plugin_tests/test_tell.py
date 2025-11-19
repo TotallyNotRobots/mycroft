@@ -2,10 +2,11 @@ import datetime
 from typing import TYPE_CHECKING, cast
 from unittest.mock import MagicMock, call, patch
 
+import pytest
 from irclib.parser import Prefix
 
 from plugins import tell
-from tests.util.mock_conn import MockConn
+from tests.util.mock_conn import MockClient
 
 if TYPE_CHECKING:
     import sqlalchemy as sa
@@ -102,10 +103,12 @@ def test_tellcmd(mock_db) -> None:
     assert tell.count_unread(session, mock_conn.name, "OtherUser") == 10
 
 
-def test_showtells(mock_db, freeze_time) -> None:
+@pytest.mark.asyncio
+async def test_showtells(mock_db, freeze_time, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     init_tables(mock_db)
     db = mock_db.session()
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     server = conn.name.lower()
     sender = "foo"
     nick = target = "other"
@@ -146,10 +149,14 @@ def test_showtells(mock_db, freeze_time) -> None:
     ]
 
 
-def test_showtells_no_tells(mock_db, freeze_time) -> None:
+@pytest.mark.asyncio
+async def test_showtells_no_tells(
+    mock_db, freeze_time, mock_bot_factory
+) -> None:
+    bot = mock_bot_factory(db=mock_db)
     init_tables(mock_db)
     db = mock_db.session()
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     nick = "other"
     event = MagicMock()
     res = tell.showtells(nick, event.notice, db, conn)
@@ -157,10 +164,10 @@ def test_showtells_no_tells(mock_db, freeze_time) -> None:
     assert event.mock_calls == [call.notice("You have no pending messages.")]
 
 
-def test_tellinput_showtells(mock_db, freeze_time) -> None:
+def test_tellinput_showtells(mock_db, freeze_time, mock_bot) -> None:
     init_tables(mock_db)
     db = mock_db.session()
-    conn = MockConn()
+    conn = MockClient(bot=mock_bot)
     nick = "other"
     event = MagicMock()
     content = ". showtells 1 2 3"
@@ -169,10 +176,10 @@ def test_tellinput_showtells(mock_db, freeze_time) -> None:
     assert event.mock_calls == []
 
 
-def test_tellinput_no_tells(mock_db, freeze_time) -> None:
+def test_tellinput_no_tells(mock_db, freeze_time, mock_bot) -> None:
     init_tables(mock_db)
     db = mock_db.session()
-    conn = MockConn()
+    conn = MockClient(bot=mock_bot)
     nick = "other"
     event = MagicMock()
     content = "aa"
@@ -182,10 +189,10 @@ def test_tellinput_no_tells(mock_db, freeze_time) -> None:
     assert event.mock_calls == []
 
 
-def test_tellinput_bad_cache(mock_db, freeze_time) -> None:
+def test_tellinput_bad_cache(mock_db, freeze_time, mock_bot) -> None:
     init_tables(mock_db)
     db = mock_db.session()
-    conn = MockConn()
+    conn = MockClient(bot=mock_bot)
     nick = "other"
     event = MagicMock()
     content = "aa"
@@ -195,10 +202,10 @@ def test_tellinput_bad_cache(mock_db, freeze_time) -> None:
     assert event.mock_calls == []
 
 
-def test_tellinput(mock_db, freeze_time) -> None:
+def test_tellinput(mock_db, freeze_time, mock_bot) -> None:
     init_tables(mock_db)
     db = mock_db.session()
-    conn = MockConn()
+    conn = MockClient(bot=mock_bot)
     sender = "foo"
     nick = "other"
     message = "bar"
@@ -212,10 +219,10 @@ def test_tellinput(mock_db, freeze_time) -> None:
     ]
 
 
-def test_read_tell_spam(mock_db, freeze_time) -> None:
+def test_read_tell_spam(mock_db, freeze_time, mock_bot) -> None:
     init_tables(mock_db)
     db = mock_db.session()
-    conn = MockConn()
+    conn = MockClient(bot=mock_bot)
     conn.config["command_prefix"] = "."
     sender = "foo"
     nick = "other"
@@ -281,10 +288,10 @@ def test_read_tell_spam(mock_db, freeze_time) -> None:
     ]
 
 
-def test_tellinput_multiple(mock_db, freeze_time) -> None:
+def test_tellinput_multiple(mock_db, freeze_time, mock_bot) -> None:
     init_tables(mock_db)
     db = mock_db.session()
-    conn = MockConn()
+    conn = MockClient(bot=mock_bot)
     conn.config["command_prefix"] = "."
     sender = "foo"
     nick = "other"
@@ -335,20 +342,26 @@ def test_tellinput_multiple(mock_db, freeze_time) -> None:
     ]
 
 
-def test_can_send_to_user(mock_db, freeze_time) -> None:
+@pytest.mark.asyncio
+async def test_can_send_to_user(mock_db, freeze_time, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     init_tables(mock_db)
     db = mock_db.session()
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     target = "otheruser"
     sender_mask = "foo!bar@baz"
     tell.add_ignore(db, conn, target, "foo")
     assert tell.can_send_to_user(conn, sender_mask, target) is True
 
 
-def test_can_send_to_user_disabled(mock_db, freeze_time) -> None:
+@pytest.mark.asyncio
+async def test_can_send_to_user_disabled(
+    mock_db, freeze_time, mock_bot_factory
+) -> None:
+    bot = mock_bot_factory(db=mock_db)
     init_tables(mock_db)
     db = mock_db.session()
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     target = "otheruser"
     sender_mask = "foo!bar@baz"
     assert tell.can_send_to_user(conn, sender_mask, target) is True
@@ -357,10 +370,14 @@ def test_can_send_to_user_disabled(mock_db, freeze_time) -> None:
     assert tell.can_send_to_user(conn, sender_mask, target) is False
 
 
-def test_can_send_to_user_ignored(mock_db, freeze_time) -> None:
+@pytest.mark.asyncio
+async def test_can_send_to_user_ignored(
+    mock_db, freeze_time, mock_bot_factory
+) -> None:
+    bot = mock_bot_factory(db=mock_db)
     init_tables(mock_db)
     db = mock_db.session()
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     target = "otheruser"
     sender_mask = "foo!bar@baz"
     assert tell.can_send_to_user(conn, sender_mask, target) is True
@@ -386,11 +403,13 @@ def test_load_disabled(mock_db, freeze_time) -> None:
     assert tell.disable_cache == {"foo": {"bar"}}
 
 
-def test_add_disabled(mock_db, freeze_time) -> None:
+@pytest.mark.asyncio
+async def test_add_disabled(mock_db, freeze_time, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     db_engine = mock_db.engine
     tell.disable_table.create(db_engine)
     session = mock_db.session()
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     now = datetime.datetime.now()
     tell.add_disable(session, conn, "foo", "bar", now=now)
 
@@ -400,11 +419,13 @@ def test_add_disabled(mock_db, freeze_time) -> None:
     ]
 
 
-def test_del_disabled(mock_db, freeze_time) -> None:
+@pytest.mark.asyncio
+async def test_del_disabled(mock_db, freeze_time, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     db_engine = mock_db.engine
     tell.disable_table.create(db_engine)
     session = mock_db.session()
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     mock_db.add_row(
         tell.disable_table,
         conn=conn.name.lower(),
@@ -439,12 +460,14 @@ def test_load_ignored(mock_db, freeze_time) -> None:
     assert tell.ignore_cache == {"foo": {"bar": ["baz"]}}
 
 
-def test_tell_disable(mock_db, freeze_time) -> None:
+@pytest.mark.asyncio
+async def test_tell_disable(mock_db, freeze_time, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     event = MagicMock()
     tell.disable_cache.clear()
     tell.disable_table.create(mock_db.engine)
     event.has_permission.return_value = True
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     db = mock_db.session()
     text = ""
     nick = "foo"
@@ -456,12 +479,16 @@ def test_tell_disable(mock_db, freeze_time) -> None:
     ]
 
 
-def test_tell_disable_self(mock_db, freeze_time) -> None:
+@pytest.mark.asyncio
+async def test_tell_disable_self(
+    mock_db, freeze_time, mock_bot_factory
+) -> None:
+    bot = mock_bot_factory(db=mock_db)
     event = MagicMock()
     tell.disable_cache.clear()
     tell.disable_table.create(mock_db.engine)
     event.has_permission.return_value = True
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     db = mock_db.session()
     nick = "foo"
     text = nick
@@ -473,12 +500,16 @@ def test_tell_disable_self(mock_db, freeze_time) -> None:
     ]
 
 
-def test_tell_disable_no_perms(mock_db, freeze_time) -> None:
+@pytest.mark.asyncio
+async def test_tell_disable_no_perms(
+    mock_db, freeze_time, mock_bot_factory
+) -> None:
+    bot = mock_bot_factory(db=mock_db)
     event = MagicMock()
     tell.disable_cache.clear()
     tell.disable_table.create(mock_db.engine)
     event.has_permission.return_value = False
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     db = mock_db.session()
     nick = "foo"
     text = "other"
@@ -492,12 +523,16 @@ def test_tell_disable_no_perms(mock_db, freeze_time) -> None:
     assert mock_db.get_data(tell.disable_table) == []
 
 
-def test_tell_disable_other(mock_db, freeze_time) -> None:
+@pytest.mark.asyncio
+async def test_tell_disable_other(
+    mock_db, freeze_time, mock_bot_factory
+) -> None:
+    bot = mock_bot_factory(db=mock_db)
     event = MagicMock()
     tell.disable_cache.clear()
     tell.disable_table.create(mock_db.engine)
     event.has_permission.return_value = True
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     db = mock_db.session()
     nick = "foo"
     text = "other"
@@ -509,13 +544,17 @@ def test_tell_disable_other(mock_db, freeze_time) -> None:
     ]
 
 
-def test_tell_disable_already_disabled(mock_db, freeze_time) -> None:
+@pytest.mark.asyncio
+async def test_tell_disable_already_disabled(
+    mock_db, freeze_time, mock_bot_factory
+) -> None:
+    bot = mock_bot_factory(db=mock_db)
     event = MagicMock()
     tell.disable_cache.clear()
     tell.disable_table.create(mock_db.engine)
     nick = "foo"
     text = ""
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     mock_db.add_row(
         tell.disable_table,
         conn=conn.name.lower(),
@@ -534,13 +573,17 @@ def test_tell_disable_already_disabled(mock_db, freeze_time) -> None:
     ]
 
 
-def test_tell_disable_already_disabled_other(mock_db, freeze_time) -> None:
+@pytest.mark.asyncio
+async def test_tell_disable_already_disabled_other(
+    mock_db, freeze_time, mock_bot_factory
+) -> None:
+    bot = mock_bot_factory(db=mock_db)
     event = MagicMock()
     tell.disable_cache.clear()
     tell.disable_table.create(mock_db.engine)
     nick = "foo"
     text = "other"
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     mock_db.add_row(
         tell.disable_table,
         conn=conn.name.lower(),
@@ -559,11 +602,13 @@ def test_tell_disable_already_disabled_other(mock_db, freeze_time) -> None:
     ]
 
 
-def test_tell_enable(mock_db, freeze_time) -> None:
+@pytest.mark.asyncio
+async def test_tell_enable(mock_db, freeze_time, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     event = MagicMock()
     tell.disable_cache.clear()
     tell.disable_table.create(mock_db.engine)
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     text = ""
     nick = "foo"
     mock_db.add_row(
@@ -582,12 +627,14 @@ def test_tell_enable(mock_db, freeze_time) -> None:
     assert mock_db.get_data(tell.disable_table) == []
 
 
-def test_tell_enable_self(mock_db, freeze_time) -> None:
+@pytest.mark.asyncio
+async def test_tell_enable_self(mock_db, freeze_time, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     event = MagicMock()
     tell.disable_cache.clear()
     tell.disable_table.create(mock_db.engine)
     event.has_permission.return_value = True
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     db = mock_db.session()
     nick = "foo"
     text = nick
@@ -605,12 +652,16 @@ def test_tell_enable_self(mock_db, freeze_time) -> None:
     assert mock_db.get_data(tell.disable_table) == []
 
 
-def test_tell_enable_no_perms(mock_db, freeze_time) -> None:
+@pytest.mark.asyncio
+async def test_tell_enable_no_perms(
+    mock_db, freeze_time, mock_bot_factory
+) -> None:
+    bot = mock_bot_factory(db=mock_db)
     event = MagicMock()
     tell.disable_cache.clear()
     tell.disable_table.create(mock_db.engine)
     event.has_permission.return_value = False
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     db = mock_db.session()
     nick = "foo"
     text = "other"
@@ -624,12 +675,16 @@ def test_tell_enable_no_perms(mock_db, freeze_time) -> None:
     assert mock_db.get_data(tell.disable_table) == []
 
 
-def test_tell_enable_other(mock_db, freeze_time) -> None:
+@pytest.mark.asyncio
+async def test_tell_enable_other(
+    mock_db, freeze_time, mock_bot_factory
+) -> None:
+    bot = mock_bot_factory(db=mock_db)
     event = MagicMock()
     tell.disable_cache.clear()
     tell.disable_table.create(mock_db.engine)
     event.has_permission.return_value = True
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     db = mock_db.session()
     nick = "foo"
     text = "other"
@@ -647,13 +702,17 @@ def test_tell_enable_other(mock_db, freeze_time) -> None:
     assert mock_db.get_data(tell.disable_table) == []
 
 
-def test_tell_enable_already_enabled(mock_db, freeze_time) -> None:
+@pytest.mark.asyncio
+async def test_tell_enable_already_enabled(
+    mock_db, freeze_time, mock_bot_factory
+) -> None:
+    bot = mock_bot_factory(db=mock_db)
     event = MagicMock()
     tell.disable_cache.clear()
     tell.disable_table.create(mock_db.engine)
     nick = "foo"
     text = ""
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     event.has_permission.return_value = True
     db = mock_db.session()
     res = tell.tell_enable(conn, db, text, event, nick)
@@ -662,13 +721,17 @@ def test_tell_enable_already_enabled(mock_db, freeze_time) -> None:
     assert mock_db.get_data(tell.disable_table) == []
 
 
-def test_tell_enable_already_enabled_other(mock_db, freeze_time) -> None:
+@pytest.mark.asyncio
+async def test_tell_enable_already_enabled_other(
+    mock_db, freeze_time, mock_bot_factory
+) -> None:
+    bot = mock_bot_factory(db=mock_db)
     event = MagicMock()
     tell.disable_cache.clear()
     tell.disable_table.create(mock_db.engine)
     nick = "foo"
     text = "other"
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     event.has_permission.return_value = True
     db = mock_db.session()
     res = tell.tell_enable(conn, db, text, event, nick)
@@ -677,13 +740,17 @@ def test_tell_enable_already_enabled_other(mock_db, freeze_time) -> None:
     assert mock_db.get_data(tell.disable_table) == []
 
 
-def test_tell_list_disabled(mock_db, freeze_time, patch_paste) -> None:
+@pytest.mark.asyncio
+async def test_tell_list_disabled(
+    mock_db, freeze_time, mock_bot_factory, patch_paste
+) -> None:
+    bot = mock_bot_factory(db=mock_db)
     patch_paste.return_value = "Pasted."
     event = MagicMock()
     tell.disable_cache.clear()
     tell.disable_table.create(mock_db.engine)
     event.has_permission.return_value = True
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     db = mock_db.session()
     nick = "foo"
     text = "other"
@@ -709,12 +776,14 @@ def test_tell_list_disabled(mock_db, freeze_time, patch_paste) -> None:
     ]
 
 
-def test_tell_ignore(mock_db, freeze_time) -> None:
+@pytest.mark.asyncio
+async def test_tell_ignore(mock_db, freeze_time, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     event = MagicMock()
     tell.ignore_cache.clear()
     tell.ignore_table.create(mock_db.engine)
     event.has_permission.return_value = True
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     nick = "foo"
     text = "other"
     db = mock_db.session()
@@ -729,12 +798,16 @@ def test_tell_ignore(mock_db, freeze_time) -> None:
     ]
 
 
-def test_tell_ignore_existing(mock_db, freeze_time) -> None:
+@pytest.mark.asyncio
+async def test_tell_ignore_existing(
+    mock_db, freeze_time, mock_bot_factory
+) -> None:
+    bot = mock_bot_factory(db=mock_db)
     event = MagicMock()
     tell.ignore_cache.clear()
     tell.ignore_table.create(mock_db.engine)
     event.has_permission.return_value = True
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     nick = "foo"
     text = "other"
     db = mock_db.session()
@@ -749,12 +822,16 @@ def test_tell_ignore_existing(mock_db, freeze_time) -> None:
     ]
 
 
-def test_tell_unignore_not_Set(mock_db, freeze_time) -> None:
+@pytest.mark.asyncio
+async def test_tell_unignore_not_Set(
+    mock_db, freeze_time, mock_bot_factory
+) -> None:
+    bot = mock_bot_factory(db=mock_db)
     event = MagicMock()
     tell.ignore_cache.clear()
     tell.ignore_table.create(mock_db.engine)
     event.has_permission.return_value = True
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     nick = "foo"
     text = "other"
     db = mock_db.session()
@@ -767,12 +844,14 @@ def test_tell_unignore_not_Set(mock_db, freeze_time) -> None:
     assert mock_db.get_data(tell.ignore_table) == []
 
 
-def test_tell_unignore(mock_db, freeze_time) -> None:
+@pytest.mark.asyncio
+async def test_tell_unignore(mock_db, freeze_time, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     event = MagicMock()
     tell.ignore_cache.clear()
     tell.ignore_table.create(mock_db.engine)
     event.has_permission.return_value = True
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     nick = "foo"
     text = "other"
     db = mock_db.session()
@@ -790,12 +869,16 @@ def test_tell_unignore(mock_db, freeze_time) -> None:
     assert mock_db.get_data(tell.ignore_table) == []
 
 
-def test_tell_list_ignores(mock_db, freeze_time) -> None:
+@pytest.mark.asyncio
+async def test_tell_list_ignores(
+    mock_db, freeze_time, mock_bot_factory
+) -> None:
+    bot = mock_bot_factory(db=mock_db)
     event = MagicMock()
     tell.ignore_cache.clear()
     tell.ignore_table.create(mock_db.engine)
     event.has_permission.return_value = True
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     nick = "foo"
     text = "other"
     mock_db.add_row(
@@ -811,12 +894,16 @@ def test_tell_list_ignores(mock_db, freeze_time) -> None:
     assert event.mock_calls == []
 
 
-def test_tell_list_ignores_empty(mock_db, freeze_time) -> None:
+@pytest.mark.asyncio
+async def test_tell_list_ignores_empty(
+    mock_db, freeze_time, mock_bot_factory
+) -> None:
+    bot = mock_bot_factory(db=mock_db)
     event = MagicMock()
     tell.ignore_cache.clear()
     tell.ignore_table.create(mock_db.engine)
     event.has_permission.return_value = True
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     nick = "foo"
     tell.load_ignores(mock_db.session())
     res = tell.list_tell_ignores(conn, nick)

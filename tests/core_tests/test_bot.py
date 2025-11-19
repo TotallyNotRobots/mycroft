@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from itertools import product
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, call, patch
 
 import pytest
@@ -16,6 +16,7 @@ from cloudbot.hook import Action, Priority
 from cloudbot.plugin_hooks import CommandHook, ConfigHook, EventHook, RawHook
 from cloudbot.util import database
 from tests.util.async_mock import AsyncMock
+from tests.util.mock_conn import MockClient
 from tests.util.mock_db import MockDB
 
 if TYPE_CHECKING:
@@ -125,16 +126,15 @@ async def test_migrate_db(
 @pytest.mark.asyncio()
 async def test_connect_clients(mock_bot_factory) -> None:
     bot = mock_bot_factory()
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     bot.connections = {"foo": conn}
     future = bot.loop.create_future()
     future.set_result(True)
-    conn.try_connect.return_value = future
     bot.plugin_manager.load_all = load_mock = MagicMock()
     load_mock.return_value = future
     await CloudBot._init_routine(bot)
     assert load_mock.mock_calls == [call(bot.base_dir / "plugins")]
-    conn.try_connect.assert_called()
+    assert conn.mock_calls() == [call.try_connect()]
 
 
 @pytest.mark.asyncio()
@@ -159,20 +159,11 @@ async def test_start_plugin_reload(tmp_path) -> None:
     ]
 
 
-class MockConn:
-    def __init__(self, nick=None) -> None:
-        self.nick = nick
-        self.config: dict[str, Any] = {}
-        self.reload = MagicMock()
-        self.try_connect = MagicMock()
-        self.notice = MagicMock()
-
-
 class TestProcessing:
     @pytest.mark.asyncio()
     async def test_irc_catch_all(self, mock_bot_factory) -> None:
         bot = mock_bot_factory()
-        conn = MockConn(nick="bot")
+        conn = MockClient(bot=bot, nick="bot")
         event = Event(
             irc_command="PRIVMSG",
             event_type=EventType.message,
@@ -204,7 +195,7 @@ class TestProcessing:
     @pytest.mark.asyncio()
     async def test_irc_catch_all_block(self, mock_bot_factory) -> None:
         bot = mock_bot_factory()
-        conn = MockConn(nick="bot")
+        conn = MockClient(bot=bot, nick="bot")
         event = Event(
             irc_command="PRIVMSG",
             event_type=EventType.message,
@@ -242,7 +233,7 @@ class TestProcessing:
     @pytest.mark.asyncio()
     async def test_command(self, mock_bot_factory) -> None:
         bot = mock_bot_factory()
-        conn = MockConn(nick="bot")
+        conn = MockClient(bot=bot, nick="bot")
         event = Event(
             irc_command="PRIVMSG",
             event_type=EventType.message,
@@ -276,7 +267,7 @@ class TestProcessing:
     @pytest.mark.asyncio()
     async def test_command_partial(self, mock_bot_factory) -> None:
         bot = mock_bot_factory()
-        conn = MockConn(nick="bot")
+        conn = MockClient(bot=bot, nick="bot")
         event = Event(
             irc_command="PRIVMSG",
             event_type=EventType.message,
@@ -305,14 +296,14 @@ class TestProcessing:
             key=id,
         )
 
-        assert conn.notice.mock_calls == [
-            call("bar", "Possible matches: foob or fooc")
+        assert conn.mock_calls() == [
+            call.notice("bar", "Possible matches: foob or fooc"),
         ]
 
     @pytest.mark.asyncio()
     async def test_event(self, mock_bot_factory) -> None:
         bot = mock_bot_factory()
-        conn = MockConn(nick="bot")
+        conn = MockClient(bot=bot, nick="bot")
         event = Event(
             irc_command="PRIVMSG",
             event_type=EventType.message,
@@ -347,7 +338,7 @@ class TestProcessing:
     @pytest.mark.asyncio()
     async def test_event_block(self, mock_bot_factory, mock_db) -> None:
         bot = mock_bot_factory(db=mock_db)
-        conn = MockConn(nick="bot")
+        conn = MockClient(bot=bot, nick="bot")
         event = Event(
             irc_command="PRIVMSG",
             event_type=EventType.message,
@@ -394,7 +385,7 @@ class TestProcessing:
     @pytest.mark.asyncio()
     async def test_irc_raw(self, mock_bot_factory) -> None:
         bot = mock_bot_factory()
-        conn = MockConn(nick="bot")
+        conn = MockClient(bot=bot, nick="bot")
         event = Event(
             irc_command="PRIVMSG",
             event_type=EventType.message,
@@ -425,7 +416,7 @@ class TestProcessing:
     @pytest.mark.asyncio()
     async def test_irc_raw_block(self, mock_bot_factory) -> None:
         bot = mock_bot_factory()
-        conn = MockConn(nick="bot")
+        conn = MockClient(bot=bot, nick="bot")
         event = Event(
             irc_command="PRIVMSG",
             event_type=EventType.message,
@@ -464,7 +455,7 @@ class TestProcessing:
 @pytest.mark.asyncio()
 async def test_reload_config(mock_bot_factory) -> None:
     bot = mock_bot_factory()
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     bot.connections = {"foo": conn}
     bot.config.load_config = MagicMock()
     runs = []
@@ -481,7 +472,7 @@ async def test_reload_config(mock_bot_factory) -> None:
 
     bot.config.load_config.assert_not_called()
     await CloudBot.reload_config(bot)
-    conn.reload.assert_called()
+    assert conn.mock_calls() == [call.reload()]
     bot.config.load_config.assert_called()
     assert runs == [config_hook]
 
@@ -498,8 +489,12 @@ def test_clean_name(text, result) -> None:
     assert clean_name(text) == result
 
 
-def test_get_cmd_regex() -> None:
-    event = Event(channel="TestUser", nick="TestUser", conn=MockConn("Bot"))
+def test_get_cmd_regex(mock_bot) -> None:
+    event = Event(
+        channel="TestUser",
+        nick="TestUser",
+        conn=MockClient(bot=mock_bot, nick="Bot"),
+    )
     regex = get_cmd_regex(event)
     assert (
         regex.pattern

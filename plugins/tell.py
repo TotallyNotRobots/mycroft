@@ -27,6 +27,8 @@ from cloudbot.util.formatting import gen_markdown_table
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from cloudbot.client import Client
+
 
 class TellMessage(database.Base):
     __tablename__ = "tell_messages"
@@ -114,15 +116,15 @@ def load_ignores(db) -> None:
     ignore_cache.update(new_cache)
 
 
-def is_disable(conn, target) -> bool:
+def is_disable(conn: Client, target) -> bool:
     return target.lower() in disable_cache[conn.name.lower()]
 
 
-def ignore_exists(conn, nick, mask) -> bool:
+def ignore_exists(conn: Client, nick, mask) -> bool:
     return mask in ignore_cache[conn.name.lower()][nick.lower()]
 
 
-def can_send_to_user(conn, sender, target) -> bool:
+def can_send_to_user(conn: Client, sender, target) -> bool:
     if target.lower() in disable_cache[conn.name.lower()]:
         return False
 
@@ -133,7 +135,7 @@ def can_send_to_user(conn, sender, target) -> bool:
     return True
 
 
-def add_disable(db, conn, setter, target, now=None) -> None:
+def add_disable(db, conn: Client, setter, target, now=None) -> None:
     if now is None:
         now = datetime.now()
 
@@ -149,7 +151,7 @@ def add_disable(db, conn, setter, target, now=None) -> None:
     load_disabled(db)
 
 
-def del_disable(db, conn, target) -> None:
+def del_disable(db, conn: Client, target) -> None:
     db.execute(
         disable_table.delete().where(
             and_(
@@ -162,14 +164,14 @@ def del_disable(db, conn, target) -> None:
     load_disabled(db)
 
 
-def list_disabled(db, conn):
+def list_disabled(db, conn: Client):
     for row in db.execute(
         disable_table.select().where(disable_table.c.conn == conn.name.lower())
     ):
         yield (row.conn, row.target, row.setter, row.set_at.ctime())
 
 
-def add_ignore(db, conn, nick, mask, now=None) -> None:
+def add_ignore(db, conn: Client, nick, mask, now=None) -> None:
     if now is None:
         now = datetime.now()
 
@@ -185,7 +187,7 @@ def add_ignore(db, conn, nick, mask, now=None) -> None:
     load_ignores(db)
 
 
-def del_ignore(db, conn, nick, mask) -> None:
+def del_ignore(db, conn: Client, nick, mask) -> None:
     db.execute(
         ignore_table.delete().where(
             and_(
@@ -199,7 +201,7 @@ def del_ignore(db, conn, nick, mask) -> None:
     load_ignores(db)
 
 
-def list_ignores(conn, nick: str) -> Iterable[str]:
+def list_ignores(conn: Client, nick: str) -> Iterable[str]:
     yield from ignore_cache[conn.name.lower()][nick.lower()]
 
 
@@ -252,7 +254,7 @@ def add_tell(db, server, sender, target, message) -> None:
     load_cache(db)
 
 
-def tell_check(conn, nick) -> bool:
+def tell_check(conn: str, nick) -> bool:
     for _conn, _target in tell_cache:
         if (conn, nick.lower()) == (_conn, _target):
             return True
@@ -261,7 +263,7 @@ def tell_check(conn, nick) -> bool:
 
 
 @hook.event([EventType.message, EventType.action], singlethread=True)
-def tellinput(conn, db, nick, notice, content) -> None:
+def tellinput(conn: Client, db, nick, notice, content) -> None:
     if "showtells" in content.lower():
         return
 
@@ -287,7 +289,7 @@ def tellinput(conn, db, nick, notice, content) -> None:
 
 
 @hook.command(autohelp=False)
-def showtells(nick, notice, db, conn) -> None:
+def showtells(nick, notice, db, conn: Client) -> None:
     """- View all pending tell messages (sent in a notice)."""
 
     tells = get_unread(db, conn.name, nick)
@@ -303,7 +305,7 @@ def showtells(nick, notice, db, conn) -> None:
 
 
 @hook.command("tell")
-def tell_cmd(text, nick, db, conn, mask, event) -> None:
+def tell_cmd(text, nick, db, conn: Client, mask, event) -> None:
     """<nick> <message> - Relay <message> to <nick> when <nick> is around."""
     query = text.split(" ", 1)
 
@@ -345,7 +347,7 @@ def check_permissions(event, *perms):
 
 
 @hook.command("telldisable", autohelp=False)
-def tell_disable(conn, db, text, nick, event):
+def tell_disable(conn: Client, db, text, nick, event):
     """[nick] - Disable the sending of tells to [nick]"""
     is_self = False
     if not text or text.casefold() == nick.casefold():
@@ -366,7 +368,7 @@ def tell_disable(conn, db, text, nick, event):
 
 
 @hook.command("tellenable", autohelp=False)
-def tell_enable(conn, db, text, event, nick):
+def tell_enable(conn: Client, db, text, event, nick):
     """[nick] - Enable the sending of tells to [nick]"""
     is_self = False
     if not text or text.casefold() == nick.casefold():
@@ -387,7 +389,7 @@ def tell_enable(conn, db, text, event, nick):
 @hook.command(
     "listtelldisabled", permissions=["botcontrol", "ignore"], autohelp=False
 )
-def list_tell_disabled(conn, db):
+def list_tell_disabled(conn: Client, db):
     """- Returns the current list of people who are not able to receive tells"""
     ignores = list(list_disabled(db, conn))
     md = gen_markdown_table(
@@ -397,7 +399,7 @@ def list_tell_disabled(conn, db):
 
 
 @hook.command("tellignore")
-def tell_ignore(db, conn, nick, text, notice) -> None:
+def tell_ignore(db, conn: Client, nick, text, notice) -> None:
     """<mask> - Disallow users matching <mask> from sending you tells"""
     mask = text.split()[0].lower()
     if ignore_exists(conn, nick, mask):
@@ -409,7 +411,7 @@ def tell_ignore(db, conn, nick, text, notice) -> None:
 
 
 @hook.command("tellunignore")
-def tell_unignore(db, conn, nick, text, notice) -> None:
+def tell_unignore(db, conn: Client, nick, text, notice) -> None:
     """<mask> - Remove a tell ignore"""
     mask = text.split()[0].lower()
     if not ignore_exists(conn, nick, mask):
@@ -423,7 +425,7 @@ def tell_unignore(db, conn, nick, text, notice) -> None:
 @hook.command(
     "listtellignores", permissions=["botcontrol", "ignore"], autohelp=False
 )
-def list_tell_ignores(conn, nick) -> str:
+def list_tell_ignores(conn: Client, nick) -> str:
     """- Returns the current list of masks who may not send you tells"""
     ignores = list(list_ignores(conn, nick))
     if not ignores:

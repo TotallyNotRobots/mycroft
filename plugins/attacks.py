@@ -1,11 +1,16 @@
+from __future__ import annotations
+
 import json
 import re
 from collections import defaultdict
 from enum import Enum, unique
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from cloudbot import hook
 from cloudbot.util import textgen
+
+if TYPE_CHECKING:
+    from cloudbot.client import Client
 
 
 @unique
@@ -15,7 +20,7 @@ class RespType(Enum):
     REPLY = 3
 
 
-def is_self(conn, target):
+def is_self(conn: Client, target):
     """Checks if a string is "****self" or contains conn.name."""
     return bool(
         re.search(f"(^..?.?.?self|{re.escape(conn.nick)})", target, re.I)
@@ -176,7 +181,7 @@ def basic_format(nick, text, data, **kwargs):
 
 
 def basic_attack(attack):
-    def func(text, conn, nick, action, message, reply, is_nick_valid):
+    def func(text, conn: Client, nick, action, message, reply, is_nick_valid):
         responses = {
             RespType.ACTION: action,
             RespType.REPLY: reply,

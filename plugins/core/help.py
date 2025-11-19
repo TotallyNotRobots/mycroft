@@ -1,7 +1,13 @@
+from __future__ import annotations
+
 from operator import attrgetter
+from typing import TYPE_CHECKING
 
 from cloudbot import hook
 from cloudbot.util import formatting, web
+
+if TYPE_CHECKING:
+    from cloudbot.client import Client
 
 
 def get_potential_commands(bot, cmd_name):
@@ -111,7 +117,7 @@ async def cmdinfo(text, bot, notice) -> None:
 
 
 @hook.command(permissions=["botcontrol"], autohelp=False)
-def generatehelp(conn, bot):
+def generatehelp(conn: Client, bot):
     """- Dumps a list of commands with their help text to the docs directory formatted using markdown."""
     message = f"{conn.nick} Command list\n"
     message += "------\n"

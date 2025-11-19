@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import Column, String, Table, UniqueConstraint
 
 from cloudbot import hook
+from cloudbot.client import Client
 from cloudbot.util import database
 
 if TYPE_CHECKING:
@@ -59,7 +60,7 @@ def load_cache(db) -> None:
     status_cache.update(new_cache)
 
 
-def set_status(db, conn, chan, status: bool) -> None:
+def set_status(db, conn: str, chan, status: bool) -> None:
     status_value = ENABLED if status else DISABLED
     if (conn, chan) in status_cache:
         # if we have a set value, update
@@ -81,7 +82,7 @@ def set_status(db, conn, chan, status: bool) -> None:
     load_cache(db)
 
 
-def delete_status(db, conn, chan) -> None:
+def delete_status(db, conn: str, chan) -> None:
     db.execute(
         table.delete()
         .where(table.c.connection == conn)
@@ -159,7 +160,7 @@ def disableregex(db, event):
 
 
 @hook.command(autohelp=False, permissions=["botcontrol"])
-def resetregex(text, db, conn, chan, nick, message, notice) -> None:
+def resetregex(text, db, conn: Client, chan, nick, message, notice) -> None:
     """[chan] - Reset regex hook status in [chan] (default: current channel)"""
     channel = parse_args(text, chan)
     message(

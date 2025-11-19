@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, call
 import pytest
 
 from plugins import jokes
-from tests.util.mock_conn import MockConn
+from tests.util.mock_conn import MockClient
 
 
 @pytest.mark.asyncio
@@ -52,13 +52,13 @@ def test_confucious() -> None:
     assert event.mock_calls == [call.message("Confucious say foobar")]
 
 
-def test_yo_mamma() -> None:
+def test_yo_mamma(mock_bot) -> None:
     jokes.joke_lines.clear()
     jokes.joke_lines["yo_momma"] = ["foobar"]
     event = MagicMock()
     event.is_nick_valid.return_value = True
     nick = "foo"
-    conn = MockConn()
+    conn = MockClient(bot=mock_bot)
     text = "bar"
     res = jokes.yomomma(text, nick, conn, event.is_nick_valid)
     assert res == "bar, foobar"

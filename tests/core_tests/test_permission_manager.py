@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING, cast
 
+import pytest
+
 from cloudbot import permissions
 from cloudbot.permissions import (
     Group,
@@ -7,15 +9,10 @@ from cloudbot.permissions import (
     GroupPermission,
     PermissionManager,
 )
+from tests.util.mock_conn import MockClient
 
 if TYPE_CHECKING:
     import sqlalchemy as sa
-
-
-class MockConn:
-    def __init__(self, name, config) -> None:
-        self.name = name
-        self.config = config
 
 
 def model_to_dict(obj):
@@ -27,11 +24,13 @@ def model_to_dict(obj):
     return out
 
 
-def test_manager_load(mock_db) -> None:
+@pytest.mark.asyncio
+async def test_manager_load(mock_db, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     group_table = Group.__table__
     group_member_table = GroupMember.__table__
     permission_table = GroupPermission.__table__
-    manager = PermissionManager(MockConn("testconn", {}))
+    manager = PermissionManager(MockClient(bot=bot, name="testconn", config={}))
 
     assert not manager.get_groups()
     assert not manager.get_group_permissions("foobar")
@@ -53,9 +52,12 @@ def test_manager_load(mock_db) -> None:
 
     permissions.backdoor = None
     perm = "testperm"
-    conn = MockConn(
-        "testconn",
-        {"permissions": {"admins": {"users": [user_mask], "perms": [perm]}}},
+    conn = MockClient(
+        bot=bot,
+        name="testconn",
+        config={
+            "permissions": {"admins": {"users": [user_mask], "perms": [perm]}}
+        },
     )
     manager = PermissionManager(conn)
     assert manager.group_exists("admins")
@@ -93,8 +95,10 @@ def test_manager_load(mock_db) -> None:
     assert not manager.user_in_group(user, "admins")
 
 
-def test_add_user_to_group(mock_db) -> None:
-    manager = PermissionManager(MockConn("testconn", {}))
+@pytest.mark.asyncio
+async def test_add_user_to_group(mock_db, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
+    manager = PermissionManager(MockClient(bot=bot, name="testconn", config={}))
     manager.add_user_to_group("*!*@host", "admins")
     manager.add_user_to_group("*!*@mask", "admins")
     assert manager.user_in_group("user!name@host", "admins")
@@ -103,7 +107,9 @@ def test_add_user_to_group(mock_db) -> None:
     assert len(manager.get_group_users("admins")) == 2
 
 
-def test_db(mock_db) -> None:
+@pytest.mark.asyncio
+async def test_db(mock_db, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     session = mock_db.session()
 
     group_table = cast("sa.Table", Group.__table__)
@@ -114,17 +120,9 @@ def test_db(mock_db) -> None:
     group_member_table.create(mock_db.engine)
     permission_table.create(mock_db.engine)
 
-    conn = MockConn(
-        "testconn",
-        {
-            "permissions": {
-                "admins": {"users": ["a", "d"], "perms": ["foo"]},
-                "foo": {
-                    "users": ["b", "c", "thing"],
-                    "perms": ["bar", "baz"],
-                },
-            }
-        },
+    conn = MockClient(
+        bot=bot,
+        name="testconn",
     )
 
     perm = "bar"
@@ -176,6 +174,18 @@ def test_db(mock_db) -> None:
 
     assert res == [("thing",), ("thing1",)]
 
+    conn = MockClient(
+        bot=bot,
+        config={
+            "permissions": {
+                "admins": {"users": ["a", "d"], "perms": ["foo"]},
+                "foo": {
+                    "users": ["b", "c", "thing"],
+                    "perms": ["bar", "baz"],
+                },
+            }
+        },
+    )
     manager = PermissionManager(conn)
 
     assert mock_db.get_data(group_table) == [
@@ -205,7 +215,9 @@ def test_db(mock_db) -> None:
     assert not manager.has_perm_mask("b", "foo", notice=True)
 
 
-def test_db_config_merge(mock_db) -> None:
+@pytest.mark.asyncio
+async def test_db_config_merge(mock_db, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     session = mock_db.session()
 
     group_table = cast("sa.Table", Group.__table__)
@@ -216,14 +228,9 @@ def test_db_config_merge(mock_db) -> None:
     group_member_table.create(mock_db.engine)
     permission_table.create(mock_db.engine)
 
-    conn = MockConn(
-        "testconn",
-        {
-            "permissions": {
-                "admins": {"users": ["a", "d"], "perms": ["foo"]},
-                "foo": {"users": ["b", "c", "thing"], "perms": ["bar", "baz"]},
-            }
-        },
+    conn = MockClient(
+        bot=bot,
+        name="testconn",
     )
 
     perm = "bar"
@@ -260,6 +267,17 @@ def test_db_config_merge(mock_db) -> None:
         (conn.name, "foo", "bar", False),
         (conn.name, "foo1", "bar", False),
     ]
+
+    conn = MockClient(
+        bot=bot,
+        name="testconn",
+        config={
+            "permissions": {
+                "admins": {"users": ["a", "d"], "perms": ["foo"]},
+                "foo": {"users": ["b", "c", "thing"], "perms": ["bar", "baz"]},
+            }
+        },
+    )
 
     manager = PermissionManager(conn)
 

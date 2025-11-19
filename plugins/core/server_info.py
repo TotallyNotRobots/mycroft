@@ -13,6 +13,8 @@ from cloudbot.util.irc import ChannelMode, ModeType, StatusMode
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from cloudbot.client import Client
+
 DEFAULT_STATUS = (
     StatusMode.make("@", "o", 2),
     StatusMode.make("+", "v", 1),
@@ -28,7 +30,7 @@ def do_isupport(bot) -> None:
 
 
 @hook.connect()
-def clear_isupport(conn) -> None:
+def clear_isupport(conn: Client) -> None:
     serv_info = conn.memory.setdefault("server_info", {})
     statuses = get_status_modes(serv_info, clear=True)
     for s in DEFAULT_STATUS:
@@ -63,7 +65,7 @@ def _get_set_clear(
     return out
 
 
-def get_server_info(conn):
+def get_server_info(conn: Client):
     return conn.memory["server_info"]
 
 
@@ -130,7 +132,7 @@ isupport_handlers = {
 
 
 @hook.irc_raw("005", singlethread=True)
-def on_isupport(conn, irc_paramlist) -> None:
+def on_isupport(conn: Client, irc_paramlist) -> None:
     serv_info = get_server_info(conn)
     token_data = serv_info["isupport_tokens"]
     # strip the nick and trailing ':are supported by this server' message

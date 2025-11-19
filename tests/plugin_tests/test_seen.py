@@ -2,13 +2,13 @@ from unittest.mock import MagicMock
 
 from cloudbot.event import CommandEvent, Event, EventType
 from plugins import seen
-from tests.util.mock_conn import MockConn
+from tests.util.mock_conn import MockClient
 
 
-def test_seen_track_correction(mock_db, freeze_time) -> None:
+def test_seen_track_correction(mock_db, freeze_time, mock_bot) -> None:
     seen.table.create(mock_db.engine)
     db = mock_db.session()
-    conn = MockConn()
+    conn = MockClient(bot=mock_bot)
     event = Event(
         conn=conn,
         channel="#foo",
@@ -21,10 +21,10 @@ def test_seen_track_correction(mock_db, freeze_time) -> None:
     assert mock_db.get_data(seen.table) == []
 
 
-def test_seen_track_pm(mock_db, freeze_time) -> None:
+def test_seen_track_pm(mock_db, freeze_time, mock_bot) -> None:
     seen.table.create(mock_db.engine)
     db = mock_db.session()
-    conn = MockConn()
+    conn = MockClient(bot=mock_bot)
     event = Event(
         conn=conn,
         channel="foo",
@@ -37,10 +37,10 @@ def test_seen_track_pm(mock_db, freeze_time) -> None:
     assert mock_db.get_data(seen.table) == []
 
 
-def test_seen_track(mock_db, freeze_time) -> None:
+def test_seen_track(mock_db, freeze_time, mock_bot) -> None:
     seen.table.create(mock_db.engine)
     db = mock_db.session()
-    conn = MockConn()
+    conn = MockClient(bot=mock_bot)
     event = Event(
         conn=conn,
         channel="#foo",
@@ -55,7 +55,7 @@ def test_seen_track(mock_db, freeze_time) -> None:
     ]
 
 
-def test_seen_track_update(mock_db, freeze_time) -> None:
+def test_seen_track_update(mock_db, freeze_time, mock_bot) -> None:
     seen.table.create(mock_db.engine)
     nick = "bar"
     chan = "#foo"
@@ -71,7 +71,7 @@ def test_seen_track_update(mock_db, freeze_time) -> None:
         ("bar", 123.0, "foo", "#foo", "foo.bar")
     ]
     db = mock_db.session()
-    conn = MockConn()
+    conn = MockClient(bot=mock_bot)
     event = Event(
         conn=conn,
         channel=chan,
@@ -86,10 +86,10 @@ def test_seen_track_update(mock_db, freeze_time) -> None:
     ]
 
 
-def test_seen_track_action(mock_db, freeze_time) -> None:
+def test_seen_track_action(mock_db, freeze_time, mock_bot) -> None:
     seen.table.create(mock_db.engine)
     db = mock_db.session()
-    conn = MockConn()
+    conn = MockClient(bot=mock_bot)
     event = Event(
         conn=conn,
         channel="#foo",
@@ -104,9 +104,9 @@ def test_seen_track_action(mock_db, freeze_time) -> None:
     ]
 
 
-def test_seen_bot(mock_db, freeze_time) -> None:
+def test_seen_bot(mock_db, freeze_time, mock_bot) -> None:
     db = mock_db.session()
-    conn = MockConn()
+    conn = MockClient(bot=mock_bot)
     event = CommandEvent(
         conn=conn,
         channel="#foo",
@@ -121,9 +121,9 @@ def test_seen_bot(mock_db, freeze_time) -> None:
     assert res == "You need to get your eyes checked."
 
 
-def test_seen_self(mock_db, freeze_time) -> None:
+def test_seen_self(mock_db, freeze_time, mock_bot) -> None:
     db = mock_db.session()
-    conn = MockConn()
+    conn = MockClient(bot=mock_bot)
     nick = "bar"
     event = CommandEvent(
         conn=conn,
@@ -139,10 +139,10 @@ def test_seen_self(mock_db, freeze_time) -> None:
     assert res == "Have you looked in a mirror lately?"
 
 
-def test_seen_not_seen(mock_db, freeze_time) -> None:
+def test_seen_not_seen(mock_db, freeze_time, mock_bot) -> None:
     seen.table.create(mock_db.engine)
     db = mock_db.session()
-    conn = MockConn()
+    conn = MockClient(bot=mock_bot)
     nick = "bar"
     event = CommandEvent(
         conn=conn,
@@ -158,7 +158,7 @@ def test_seen_not_seen(mock_db, freeze_time) -> None:
     assert res == "I've never seen other talking in this channel."
 
 
-def test_seen(mock_db, freeze_time) -> None:
+def test_seen(mock_db, freeze_time, mock_bot) -> None:
     seen.table.create(mock_db.engine)
     chan = "#foo"
     mock_db.add_row(
@@ -171,7 +171,7 @@ def test_seen(mock_db, freeze_time) -> None:
     )
 
     db = mock_db.session()
-    conn = MockConn()
+    conn = MockClient(bot=mock_bot)
     nick = "bar"
     event = CommandEvent(
         conn=conn,
@@ -187,7 +187,7 @@ def test_seen(mock_db, freeze_time) -> None:
     assert res == "other was last seen 49 years and 8 months ago saying: foo"
 
 
-def test_seen_bad_nick(mock_db, freeze_time) -> None:
+def test_seen_bad_nick(mock_db, freeze_time, mock_bot) -> None:
     seen.table.create(mock_db.engine)
     chan = "#foo"
     mock_db.add_row(
@@ -200,7 +200,7 @@ def test_seen_bad_nick(mock_db, freeze_time) -> None:
     )
 
     db = mock_db.session()
-    conn = MockConn()
+    conn = MockClient(bot=mock_bot)
     conn.is_nick_valid = lambda nick: False  # type: ignore[method-assign]
     nick = "bar"
     event = CommandEvent(
@@ -218,7 +218,7 @@ def test_seen_bad_nick(mock_db, freeze_time) -> None:
     assert res == "I can't look up that name, its impossible to use!"
 
 
-def test_seen_action(mock_db, freeze_time) -> None:
+def test_seen_action(mock_db, freeze_time, mock_bot) -> None:
     seen.table.create(mock_db.engine)
     chan = "#foo"
     mock_db.add_row(
@@ -231,7 +231,7 @@ def test_seen_action(mock_db, freeze_time) -> None:
     )
 
     db = mock_db.session()
-    conn = MockConn()
+    conn = MockClient(bot=mock_bot)
     nick = "bar"
     event = CommandEvent(
         conn=conn,

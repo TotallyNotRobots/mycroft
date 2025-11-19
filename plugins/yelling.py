@@ -1,7 +1,13 @@
+from __future__ import annotations
+
 import re
+from typing import TYPE_CHECKING
 
 from cloudbot import hook
 from cloudbot.event import EventType
+
+if TYPE_CHECKING:
+    from cloudbot.clients.irc import IrcClient
 
 OPT_IN = ["#yelling"]
 YELL_RE = re.compile("[^a-zA-Z]")
@@ -11,7 +17,7 @@ URL_RE = re.compile(
 
 
 @hook.event([EventType.message, EventType.action], clients=["irc"])
-def yell_check(conn, chan, content, bot, nick) -> None:
+def yell_check(conn: IrcClient, chan, content, bot, nick) -> None:
     """THIS IS A CUSTOM PLUGIN FOR #YELLING TO MAKE SURE PEOPLE FOLLOW THE RULES."""
     if chan.casefold() not in OPT_IN:
         return

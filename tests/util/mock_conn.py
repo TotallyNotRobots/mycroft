@@ -13,20 +13,47 @@ if TYPE_CHECKING:
 
 
 class MockClient(Client):
-    def __init__(self, *, bot: AbstractBot, nick=None, name=None) -> None:
+    def __init__(
+        self,
+        *,
+        bot: AbstractBot,
+        nick=None,
+        name=None,
+        config=None,
+        channels=None,
+        connected=True,
+    ) -> None:
         super().__init__(
             bot=bot,
             _type="mock",
             name=name or "testconn",
             nick=nick or "TestBot",
+            config=config or {},
+            channels=channels,
         )
         self._mock = MagicMock(spec=Client)
+        self.active = True
+        self.ready = connected
+        self._connected = connected
+
+    @property
+    def connected(self) -> bool:
+        return self._connected
+
+    @connected.setter
+    def connected(self, value) -> None:
+        self._connected = value
 
     def reload(self):
         return self._mock.reload()
 
     async def try_connect(self):
-        return self._mock.try_connect()
+        self._connected = True
+        return await self._mock.try_connect()
+
+    async def connect(self, timeout=None):
+        self._connected = True
+        return await self._mock.connect(timeout=timeout)
 
     def join(self, channel, key=None):
         return self._mock.join(channel, key)

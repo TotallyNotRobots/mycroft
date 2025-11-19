@@ -1,7 +1,14 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from cloudbot import hook
 
+if TYPE_CHECKING:
+    from cloudbot.client import Client
 
-def get_latest_line(conn, chan, nick):
+
+def get_latest_line(conn: Client, chan, nick):
     for name, _, msg in reversed(conn.history.get(chan.casefold(), [])):
         if nick.casefold() == name.casefold():
             return msg
@@ -10,7 +17,7 @@ def get_latest_line(conn, chan, nick):
 
 
 @hook.command()
-def mock(text, chan, conn, message):
+def mock(text, chan, conn: Client, message):
     """<nick> - turn <user>'s last message in to aLtErNaTiNg cApS"""
     nick = text.strip()
     line = get_latest_line(conn, chan, nick)

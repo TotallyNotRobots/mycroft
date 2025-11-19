@@ -1,13 +1,19 @@
+from __future__ import annotations
+
 import asyncio
 from collections import defaultdict
 from copy import copy
 from threading import RLock
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Column, PrimaryKeyConstraint, String, Table, and_
 from sqlalchemy.exc import IntegrityError
 
 from cloudbot import hook
 from cloudbot.util import database
+
+if TYPE_CHECKING:
+    from cloudbot.client import Client
 
 table = Table(
     "autojoin",
@@ -33,7 +39,7 @@ def load_cache(db) -> None:
 
 
 @hook.irc_raw("376")
-async def do_joins(conn) -> None:
+async def do_joins(conn: Client) -> None:
     while not conn.ready:
         await asyncio.sleep(1)
 
@@ -44,7 +50,7 @@ async def do_joins(conn) -> None:
 
 
 @hook.irc_raw("JOIN", singlethread=True)
-def add_chan(db, conn, chan, nick) -> None:
+def add_chan(db, conn: Client, chan, nick) -> None:
     chans = chan_cache[conn.name]
     chan = chan.casefold()
     if nick.casefold() != conn.nick.casefold() or chan in chans:
@@ -66,7 +72,7 @@ def add_chan(db, conn, chan, nick) -> None:
 
 
 @hook.irc_raw("PART", singlethread=True)
-def on_part(db, conn, chan, nick) -> None:
+def on_part(db, conn: Client, chan, nick) -> None:
     if nick.casefold() != conn.nick.casefold():
         return
 
@@ -85,5 +91,5 @@ def on_part(db, conn, chan, nick) -> None:
 
 
 @hook.irc_raw("KICK", singlethread=True)
-def on_kick(db, conn, chan, target) -> None:
+def on_kick(db, conn: Client, chan, target) -> None:
     on_part(db, conn, chan, target)

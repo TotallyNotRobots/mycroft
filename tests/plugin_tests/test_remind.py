@@ -1,11 +1,17 @@
+from __future__ import annotations
+
 import datetime
 import time
 from contextlib import contextmanager
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, call
 
 import pytest
 
 from plugins import remind
+
+if TYPE_CHECKING:
+    from cloudbot.client import Client
 
 second = datetime.timedelta(seconds=1)
 minute = 60 * second
@@ -21,7 +27,7 @@ async def async_call(func, *args):
     return func(*args)
 
 
-async def make_reminder(text, nick, chan, mock_db, conn, event):
+async def make_reminder(text, nick, chan, mock_db, conn: Client, event):
     return await remind.remind(
         text, nick, chan, mock_db.session(), conn, event, async_call
     )

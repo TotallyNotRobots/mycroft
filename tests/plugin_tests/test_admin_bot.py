@@ -16,7 +16,7 @@ from cloudbot.permissions import (
 from cloudbot.util import func_utils
 from plugins import admin_bot
 from tests.util import wrap_hook_response
-from tests.util.mock_conn import MockConn
+from tests.util.mock_conn import MockClient
 
 if TYPE_CHECKING:
     import sqlalchemy as sa
@@ -109,18 +109,16 @@ def test_me() -> None:
     ]
 
 
-def test_remove_permission_user(mock_db) -> None:
-    conn = MockConn(nick="testconn")
+@pytest.mark.asyncio
+async def test_remove_permission_user(mock_db, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
+    conn = MockClient(bot=bot, nick="testconn")
 
     session = mock_db.session()
 
     group_table = cast("sa.Table", Group.__table__)
     group_member_table = cast("sa.Table", GroupMember.__table__)
     permission_table = cast("sa.Table", GroupPermission.__table__)
-
-    group_table.create(mock_db.engine)
-    group_member_table.create(mock_db.engine)
-    permission_table.create(mock_db.engine)
 
     manager = PermissionManager(conn)
     conn.permissions = manager
@@ -184,18 +182,18 @@ def test_remove_permission_user(mock_db) -> None:
     ]
 
 
-def test_remove_permission_user_too_many_args(mock_db) -> None:
-    conn = MockConn(nick="testconn")
+@pytest.mark.asyncio
+async def test_remove_permission_user_too_many_args(
+    mock_db, mock_bot_factory
+) -> None:
+    bot = mock_bot_factory(db=mock_db)
+    conn = MockClient(bot=bot, nick="testconn")
 
     session = mock_db.session()
 
     group_table = cast("sa.Table", Group.__table__)
     group_member_table = cast("sa.Table", GroupMember.__table__)
     permission_table = cast("sa.Table", GroupPermission.__table__)
-
-    group_table.create(mock_db.engine)
-    group_member_table.create(mock_db.engine)
-    permission_table.create(mock_db.engine)
 
     manager = PermissionManager(conn)
     conn.permissions = manager
@@ -257,18 +255,18 @@ def test_remove_permission_user_too_many_args(mock_db) -> None:
     ]
 
 
-def test_remove_permission_user_too_few_args(mock_db) -> None:
-    conn = MockConn(nick="testconn")
+@pytest.mark.asyncio
+async def test_remove_permission_user_too_few_args(
+    mock_db, mock_bot_factory
+) -> None:
+    bot = mock_bot_factory(db=mock_db)
+    conn = MockClient(bot=bot, nick="testconn")
 
     session = mock_db.session()
 
     group_table = cast("sa.Table", Group.__table__)
     group_member_table = cast("sa.Table", GroupMember.__table__)
     permission_table = cast("sa.Table", GroupPermission.__table__)
-
-    group_table.create(mock_db.engine)
-    group_member_table.create(mock_db.engine)
-    permission_table.create(mock_db.engine)
 
     manager = PermissionManager(conn)
     conn.permissions = manager

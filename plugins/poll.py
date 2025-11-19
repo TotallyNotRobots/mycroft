@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 from re import findall
+from typing import TYPE_CHECKING
 
 from cloudbot import hook
 from cloudbot.util.formatting import get_text_list
+
+if TYPE_CHECKING:
+    from cloudbot.client import Client
 
 polls: dict[str, Poll] = {}
 
@@ -66,7 +70,7 @@ class Poll:
 
 
 @hook.command()
-def poll(text, conn, nick, chan, message, reply):
+def poll(text, conn: Client, nick, chan, message, reply):
     """{<question>[: <option1>, <option2>[, <option3>]...|close} - Creates a poll for [question] with the provided
     options (default: Yes, No), or closes the poll if the argument is 'close'"""
     # get poll ID
@@ -116,7 +120,7 @@ def poll(text, conn, nick, chan, message, reply):
 
 
 @hook.command(autohelp=True)
-def vote(text, nick, conn, chan, notice):
+def vote(text, nick, conn: Client, chan, notice):
     """<poll> <choice> - Vote on a poll; responds on error and silently records on success."""
     split = text.split(None, 1)
     if len(split) != 2:
@@ -142,7 +146,7 @@ def vote(text, nick, conn, chan, notice):
 
 
 @hook.command(autohelp=False)
-def results(text, conn, chan, nick, message, reply):
+def results(text, conn: Client, chan, nick, message, reply):
     """[user] - Shows current results from [user]'s poll. If [user] is empty, it will show results for your poll."""
     if text:
         uid = f"{conn.name}:{chan}:{text}".lower()
