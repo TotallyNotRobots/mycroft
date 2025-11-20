@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -7,19 +8,12 @@ from irclib.parser import ParamList
 from cloudbot import hook
 from cloudbot.event import Event
 from cloudbot.plugin import PluginManager
-from cloudbot.util import async_util
 from plugins.core import cap
 from tests.util.mock_module import MockModule
 
 
-@pytest.fixture()
-def patch_import_module():
-    with patch("importlib.import_module") as mocked:
-        yield mocked
-
-
 @pytest.mark.asyncio()
-async def test_cap_req(patch_import_module, event_loop):
+async def test_cap_req(patch_import_module) -> None:
     caps = [
         "some-cap",
         "another-cap",
@@ -29,13 +23,13 @@ async def test_cap_req(patch_import_module, event_loop):
     ]
     cap_names = [s.split("=")[0] for s in caps]
 
-    params = ParamList.parse("* LS :" + " ".join(caps))
+    params = ParamList.parse(f"* LS :{' '.join(caps)}")
     event = Event(
         irc_paramlist=params,
         bot=MagicMock(),
         conn=MagicMock(),
     )
-    event.conn.loop = event.bot.loop = event_loop
+    event.conn.loop = event.bot.loop = asyncio.get_running_loop()
     event.bot.config = {}
     event.conn.type = "irc"
     event.bot.base_dir = Path(".").resolve()
@@ -43,7 +37,7 @@ async def test_cap_req(patch_import_module, event_loop):
 
     called = False
 
-    def func():
+    def func() -> bool:
         nonlocal called
         called = True
         return True
@@ -63,15 +57,15 @@ async def test_cap_req(patch_import_module, event_loop):
 
     calls = []
 
-    def cmd(cmd, subcmd, *args):
+    def cmd(cmd, subcmd, *args) -> None:
         calls.append((cmd, subcmd) + args)
-        p = ParamList.parse("* ACK :" + " ".join(args))
+        p = ParamList.parse(f"* ACK :{' '.join(args)}")
         cmd_event = Event(
             irc_paramlist=p,
             bot=event.bot,
             conn=event.conn,
         )
-        async_util.wrap_future(cap.on_cap(p, cmd_event), loop=event.loop)
+        asyncio.ensure_future(cap.on_cap(p, cmd_event), loop=event.loop)
 
     with patch.object(event.conn, "cmd", new=cmd):
         res = await cap.on_cap(params, event)

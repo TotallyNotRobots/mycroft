@@ -36,7 +36,9 @@ License:
 """
 
 import re
-from typing import Optional, Union
+from typing import Literal
+
+from cloudbot.errors import ShouldBeUnreachable
 
 SIGN = r"(?P<sign>[+|-])?"
 
@@ -57,24 +59,12 @@ DAY_CLOCK = (
 )
 
 OPT = lambda x: rf"(?:{x})?"
-OPT_SEP = lambda x: r"(?:{x}\s*(?:{SEPARATORS}\s*)?)?".format(
-    x=x, SEPARATORS=SEPARATORS
-)
+OPT_SEP = lambda x: rf"(?:{x}\s*(?:{SEPARATORS}\s*)?)?"
 
 TIME_FORMATS = [
-    r"{WEEKS}\s*{DAYS}\s*{HOURS}\s*{MINS}\s*{SECS}".format(
-        # YEARS=OPT_SEP(YEARS),
-        # MONTHS=OPT_SEP(MONTHS),
-        WEEKS=OPT_SEP(WEEKS),
-        DAYS=OPT_SEP(DAYS),
-        HOURS=OPT_SEP(HOURS),
-        MINS=OPT_SEP(MINS),
-        SECS=OPT(SECS),
-    ),
+    rf"{OPT_SEP(WEEKS)}\s*{OPT_SEP(DAYS)}\s*{OPT_SEP(HOURS)}\s*{OPT_SEP(MINS)}\s*{OPT(SECS)}",
     rf"{MIN_CLOCK}",
-    r"{WEEKS}\s*{DAYS}\s*{HOUR_CLOCK}".format(
-        WEEKS=OPT_SEP(WEEKS), DAYS=OPT_SEP(DAYS), HOUR_CLOCK=HOUR_CLOCK
-    ),
+    rf"{OPT_SEP(WEEKS)}\s*{OPT_SEP(DAYS)}\s*{HOUR_CLOCK}",
     rf"{DAY_CLOCK}",
     rf"{SEC_CLOCK}",
 ]
@@ -92,7 +82,7 @@ MULTIPLIERS = dict(
 )
 
 
-def _interpret_as_minutes(string, mdict):
+def _interpret_as_minutes(string: str, mdict):
     """
     Times like "1:22" are ambiguous; do they represent minutes and seconds
     or hours and minutes?  By default, timeparse assumes the latter.  Call
@@ -117,7 +107,9 @@ def _interpret_as_minutes(string, mdict):
     return mdict
 
 
-def time_parse(string, granularity="seconds") -> Optional[Union[int, float]]:
+def time_parse(
+    string: str, granularity: Literal["seconds", "minutes"] = "seconds"
+) -> int | float | None:
     """
     Parse a time expression, returning it as a number of seconds.  If
     possible, the return value will be an `int`; if this is not
@@ -156,8 +148,12 @@ def time_parse(string, granularity="seconds") -> Optional[Union[int, float]]:
     5400
     >>> time_parse('1:30:50', granularity='minutes')
     5450
+    >>> time_parse('')
     """
     match = re.match(r"\s*" + SIGN + r"\s*(?P<unsigned>.*)$", string)
+    if not match:
+        raise ShouldBeUnreachable()
+
     sign = -1 if match.groupdict()["sign"] == "-" else 1
     string = match.groupdict()["unsigned"]
     for timefmt in TIME_FORMATS:

@@ -2,7 +2,7 @@ import logging
 import os
 import os.path
 import time
-from typing import Dict, TextIO, Tuple
+from typing import TextIO
 
 import cloudbot
 from cloudbot import hook
@@ -87,7 +87,7 @@ def format_event(event):
     # Try formatting with non-connection-specific formats
 
     if event.type in base_formats:
-        return base_formats[event.type].format(**args)
+        return base_formats[event.type].format_map(args)
 
     # Try formatting with IRC-formats, if this is an IRC event
     if event.irc_command is not None:
@@ -112,7 +112,7 @@ def format_irc_event(event, args):
     # Try formatting with the IRC command
 
     if event.irc_command in irc_formats:
-        return irc_formats[event.irc_command].format(**args)
+        return irc_formats[event.irc_command].format_map(args)
 
     # Try formatting with the CTCP command
 
@@ -123,14 +123,14 @@ def format_irc_event(event, args):
 
         if ctcp_command in ("VERSION", "PING", "TIME", "FINGER"):
             if ctcp_message:
-                return ctcp_known_with_message.format(**args)
+                return ctcp_known_with_message.format_map(args)
 
             return ctcp_known.format(**args)
 
         if ctcp_message:
-            return ctcp_unknown_with_message.format(**args)
+            return ctcp_unknown_with_message.format_map(args)
 
-        return ctcp_unknown.format(**args)
+        return ctcp_unknown.format_map(args)
 
     # No formats have been found, resort to the default
 
@@ -169,9 +169,9 @@ raw_file_format = "{server}_%Y%m%d.log"
 folder_format = "%Y"
 
 # Stream cache, (server, chan) -> (file_name, stream)
-stream_cache: Dict[Tuple[str, str], Tuple[str, TextIO]] = {}
+stream_cache: dict[tuple[str, str], tuple[str, TextIO]] = {}
 # Raw stream cache, server -> (file_name, stream)
-raw_cache: Dict[str, Tuple[str, TextIO]] = {}
+raw_cache: dict[str, tuple[str, TextIO]] = {}
 
 
 def get_log_filename(server, chan):
@@ -236,7 +236,7 @@ def get_raw_log_stream(server):
 
 
 @hook.irc_raw("*", singlethread=True)
-def log_raw(event):
+def log_raw(event) -> None:
     logging_config = event.bot.config.get("logging", {})
     if not logging_config.get("raw_file_log", False):
         return
@@ -247,14 +247,12 @@ def log_raw(event):
 
 
 @hook.irc_raw("*", singlethread=True)
-def log(event):
+def log(event) -> None:
     logging_config = event.bot.config.get("logging", {})
     if not logging_config.get("file_log", False):
         return
 
-    text = format_event(event)
-
-    if text is not None:
+    if (text := format_event(event)) is not None:
         if (
             event.irc_command
             in ["PRIVMSG", "PART", "JOIN", "MODE", "TOPIC", "QUIT", "NOTICE"]
@@ -267,14 +265,14 @@ def log(event):
 
 # Log console separately to prevent lag
 @hook.irc_raw("*")
-async def console_log(bot, event):
+async def console_log(bot, event) -> None:
     text = format_event(event)
     if text is not None:
         logger.info(text)
 
 
 @hook.command("flushlog", permissions=["botcontrol"])
-def flush_log():
+def flush_log() -> None:
     """- Flush all log streams"""
     for _, stream in stream_cache.values():
         stream.flush()
@@ -283,7 +281,7 @@ def flush_log():
 
 
 @hook.on_stop()
-def close_logs():
+def close_logs() -> None:
     for _, stream in stream_cache.values():
         stream.flush()
         stream.close()

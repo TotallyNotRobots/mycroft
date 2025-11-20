@@ -1,11 +1,7 @@
-ci:
-  skip:
-  - pylint
-  - mypy
 exclude: ^\.vscode/.*$
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: c4a0b883114b00d8d76b479c820ce7950211c99b  # frozen: v4.5.0
+  rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c   # frozen: v6.0.0
   hooks:
   - id: trailing-whitespace
     args: ['--markdown-linebreak-ext=md,markdown']
@@ -13,7 +9,7 @@ repos:
   - id: check-yaml
   - id: check-added-large-files
   - id: check-ast
-  - id: check-byte-order-marker
+  - id: fix-byte-order-marker
   - id: check-merge-conflict
   - id: debug-statements
   - id: detect-private-key
@@ -32,28 +28,29 @@ repos:
     - --autofix
     - --no-sort-keys
   - id: check-toml
-  - id: fix-encoding-pragma
-    args:
-    - --remove
 - repo: https://github.com/psf/black
-  rev: 6fdf8a4af28071ed1d079c01122b34c5d587207a  # frozen: 24.2.0
+  rev: 05f0a8ce1f71fbb36e1e032d3b518c7b945089a2  # frozen: 25.11.0
   hooks:
   - id: black
 - repo: https://github.com/pycqa/isort
-  rev: c235f5e450b4b84e58d114ed4c589cbf454175a3  # frozen: 5.13.2
+  rev: 0a09c783808cfe77bb3269250f663ff733d23302   # frozen: 7.0.0
   hooks:
   - id: isort
 - repo: https://github.com/pre-commit/pygrep-hooks
-  rev: 3a6eb0fadf60b3cccfd80bad9dbb6fae7e47b316  # frozen: v1.10.0
+  rev: 3a6eb0fadf60b3cccfd80bad9dbb6fae7e47b316   # frozen: v1.10.0
   hooks:
   - id: python-no-eval
   - id: python-no-log-warn
 - repo: https://github.com/asottile/pyupgrade
-  rev: df17dfa3911b81b4a27190b0eea5b1debc7ffa0a  # frozen: v3.15.1
+  rev: 46c3d526905780be88d227f46e19f24f2593fbbe  # frozen: v3.21.1
   hooks:
   - id: pyupgrade
     args:
     - "--py310-plus"
+- repo: https://github.com/PyCQA/autoflake
+  rev: 0544741e2b4a22b472d9d93e37d4ea9153820bb1   # frozen: v2.3.1
+  hooks:
+  - id: autoflake
 
 - repo: local
   hooks:
@@ -61,17 +58,28 @@ repos:
     name: mypy
     entry: mypy
     language: system
-    types: [python]
-  - id: pylint
-    name: pylint
-    entry: pylint
-    args:
-    - '-s'
-    - 'no'
+    types_or: [python, pyi]
+  - id: ruff-check
+    name: ruff check
+    entry: ruff check --fix
     language: system
+    types_or:
+    - python
+    - pyi
+  - id: ruff-format
+    name: ruff format
+    entry: ruff format
+    language: system
+    types_or:
+    - python
+    - pyi
+  - id: replace-non-ascii
+    name: replace non ascii characters
+    entry: python3 tools/escape_non_ascii.py
+    language: python
     types: [python]
 - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
-  rev: 8d1b9cadaf854cb25bb0b0f5870e1cc66a083d6b  # frozen: 0.2.3
+  rev: 8d1b9cadaf854cb25bb0b0f5870e1cc66a083d6b   # frozen: 0.2.3
   hooks:
   - id: yamlfmt
     args:
@@ -85,3 +93,55 @@ repos:
     - '120'
     - -e
     - -p
+- repo: https://github.com/commitizen-tools/commitizen
+  rev: 9f3ec868c0429155a46b4819b625d47a8522a3d5  # frozen: v4.10.0
+  hooks:
+  - id: commitizen
+- repo: https://github.com/andreoliwa/nitpick
+  rev: 'a1373f03f5a9394c75cc03e5da1b0cb6ff615dbb'   # frozen: v0.38.0
+  hooks:
+  - id: nitpick
+- repo: https://github.com/ikamensh/flynt
+  rev: '97be693bf18bc2f050667dd282d243e2824b81e2'    # frozen: 1.0.6
+  hooks:
+  - id: flynt
+- repo: https://github.com/codespell-project/codespell
+  rev: '63c8f8312b7559622c0d82815639671ae42132ac'    # frozen: v2.4.1
+  hooks:
+  - id: codespell
+    exclude: data/.*
+    additional_dependencies:
+    - tomli ; python_version < '3.11'
+- repo: https://github.com/MarcoGorelli/auto-walrus
+  rev: 'ba0661836089a532a710f68713a3e3e53f7f0113'    # frozen: 0.3.4
+  hooks:
+  - id: auto-walrus
+    additional_dependencies:
+    - tomli ; python_version < '3.11'
+- repo: https://github.com/JelleZijlstra/autotyping
+  rev: 4dcb8d9dcb3dceedce8de4df074d18de0b7cfe3c  # frozen: 24.9.0
+  hooks:
+  - id: autotyping
+    stages:
+    - pre-commit
+    args:
+    - --annotate-named-param
+    - conn:cloudbot.client.Client
+    - --safe
+- repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
+  rev: '19b28a9f0a0102b30776f054bea4176e7af50dbe'    # frozen: v2.15.0
+  hooks:
+  - id: pretty-format-toml
+    args:
+    - --autofix
+    - --no-sort
+    - --trailing-commas
+    - --indent
+    - '4'
+    - --inline-comment-spaces
+    - '1'
+minimum_pre_commit_version: 4.3.0
+default_install_hook_types:
+- pre-commit
+- pre-push
+- commit-msg

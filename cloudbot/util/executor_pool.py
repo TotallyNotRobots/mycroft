@@ -1,21 +1,20 @@
+from __future__ import annotations
+
 import logging
 import os
 import random
-from asyncio import AbstractEventLoop
 from concurrent.futures import Executor
-from typing import Generic, List, Optional, Type, TypeVar
-
-from cloudbot.util.async_util import create_future
+from typing import Generic, TypeVar
 
 logger = logging.getLogger("cloudbot")
 
 
 class ExecutorWrapper:
-    def __init__(self, pool, executor):
+    def __init__(self, pool, executor) -> None:
         self._pool = pool
         self._executor = executor
 
-    def release(self):
+    def release(self) -> None:
         self._pool.release_executor(self._executor)
         self._executor = None
 
@@ -23,7 +22,7 @@ class ExecutorWrapper:
     def executor(self):
         return self._executor
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.release()
 
 
@@ -33,10 +32,9 @@ T = TypeVar("T", bound=Executor)
 class ExecutorPool(Generic[T]):
     def __init__(
         self,
-        max_executors: Optional[int] = None,
+        max_executors: int | None = None,
         *,
-        executor_type: Type[T],
-        loop: AbstractEventLoop,
+        executor_type: type[T],
         **kwargs,
     ) -> None:
         if max_executors is None:
@@ -49,9 +47,8 @@ class ExecutorPool(Generic[T]):
         self._exec_class = executor_type
         self._exec_args = kwargs
 
-        self._executors: List[T] = []
-        self._free_executors: List[T] = []
-        self._executor_waiter = create_future(loop)
+        self._executors: list[T] = []
+        self._free_executors: list[T] = []
 
     def get(self) -> ExecutorWrapper:
         return ExecutorWrapper(self, self._get())

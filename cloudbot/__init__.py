@@ -2,10 +2,10 @@ import json
 import logging
 import logging.config
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import cast
 
-version = (1, 3, 0)
-__version__ = ".".join(str(i) for i in version)
+__version__ = "1.5.0"
+version = tuple(__version__.split("."))
 
 __all__ = (
     "clients",
@@ -41,7 +41,7 @@ class LoggingInfo:
 logging_info = LoggingInfo()
 
 
-def _setup(base_path: Optional[Path] = None) -> None:
+def _setup(base_path: Path | None = None) -> None:
     base_path = base_path or Path().resolve()
     cfg_file = base_path / "config.json"
     if cfg_file.exists():
@@ -51,10 +51,14 @@ def _setup(base_path: Optional[Path] = None) -> None:
     else:
         logging_config = {}
 
-    file_log = logging_config.get("file_log", False)
-    console_level = (
-        "INFO" if logging_config.get("console_log_info", True) else "WARNING"
-    )
+    logger_names = ["cloudbot", "plugins"]
+    if logging_config.get("console_debug", False):
+        console_level = logging.DEBUG
+        logger_names.append("asyncio")
+    elif logging_config.get("console_log_info", True):
+        console_level = logging.INFO
+    else:
+        console_level = logging.WARNING
 
     logging_info.dir = base_path / "logs"
 
@@ -62,9 +66,60 @@ def _setup(base_path: Optional[Path] = None) -> None:
 
     logging.captureWarnings(True)
 
-    logger_names = ["cloudbot", "plugins"]
+    default_handlers = ["console"]
+    handler_configs = {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "brief",
+            "level": console_level,
+            "stream": "ext://sys.stdout",
+        },
+    }
 
-    dict_config: Dict[str, Any] = {
+    file_log = logging_config.get("file_log", False)
+    if file_log:
+        handler_configs["file"] = {
+            "class": "logging.handlers.RotatingFileHandler",
+            "maxBytes": 1000000,
+            "backupCount": 5,
+            "formatter": "full",
+            "level": "INFO",
+            "encoding": "utf-8",
+            "filename": logging_info.add_path("bot.log"),
+        }
+
+        default_handlers.append("file")
+
+    if logging_config.get("file_debug", False):
+        handler_configs["debug_file"] = {
+            "class": "logging.handlers.RotatingFileHandler",
+            "maxBytes": 1000000,
+            "backupCount": 5,
+            "formatter": "full",
+            "encoding": "utf-8",
+            "level": "DEBUG",
+            "filename": logging_info.add_path("debug.log"),
+        }
+
+        default_handlers.append("debug_file")
+
+    def _get_level_value(level: str | int) -> int:
+        if isinstance(level, str):
+            return cast("int", getattr(logging, level))
+
+        return level
+
+    # This will drasticly reduce the logging performance hit by ensuring calls
+    # that would route nowhere don't get made
+    default_logger_level = min(
+        [
+            _get_level_value(cast("str | int", handler["level"]))
+            for handler in handler_configs.values()
+        ]
+        + [logging.WARNING]
+    )
+
+    dict_config = {
         "version": 1,
         "formatters": {
             "brief": {
@@ -76,55 +131,20 @@ def _setup(base_path: Optional[Path] = None) -> None:
                 "datefmt": "%Y-%m-%d][%H:%M:%S",
             },
         },
-        "handlers": {
-            "console": {
-                "class": "logging.StreamHandler",
-                "formatter": "brief",
-                "level": console_level,
-                "stream": "ext://sys.stdout",
-            }
-        },
+        "handlers": handler_configs.copy(),
         "loggers": {
-            name: {"level": "DEBUG", "handlers": ["console"]}
+            name: {
+                "level": default_logger_level,
+                "handlers": default_handlers.copy(),
+                "propagate": False,
+            }
             for name in logger_names
         },
+        "root": {
+            "level": default_logger_level,
+            "handlers": default_handlers.copy(),
+        },
     }
-
-    if file_log:
-        dict_config["handlers"]["file"] = {
-            "class": "logging.handlers.RotatingFileHandler",
-            "maxBytes": 1000000,
-            "backupCount": 5,
-            "formatter": "full",
-            "level": "INFO",
-            "encoding": "utf-8",
-            "filename": logging_info.add_path("bot.log"),
-        }
-
-        for name in logger_names:
-            dict_config["loggers"][name]["handlers"].append("file")
-
-    if logging_config.get("console_debug", False):
-        dict_config["handlers"]["console"]["level"] = "DEBUG"
-        dict_config["loggers"]["asyncio"] = {
-            "level": "DEBUG",
-            "handlers": ["console"],
-        }
-        if file_log:
-            dict_config["loggers"]["asyncio"]["handlers"].append("file")
-
-    if logging_config.get("file_debug", False):
-        dict_config["handlers"]["debug_file"] = {
-            "class": "logging.handlers.RotatingFileHandler",
-            "maxBytes": 1000000,
-            "backupCount": 5,
-            "formatter": "full",
-            "encoding": "utf-8",
-            "level": "DEBUG",
-            "filename": logging_info.add_path("debug.log"),
-        }
-        for name in logger_names:
-            dict_config["loggers"][name]["handlers"].append("debug_file")
 
     logging.config.dictConfig(dict_config)
 

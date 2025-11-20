@@ -3,7 +3,7 @@ import time
 
 
 class Delayer:
-    def __init__(self, base=1, *, integral=False):
+    def __init__(self, base=1, *, integral=False) -> None:
         self._base = base
         self._integral = integral
         self._max = 10
@@ -20,5 +20,5 @@ class Delayer:
         time.sleep(wait)
         return self
 
-    def __exit__(self, *exc):
+    def __exit__(self, *exc) -> None:
         pass

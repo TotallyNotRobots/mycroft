@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 from collections import ChainMap
 from functools import partial
+from typing import TYPE_CHECKING
 
 from irclib.parser import CapList
 
@@ -9,18 +12,24 @@ from cloudbot import hook
 from cloudbot.event import CapEvent
 from cloudbot.util import async_util
 
+if TYPE_CHECKING:
+    from cloudbot.client import Client
+    from cloudbot.clients.irc import IrcClient
+
 logger = logging.getLogger("cloudbot")
 
 
 @hook.connect(priority=-10, clients="irc")
-def send_cap_ls(conn):
+def send_cap_ls(conn: IrcClient) -> None:
     conn.cmd("CAP", "LS", "302")
     conn.memory.setdefault("available_caps", CapList()).clear()
     conn.memory.setdefault("cap_queue", {}).clear()
 
 
-async def handle_available_caps(conn, caplist, event, irc_paramlist, bot):
-    available_caps = conn.memory["available_caps"]  # type: CapList
+async def handle_available_caps(
+    conn: IrcClient, caplist, event, irc_paramlist, bot
+) -> None:
+    available_caps: CapList = conn.memory["available_caps"]
     available_caps.extend(caplist)
     cap_queue = conn.memory["cap_queue"]
     for cap in caplist:
@@ -35,7 +44,7 @@ async def handle_available_caps(conn, caplist, event, irc_paramlist, bot):
         ]
         results = await asyncio.gather(*tasks)
         if any(ok and (res or res is None) for ok, res in results):
-            cap_queue[name_cf] = async_util.create_future(conn.loop)
+            cap_queue[name_cf] = conn.loop.create_future()
             conn.cmd("CAP", "REQ", name)
 
     if irc_paramlist[2] != "*":
@@ -57,7 +66,7 @@ def _subcmd_handler(*types):
     return _decorate
 
 
-async def _launch_handler(subcmd, event, **kwargs):
+async def _launch_handler(subcmd, event, **kwargs) -> None:
     subcmd = subcmd.upper()
     kwargs["subcmd"] = subcmd
     try:
@@ -71,12 +80,12 @@ async def _launch_handler(subcmd, event, **kwargs):
 
 
 @_subcmd_handler("LS")
-async def cap_ls(conn, caplist, event, irc_paramlist, bot):
+async def cap_ls(conn: IrcClient, caplist, event, irc_paramlist, bot) -> None:
     logger.info("[%s|cap] Available capabilities: %s", conn.name, caplist)
     await handle_available_caps(conn, caplist, event, irc_paramlist, bot)
 
 
-async def handle_req_resp(enabled, conn, caplist, event, bot):
+async def handle_req_resp(enabled, conn: Client, caplist, event, bot) -> None:
     server_caps = conn.memory.setdefault("server_caps", {})
     cap_queue = conn.memory.get("cap_queue", {})
     caps = (cap.name.casefold() for cap in caplist)
@@ -95,28 +104,28 @@ async def handle_req_resp(enabled, conn, caplist, event, bot):
 
 
 @_subcmd_handler("ACK")
-async def cap_ack_nak(conn, caplist, event, bot):
+async def cap_ack_nak(conn: Client, caplist, event, bot) -> None:
     await handle_req_resp(True, conn, caplist, event, bot)
 
 
 @_subcmd_handler("NAK")
-async def cap_nak(conn, caplist, event, bot):
+async def cap_nak(conn: Client, caplist, event, bot) -> None:
     await handle_req_resp(False, conn, caplist, event, bot)
 
 
 @_subcmd_handler("LIST")
-def cap_list(caplist, conn):
+def cap_list(caplist, conn: Client) -> None:
     logger.info("[%s|cap] Enabled Capabilities: %s", conn.name, caplist)
 
 
 @_subcmd_handler("NEW")
-async def cap_new(caplist, conn, event, bot, irc_paramlist):
+async def cap_new(caplist, conn: IrcClient, event, bot, irc_paramlist) -> None:
     logger.info("[%s|cap] New capabilities advertised: %s", conn.name, caplist)
     await handle_available_caps(conn, caplist, event, irc_paramlist, bot)
 
 
 @_subcmd_handler("DEL")
-def cap_del(conn, caplist):
+def cap_del(conn: Client, caplist) -> None:
     # TODO add hooks for CAP removal
     logger.info(
         "[%s|cap] Capabilities removed by server: %s", conn.name, caplist
@@ -127,7 +136,7 @@ def cap_del(conn, caplist):
 
 
 @hook.irc_raw("CAP")
-async def on_cap(irc_paramlist, event):
+async def on_cap(irc_paramlist, event) -> None:
     args = {}
     if len(irc_paramlist) > 2:
         args["caplist"] = CapList.parse(irc_paramlist[-1])

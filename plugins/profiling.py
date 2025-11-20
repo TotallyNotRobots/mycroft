@@ -1,31 +1,32 @@
-import os
+from __future__ import annotations
+
 import signal
 import sys
 import threading
 import traceback
+from typing import TYPE_CHECKING
 
 from cloudbot import hook
 from cloudbot.util import web
 
-PYMPLER_ENABLED = False
+try:  # pragma: no cover
+    import pympler
+    import pympler.muppy
+    import pympler.summary
+    import pympler.tracker
 
-if PYMPLER_ENABLED:
-    try:
-        import pympler
-        import pympler.muppy
-        import pympler.summary
-        import pympler.tracker
-    except ImportError:
-        pympler = None
-else:
+    if TYPE_CHECKING:
+        from pympler.tracker import SummaryTracker
+except ImportError:
     pympler = None
-try:
+
+try:  # pragma: no cover
     import objgraph
 except ImportError:
     objgraph = None
 
 
-def create_tracker():
+def create_tracker() -> SummaryTracker | None:
     if pympler is None:
         return None
 
@@ -35,7 +36,7 @@ def create_tracker():
 tr = create_tracker()
 
 
-def get_name(thread_id):
+def get_name(thread_id) -> str:
     current_thread = threading.current_thread()
     if thread_id == current_thread.ident:
         is_current = True
@@ -63,7 +64,7 @@ def get_name(thread_id):
     return name
 
 
-def get_thread_dump():
+def get_thread_dump() -> str:
     code = []
     threads = [
         (get_name(thread_id), traceback.extract_stack(stack))
@@ -80,13 +81,13 @@ def get_thread_dump():
 
 
 @hook.command("threaddump", autohelp=False, permissions=["botcontrol"])
-async def threaddump_command():
+async def threaddump_command() -> str:
     """- Return a full thread dump"""
     return get_thread_dump()
 
 
 @hook.command("objtypes", autohelp=False, permissions=["botcontrol"])
-def show_types():
+def show_types() -> str:
     """- Print object type data to the console"""
     if objgraph is None:
         return "objgraph not installed"
@@ -95,7 +96,7 @@ def show_types():
 
 
 @hook.command("objgrowth", autohelp=False, permissions=["botcontrol"])
-def show_growth():
+def show_growth() -> str:
     """- Print object growth data to the console"""
     if objgraph is None:
         return "objgraph not installed"
@@ -104,7 +105,7 @@ def show_growth():
 
 
 @hook.command("pymsummary", autohelp=False, permissions=["botcontrol"])
-def pympler_summary():
+def pympler_summary() -> str:
     """- Print object summary data to the console"""
     if pympler is None:
         return "pympler not installed / not enabled"
@@ -115,20 +116,19 @@ def pympler_summary():
 
 
 @hook.command("pymdiff", autohelp=False, permissions=["botcontrol"])
-def pympler_diff():
+def pympler_diff() -> str:
     """- Print object diff data to the console"""
-    if pympler is None:
+    if tr is None:
         return "pympler not installed / not enabled"
     tr.print_diff()
     return "Printed to console"
 
 
 # # Provide an easy way to get a threaddump, by using SIGUSR1 (only on POSIX systems)
-if os.name == "posix":
+if sys.platform == "linux":  # pragma: no cover
     # The handler is called with two arguments: the signal number and the current stack frame
     # These parameters should NOT be removed
-    # noinspection PyUnusedLocal
-    def debug(sig, frame):
+    def debug(sig, frame) -> None:
         print(get_thread_dump())
 
     signal.signal(signal.SIGUSR1, debug)  # Register handler

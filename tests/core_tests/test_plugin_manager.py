@@ -1,26 +1,38 @@
+from __future__ import annotations
+
+import asyncio
 import itertools
 import logging
 import re
 from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
 import pytest
-import sqlalchemy as sa
+import pytest_asyncio
 from sqlalchemy import Column, String, Table, inspect
+from sqlalchemy.orm import Mapped, mapped_column
 
-from cloudbot import hook
+from cloudbot import hook, plugin
 from cloudbot.event import CommandEvent, EventType
-from cloudbot.plugin import Plugin, PluginManager
+from cloudbot.plugin import Plugin
 from cloudbot.util import database
 from tests.util.mock_module import MockModule
 
+if TYPE_CHECKING:
+    from asyncio import Task
+    from collections.abc import Callable
 
-@pytest.fixture()
-def mock_bot(mock_bot_factory, event_loop, tmp_path):
+    from cloudbot.plugin import PluginManager
+    from tests.util.mock_bot import MockBot
+
+
+@pytest_asyncio.fixture()
+async def mock_bot(mock_bot_factory, tmp_path):
     tmp_base = tmp_path / "tmp"
     tmp_base.mkdir(exist_ok=True)
 
-    yield mock_bot_factory(base_dir=tmp_base, loop=event_loop)
+    yield mock_bot_factory(base_dir=tmp_base)
 
 
 @pytest.fixture()
@@ -28,7 +40,7 @@ def mock_manager(mock_bot):
     yield mock_bot.plugin_manager
 
 
-def test_get_plugin(mock_manager):
+def test_get_plugin(mock_manager) -> None:
     assert mock_manager.get_plugin("plugins/test.py") is None
     assert mock_manager.find_plugin("test") is None
 
@@ -57,14 +69,14 @@ def test_get_plugin(mock_manager):
     assert mock_manager.find_plugin("test") is None
 
 
-def test_find_tables(mock_manager):
+def test_find_tables(mock_manager) -> None:
     file_path = mock_manager.bot.plugin_dir / "test.py"
     file_name = file_path.name
 
     class TestTable(database.Base):
         __tablename__ = "foo"
 
-        test_id = sa.Column(sa.Integer, primary_key=True)
+        test_id: Mapped[int] = mapped_column(primary_key=True)
 
     mod = MockModule(tbl=TestTable)
     obj = Plugin(
@@ -79,7 +91,7 @@ def test_find_tables(mock_manager):
     assert table_names == ["foo"]
 
 
-def test_can_load(mock_manager):
+def test_can_load(mock_manager) -> None:
     mock_manager.bot.config.clear()
 
     assert mock_manager.can_load("plugins.foo")
@@ -137,7 +149,9 @@ def test_can_load(mock_manager):
     assert mock_manager.can_load("plugins.foo")
 
 
-def test_plugin_load(mock_manager, patch_import_module, patch_import_reload):
+def test_plugin_load(
+    mock_manager, patch_import_module, patch_import_reload
+) -> None:
     patch_import_module.return_value = mod = MockModule()
     mock_manager.bot.loop.run_until_complete(
         mock_manager.load_plugin(mock_manager.bot.plugin_dir / "test.py")
@@ -166,19 +180,30 @@ def test_plugin_load(mock_manager, patch_import_module, patch_import_reload):
     )
 
 
+@pytest.mark.asyncio
+async def test_get_plugin_tables_reentrant(
+    mock_bot_factory: Callable[..., MockBot],
+) -> None:
+    mock_bot = mock_bot_factory(base_dir=Path.cwd().resolve())
+    assert mock_bot.plugin_dir.exists()
+    mock_manager = mock_bot.plugin_manager
+    mock_manager.get_plugin_tables(mock_bot.plugin_dir, reload=True)
+    mock_manager.get_plugin_tables(mock_bot.plugin_dir, reload=True)
+
+
 class WeirdObject:
     """
     This represents an object that returns a value for any attribute you ask for
     """
 
-    def __init__(self, func):
+    def __init__(self, func) -> None:
         self.func = func
 
     def __getattr__(self, item):
         return self.func(self, item)
 
 
-def _test_weird_obj(patch_import_module, mock_manager, weird_obj):
+def _test_weird_obj(patch_import_module, mock_manager, weird_obj) -> None:
     patch_import_module.return_value = MockModule(some_import=weird_obj)
 
     mock_manager.bot.loop.run_until_complete(
@@ -186,13 +211,13 @@ def _test_weird_obj(patch_import_module, mock_manager, weird_obj):
     )
 
 
-def test_plugin_with_objs_none_attr(mock_manager, patch_import_module):
+def test_plugin_with_objs_none_attr(mock_manager, patch_import_module) -> None:
     _test_weird_obj(
         patch_import_module, mock_manager, WeirdObject(lambda *args: None)
     )
 
 
-def test_plugin_with_objs_mock_attr(mock_manager, patch_import_module):
+def test_plugin_with_objs_mock_attr(mock_manager, patch_import_module) -> None:
     _test_weird_obj(
         patch_import_module,
         mock_manager,
@@ -200,13 +225,15 @@ def test_plugin_with_objs_mock_attr(mock_manager, patch_import_module):
     )
 
 
-def test_plugin_with_objs_dict_attr(mock_manager, patch_import_module):
+def test_plugin_with_objs_dict_attr(mock_manager, patch_import_module) -> None:
     _test_weird_obj(
         patch_import_module, mock_manager, WeirdObject(lambda *args: {})
     )
 
 
-def test_plugin_with_objs_full_dict_attr(mock_manager, patch_import_module):
+def test_plugin_with_objs_full_dict_attr(
+    mock_manager, patch_import_module
+) -> None:
     _test_weird_obj(
         patch_import_module,
         mock_manager,
@@ -220,7 +247,7 @@ def test_plugin_with_objs_full_dict_attr(mock_manager, patch_import_module):
 
 def test_plugin_load_disabled(
     mock_manager, patch_import_module, patch_import_reload
-):
+) -> None:
     patch_import_module.reset_mock()
     patch_import_reload.reset_mock()
     patch_import_module.return_value = MockModule()
@@ -257,8 +284,8 @@ class TestPluginLoad:
         mock_bot,
         patch_import_module,
         patch_import_reload,
-        caplog,
-    ):
+        caplog_bot,
+    ) -> None:
         plugin_a = MockModule()
         plugin_b = MockModule()
 
@@ -282,7 +309,7 @@ class TestPluginLoad:
 
         await mock_manager.load_plugin(str(plugin_file))
 
-        assert caplog.record_tuples == [
+        assert caplog_bot.record_tuples == [
             ("cloudbot", 20, "Loaded command foo from test.py"),
             (
                 "cloudbot",
@@ -294,10 +321,10 @@ class TestPluginLoad:
         patch_import_module.return_value = plugin_b
         plugin_file_b = plugin_file.with_name("test2.py")
         plugin_file_b.touch()
-        caplog.clear()
+        caplog_bot.clear()
         await mock_manager.load_plugin(str(plugin_file_b))
 
-        assert caplog.record_tuples == [
+        assert caplog_bot.record_tuples == [
             (
                 "cloudbot",
                 30,
@@ -326,8 +353,8 @@ class TestPluginLoad:
         mock_bot,
         patch_import_module,
         patch_import_reload,
-        caplog,
-    ):
+        caplog_bot,
+    ) -> None:
         mod = MockModule()
 
         @hook.regex(re.compile(r"."))
@@ -344,7 +371,7 @@ class TestPluginLoad:
 
         await mock_manager.load_plugin(str(plugin_file))
 
-        assert caplog.record_tuples == [
+        assert caplog_bot.record_tuples == [
             ("cloudbot", 20, "Loaded regex regex from test.py"),
             (
                 "cloudbot",
@@ -354,19 +381,81 @@ class TestPluginLoad:
             ),
         ]
         assert len(mock_manager.regex_hooks) == 1
-        caplog.clear()
+        caplog_bot.clear()
 
         await mock_manager.unload_plugin(str(plugin_file))
         assert len(mock_manager.regex_hooks) == 0
-        assert caplog.record_tuples == [
+        assert caplog_bot.record_tuples == [
             ("cloudbot", 20, "Unloaded all plugins from test")
         ]
+
+    @pytest.mark.asyncio
+    async def test_load_periodic_hooks(
+        self,
+        mock_manager,
+        tmp_path,
+        mock_bot,
+        patch_import_module,
+        patch_import_reload,
+        caplog_bot,
+    ) -> None:
+        mod = MockModule()
+
+        @hook.periodic(60)
+        def periodic():
+            raise NotImplementedError
+
+        mod.periodic = periodic  # type: ignore[attr-defined]
+        patch_import_module.return_value = mod
+        plugin_dir = mock_bot.base_dir / "plugins"
+        plugin_dir.mkdir(exist_ok=True)
+        (plugin_dir / "__init__.py").touch()
+        plugin_file = plugin_dir / "test.py"
+        plugin_file.touch()
+
+        await mock_manager.load_plugin(str(plugin_file))
+
+        assert caplog_bot.record_tuples == [
+            (
+                "cloudbot",
+                20,
+                "Loaded periodic hook (60 seconds) periodic from test.py",
+            ),
+            (
+                "cloudbot",
+                10,
+                "Loaded Periodic[interval: [60], type: periodic, plugin: test, permissions: [], "
+                "single_thread: False, threaded: True]",
+            ),
+        ]
+        plugin: Plugin | None = mock_manager.get_plugin(str(plugin_file))
+        assert plugin is not None
+        assert len(plugin.tasks) == 1
+        task: Task = plugin.tasks[0]
+        caplog_bot.clear()
+
+        await mock_manager.unload_plugin(str(plugin_file))
+        await asyncio.sleep(0)
+        assert caplog_bot.record_tuples == [
+            (
+                "cloudbot",
+                10,
+                "Cancelling running tasks in test",
+            ),
+            (
+                "cloudbot",
+                20,
+                "Cancelled 1 tasks from test",
+            ),
+            ("cloudbot", 20, "Unloaded all plugins from test"),
+        ]
+        assert task.cancelled()
 
 
 @pytest.mark.asyncio
 async def test_load_all(
     mock_manager, tmp_path, mock_bot, patch_import_module, patch_import_reload
-):
+) -> None:
     mod = MockModule()
 
     @hook.command("foo")
@@ -377,12 +466,12 @@ async def test_load_all(
     stopped = 0
 
     @hook.on_start()
-    def start():
+    def start() -> None:
         nonlocal started
         started += 1
 
     @hook.on_stop()
-    def stop():
+    def stop() -> None:
         nonlocal stopped
         stopped += 1
 
@@ -417,9 +506,9 @@ async def test_load_on_start_error(
     mock_bot,
     patch_import_module,
     patch_import_reload,
-    caplog,
-):
-    caplog.set_level(logging.INFO)
+    caplog_bot,
+) -> None:
+    caplog_bot.set_level(logging.INFO)
     mod = MockModule()
 
     @hook.on_start()
@@ -437,7 +526,7 @@ async def test_load_on_start_error(
 
     await mock_manager.load_plugin(str(plugin_file))
 
-    assert caplog.record_tuples == [
+    assert caplog_bot.record_tuples == [
         ("cloudbot", 40, "Error in hook test:start"),
         (
             "cloudbot",
@@ -455,8 +544,8 @@ async def test_load_config_hooks(
     mock_bot,
     patch_import_module,
     patch_import_reload,
-    caplog,
-):
+    caplog_bot,
+) -> None:
     mod = MockModule()
 
     @hook.config()
@@ -473,7 +562,7 @@ async def test_load_config_hooks(
 
     await mock_manager.load_plugin(str(plugin_file))
 
-    assert caplog.record_tuples == [
+    assert caplog_bot.record_tuples == [
         ("cloudbot", 20, "Loaded Config hook config from test.py"),
         (
             "cloudbot",
@@ -483,11 +572,11 @@ async def test_load_config_hooks(
         ),
     ]
     assert len(mock_manager.config_hooks) == 1
-    caplog.clear()
+    caplog_bot.clear()
 
     await mock_manager.unload_plugin(str(plugin_file))
     assert len(mock_manager.config_hooks) == 0
-    assert caplog.record_tuples == [
+    assert caplog_bot.record_tuples == [
         ("cloudbot", 20, "Unloaded all plugins from test")
     ]
 
@@ -499,8 +588,8 @@ async def test_unload_raw_hooks(
     mock_bot,
     patch_import_module,
     patch_import_reload,
-    caplog,
-):
+    caplog_bot,
+) -> None:
     mod = MockModule()
 
     @hook.irc_raw("PRIVMSG")
@@ -522,13 +611,13 @@ async def test_unload_raw_hooks(
 
     await mock_manager.load_plugin(str(plugin_file))
 
-    caplog.clear()
+    caplog_bot.clear()
     assert mock_manager.raw_triggers["PRIVMSG"][0].function is irc_raw
 
     await mock_manager.unload_plugin(str(plugin_file))
 
     assert len(mock_manager.raw_triggers["PRIVMSG"]) == 0
-    assert caplog.record_tuples == [
+    assert caplog_bot.record_tuples == [
         ("cloudbot", 20, "Unloaded all plugins from test")
     ]
 
@@ -540,8 +629,8 @@ async def test_unload_event_hooks(
     mock_bot,
     patch_import_module,
     patch_import_reload,
-    caplog,
-):
+    caplog_bot,
+) -> None:
     mod = MockModule()
 
     @hook.event(EventType.notice)
@@ -563,23 +652,37 @@ async def test_unload_event_hooks(
 
     await mock_manager.load_plugin(str(plugin_file))
 
-    caplog.clear()
+    caplog_bot.clear()
     assert mock_manager.event_type_hooks[EventType.notice][0].function is event
 
     await mock_manager.unload_plugin(str(plugin_file))
 
     assert len(mock_manager.event_type_hooks[EventType.notice]) == 0
-    assert caplog.record_tuples == [
+    assert caplog_bot.record_tuples == [
         ("cloudbot", 20, "Unloaded all plugins from test")
     ]
 
 
-def test_safe_resolve(mock_manager):
+def test_safe_resolve() -> None:
     base_path = Path("/some/path/that/doesn't/exist")
-    path = mock_manager.safe_resolve(base_path)
+    path = plugin.safe_resolve(base_path)
     assert str(path) == str(base_path.absolute())
     assert path.is_absolute()
     assert not path.exists()
+
+
+@pytest.mark.parametrize(
+    ("base_dir", "path", "expected"),
+    [
+        ("foo", "foo/plugins/bar.py", "plugins.bar"),
+        ("some.base", "some.base/plugins/bar.py", "plugins.bar"),
+    ],
+)
+def test_file_path_to_import(
+    base_dir: str, path: str, expected: str, mock_manager, mock_bot, tmp_path
+) -> None:
+    mock_bot.base_dir = tmp_path / base_dir
+    assert mock_manager.file_path_to_import(tmp_path / path) == expected
 
 
 @pytest.mark.asyncio
@@ -598,15 +701,15 @@ async def test_launch(
     sieve_allow,
     single_thread,
     sieve_error,
-    caplog,
-):
-    caplog.set_level(logging.INFO)
+    caplog_bot,
+) -> None:
+    caplog_bot.set_level(logging.INFO)
     called = False
     sieve_called = False
     post_called = 0
 
     @hook.command("test", do_sieve=do_sieve, singlethread=single_thread)
-    def foo_cb():
+    def foo_cb() -> None:
         nonlocal called
         called = True
 
@@ -624,7 +727,7 @@ async def test_launch(
         return None
 
     @hook.post_hook()
-    def post_hook(db):
+    def post_hook(db) -> None:
         nonlocal post_called
         post_called += 1
         assert db is not None
@@ -648,7 +751,7 @@ async def test_launch(
         text="",
         triggered_command="test",
     )
-    caplog.clear()
+    caplog_bot.clear()
     result = await mock_manager.launch(event.hook, event)
     if do_sieve:
         if sieve_allow and not sieve_error:
@@ -660,7 +763,7 @@ async def test_launch(
 
     if sieve_error and sieve_called:
         assert result == called and not called
-        assert caplog.record_tuples == [
+        assert caplog_bot.record_tuples == [
             (
                 "cloudbot",
                 40,
@@ -690,15 +793,15 @@ async def test_launch_async(
     sieve_allow,
     single_thread,
     sieve_error,
-    caplog,
-):
-    caplog.set_level(logging.INFO)
+    caplog_bot,
+) -> None:
+    caplog_bot.set_level(logging.INFO)
     called = False
     sieve_called = False
     post_called = 0
 
     @hook.command("test", do_sieve=do_sieve, singlethread=single_thread)
-    async def foo_cb():
+    async def foo_cb() -> None:
         nonlocal called
         called = True
 
@@ -715,7 +818,7 @@ async def test_launch_async(
         return None
 
     @hook.post_hook()
-    async def post_hook(db):
+    async def post_hook(db) -> None:
         nonlocal post_called
         post_called += 1
         assert db is not None
@@ -740,7 +843,7 @@ async def test_launch_async(
         text="",
         triggered_command="test",
     )
-    caplog.clear()
+    caplog_bot.clear()
     result = await mock_manager.launch(event.hook, event)
     if do_sieve:
         if sieve_allow and not sieve_error:
@@ -752,7 +855,7 @@ async def test_launch_async(
 
     if sieve_error and sieve_called:
         assert result == called and not called
-        assert caplog.record_tuples == [
+        assert caplog_bot.record_tuples == [
             (
                 "cloudbot",
                 40,
@@ -768,10 +871,10 @@ async def test_launch_async(
 
 @pytest.mark.asyncio
 async def test_create_tables(
-    mock_bot_factory, caplog_bot, tmp_path, event_loop, mock_db
-):
+    mock_bot_factory, caplog_bot, tmp_path, mock_db
+) -> None:
     db = mock_db
-    bot = mock_bot_factory(db=db, loop=event_loop)
+    bot = mock_bot_factory(db=db)
     table = Table(
         "test",
         database.metadata,

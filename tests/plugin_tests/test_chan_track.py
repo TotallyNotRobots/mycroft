@@ -1,5 +1,6 @@
-from typing import Any, Dict
-from unittest.mock import MagicMock
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import pytest
 from irclib.parser import Prefix, TagList
@@ -7,12 +8,23 @@ from irclib.parser import Prefix, TagList
 from cloudbot.clients.irc import _IrcProtocol
 from cloudbot.util.func_utils import call_with_args
 from plugins.core import chan_track, server_info
+from tests.util.mock_conn import MockClient
+from tests.util.mock_irc_client import MockIrcClient
+
+if TYPE_CHECKING:
+    from cloudbot.client import Client
 
 
-class MockConn:
-    def __init__(self, bot=None, loop=None):
-        self.name = "foo"
-        self.memory: Dict[str, Any] = {
+def get_statuses(conn: Client, chars: str):
+    return [conn.memory["server_info"]["statuses"][c] for c in chars]
+
+
+@pytest.mark.asyncio
+async def test_replace_user_data(mock_db, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
+    conn = MockClient(bot=bot)
+    conn.memory.update(
+        {
             "server_info": {
                 "statuses": {},
             },
@@ -21,19 +33,7 @@ class MockConn:
                 "multi-prefix": True,
             },
         }
-        self.nick = "BotFoo"
-        self.bot = bot
-        if self.bot:
-            self.loop = self.bot.loop
-        else:
-            self.loop = loop
-
-    def get_statuses(self, chars):
-        return [self.memory["server_info"]["statuses"][c] for c in chars]
-
-
-def test_replace_user_data(event_loop):
-    conn = MockConn(loop=event_loop)
+    )
     serv_info = conn.memory["server_info"]
     server_info.handle_prefixes("(YohvV)!@%+-", serv_info)
     users = chan_track.UsersDict(conn)
@@ -57,14 +57,16 @@ def test_replace_user_data(event_loop):
         "ExampleUser2", "bar", "baz"
     )
 
-    assert chan.users["foo"].status == conn.get_statuses("@+")
-    assert chan.users["exampleuser"].status == conn.get_statuses("@")
-    assert chan.users["Foo1"].status == conn.get_statuses("!@%+-")
+    assert chan.users["foo"].status == get_statuses(conn, "@+")
+    assert chan.users["exampleuser"].status == get_statuses(conn, "@")
+    assert chan.users["Foo1"].status == get_statuses(conn, "!@%+-")
     assert not chan.users["exampleuser2"].status
 
 
-def test_missing_on_nick(event_loop):
-    conn = MockConn(loop=event_loop)
+@pytest.mark.asyncio
+async def test_missing_on_nick(mock_db, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
+    conn = MockClient(bot=bot)
     chans = chan_track.get_chans(conn)
     chan = chans.getchan("#foo")
 
@@ -72,8 +74,21 @@ def test_missing_on_nick(event_loop):
         chan.users.pop("exampleuser3")
 
 
-def test_channel_members(event_loop):
-    conn = MockConn(loop=event_loop)
+@pytest.mark.asyncio
+async def test_channel_members(mock_db, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
+    conn = MockClient(bot=bot)
+    conn.memory.update(
+        {
+            "server_info": {
+                "statuses": {},
+            },
+            "server_caps": {
+                "userhost-in-names": True,
+                "multi-prefix": True,
+            },
+        }
+    )
     serv_info = conn.memory["server_info"]
     server_info.handle_prefixes("(YohvV)!@%+-", serv_info)
     server_info.handle_chan_modes(
@@ -103,17 +118,17 @@ def test_channel_members(event_loop):
 
     user = users.getuser("exampleuserfoo")
 
-    assert chan.get_member(user).status == conn.get_statuses("-")
+    assert chan.get_member(user).status == get_statuses(conn, "-")
 
     chan_track.on_join("nick1", "user", "host", conn, ["#bar"])
 
     assert users["Nick1"].host == "host"
 
-    assert chans["#Bar"].users["Nick1"].status == conn.get_statuses("")
+    assert chans["#Bar"].users["Nick1"].status == get_statuses(conn, "")
 
     chan_track.on_mode(chan.name, [chan.name, "+sop", test_user.nick], conn)
 
-    assert chan.get_member(test_user).status == conn.get_statuses("@-")
+    assert chan.get_member(test_user).status == get_statuses(conn, "@-")
 
     chan_track.on_part(chan.name, test_user.nick, conn)
 
@@ -141,7 +156,8 @@ NAMES_MOCK_TRAFFIC = [
 ]
 
 
-def test_names_handling(event_loop):
+@pytest.mark.asyncio
+async def test_names_handling(mock_db, mock_bot_factory) -> None:
     handlers = {
         "JOIN": chan_track.on_join,
         "PART": chan_track.on_part,
@@ -151,10 +167,29 @@ def test_names_handling(event_loop):
         "366": chan_track.on_names,
     }
 
-    bot = MagicMock()
-    bot.loop = event_loop
+    bot = mock_bot_factory(db=mock_db)
 
-    conn = MockConn(bot)
+    conn = MockIrcClient(
+        bot=bot,
+        name="testconn",
+        nick="BotFoo",
+        config={
+            "connection": {
+                "server": "foo.invalid",
+            },
+        },
+    )
+    conn.memory.update(
+        {
+            "server_info": {
+                "statuses": {},
+            },
+            "server_caps": {
+                "userhost-in-names": True,
+                "multi-prefix": True,
+            },
+        }
+    )
     serv_info = conn.memory["server_info"]
     server_info.handle_prefixes("(YohvV)!@%+-", serv_info)
     server_info.handle_chan_modes(
@@ -166,11 +201,10 @@ def test_names_handling(event_loop):
         call_with_args(handlers[event.irc_command], event)
 
 
-def test_account_tag(event_loop):
-    bot = MagicMock()
-    bot.loop = event_loop
-
-    conn = MockConn(bot)
+@pytest.mark.asyncio
+async def test_account_tag(mock_db, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
+    conn = MockClient(bot=bot)
     data = {
         "conn": conn,
         "irc_tags": TagList.from_dict({"account": "foo"}),
@@ -195,19 +229,19 @@ def test_account_tag(event_loop):
 
 
 class TestSerializer:
-    def test_simple(self):
+    def test_simple(self) -> None:
         assert chan_track.MappingSerializer().serialize("a") == '"a"'
         assert chan_track.MappingSerializer().serialize(1) == "1"
         assert chan_track.MappingSerializer().serialize(None) == "null"
         assert chan_track.MappingSerializer().serialize(True) == "true"
 
-    def test_dict(self):
+    def test_dict(self) -> None:
         assert (
             chan_track.MappingSerializer().serialize({"a": 1, "b": True})
             == '{"a": 1, "b": true}'
         )
 
-    def test_int_list(self):
+    def test_int_list(self) -> None:
         assert (
             chan_track.MappingSerializer().serialize([1, 2, 3]) == "[1, 2, 3]"
         )

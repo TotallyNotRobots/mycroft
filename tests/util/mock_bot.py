@@ -1,72 +1,84 @@
+from __future__ import annotations
+
 import logging
+from collections.abc import Awaitable
 from concurrent.futures import ThreadPoolExecutor
-from typing import Awaitable, Dict, Optional
+from typing import TYPE_CHECKING
 
 from watchdog.observers import Observer
 
-from cloudbot.bot import CloudBot
-from cloudbot.client import Client
+from cloudbot.bot import AbstractBot, CloudBot
 from cloudbot.plugin import PluginManager
-from cloudbot.util.async_util import create_future
 from cloudbot.util.executor_pool import ExecutorPool
 from tests.util.mock_config import MockConfig
-from tests.util.mock_db import MockDB
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable
+    from pathlib import Path
+
+    from sqlalchemy.engine.base import Engine
+
+    from cloudbot.client import Client
+    from tests.util.mock_db import MockDB
 
 
-class MockBot:
+class MockBot(AbstractBot):
     def __init__(
         self,
         *,
         config=None,
         loop=None,
-        db: Optional[MockDB] = None,
-        base_dir=None,
-    ):
+        db: MockDB | None = None,
+        base_dir: Path,
+    ) -> None:
         if loop:
-            self.db_executor_pool = ExecutorPool(
-                50,
-                max_workers=1,
-                thread_name_prefix="cloudbot-db",
-                loop=loop,
-                executor_type=ThreadPoolExecutor,
+            self.db_executor_pool: ExecutorPool[ThreadPoolExecutor] | None = (
+                ExecutorPool(
+                    50,
+                    max_workers=1,
+                    thread_name_prefix="cloudbot-db",
+                    executor_type=ThreadPoolExecutor,
+                )
             )
         else:
             self.db_executor_pool = None
 
         self.old_db = None
         self.do_db_migrate = False
-        self.loop = loop
         self.base_dir = base_dir
         self.data_path = self.base_dir / "data"
         self.data_dir = str(self.data_path)
         self.plugin_dir = self.base_dir / "plugins"
-        if self.loop:
-            self.stopped_future: Awaitable[bool] = create_future(self.loop)
+        if loop:
+            self.stopped_future: Awaitable[bool] | None = loop.create_future()
         else:
             self.stopped_future = None
 
         if db:
-            self.db_engine = db.engine
+            self.db_engine: Engine | None = db.engine
         else:
             self.db_engine = None
 
         self.running = True
         self.logger = logging.getLogger("cloudbot")
-        self.config = MockConfig(self)
+        super().__init__(config=MockConfig(), loop=loop)
 
         if config is not None:
             self.config.update(config)
 
-        self.plugin_manager = PluginManager(self)
+        self._plugin_manager = PluginManager(self)
         self.plugin_reloading_enabled = False
         self.config_reloading_enabled = False
         self.observer = Observer()
         self.repo_link = "https://github.com/foobar/baz"
         self.user_agent = "User agent"
-        self.connections: Dict[str, Client] = {}
+        self.connections: dict[str, Client] = {}
 
-    def close(self):
+    def get_plugin_manager(self) -> PluginManager:
+        return self._plugin_manager
+
+    def close(self) -> None:
         self.observer.stop()
 
-    def migrate_db(self) -> None:
-        return CloudBot.migrate_db(self)  # type: ignore[arg-type]
+    def migrate_db(self, *, old_db_url: str) -> None:
+        return CloudBot.migrate_db(self, old_db_url=old_db_url)  # type: ignore[arg-type]

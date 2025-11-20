@@ -3,7 +3,7 @@ import re
 from cloudbot.util import textgen
 
 
-def test_textgenerator():
+def test_textgenerator() -> None:
     generator = textgen.TextGenerator(
         ["{thing} is {stuff}"],
         {
@@ -21,7 +21,7 @@ def test_textgenerator():
     assert generator.get_template(0) == "{thing} is {stuff}"
 
 
-def test_textgen_default_tmpl():
+def test_textgen_default_tmpl() -> None:
     generator = textgen.TextGenerator(
         [
             "{thing} is {stuff} {a}",

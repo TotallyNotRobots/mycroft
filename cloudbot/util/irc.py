@@ -1,8 +1,15 @@
+from __future__ import annotations
+
 import logging
 from enum import Enum
-from typing import List, Mapping, Optional
+from typing import TYPE_CHECKING
 
-import attr
+import attrs
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    from typing_extensions import Self
 
 logger = logging.getLogger(__name__)
 
@@ -18,14 +25,14 @@ class ModeType(Enum):
 PARAM_MODE_TYPES = (ModeType.A, ModeType.B, ModeType.Status)
 
 
-@attr.s(hash=True)
+@attrs.define(hash=True)
 class ChannelMode:
     """
     An IRC channel mode
     """
 
-    character = attr.ib(type=str)
-    type = attr.ib(type=ModeType)
+    character: str
+    type: ModeType
 
     def has_param(self, adding: bool) -> bool:
         return self.type in PARAM_MODE_TYPES or (
@@ -33,16 +40,16 @@ class ChannelMode:
         )
 
 
-@attr.s(hash=True)
+@attrs.define(hash=True)
 class ModeChange:
     """
     Represents a single change of a mode
     """
 
-    char = attr.ib(type=str)
-    adding = attr.ib(type=bool)
-    param = attr.ib(type=Optional[str])
-    info = attr.ib(type=ChannelMode)
+    char: str
+    adding: bool
+    param: str | None
+    info: ChannelMode | None
 
     @property
     def is_status(self) -> bool:
@@ -52,25 +59,25 @@ class ModeChange:
         return self.info.type == ModeType.Status
 
 
-@attr.s(hash=True)
+@attrs.define(hash=True)
 class StatusMode(ChannelMode):
     """
     An IRC status mode
     """
 
-    prefix = attr.ib(type=str)
-    level = attr.ib(type=int)
+    prefix: str
+    level: int
 
     @classmethod
-    def make(cls, prefix: str, char: str, level: int) -> "StatusMode":
+    def make(cls, prefix: str, char: str, level: int) -> Self:
         return cls(
             prefix=prefix, level=level, character=char, type=ModeType.Status
         )
 
 
 def parse_mode_string(
-    modes: str, params: List[str], server_modes: Mapping[str, ChannelMode]
-) -> List[ModeChange]:
+    modes: str, params: list[str], server_modes: Mapping[str, ChannelMode]
+) -> list[ModeChange]:
     new_modes = []
     params = params.copy()
     adding = True

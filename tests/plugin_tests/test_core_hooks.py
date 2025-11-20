@@ -6,8 +6,8 @@ from cloudbot.plugin_hooks import CommandHook, Hook
 from plugins.core import core_hooks
 
 
-def test_autohelp():
-    def f():
+def test_autohelp() -> None:
+    def f() -> None:
         """foo"""
 
     event = Event(

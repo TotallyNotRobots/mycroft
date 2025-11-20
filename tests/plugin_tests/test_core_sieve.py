@@ -1,4 +1,6 @@
-from typing import Iterator, Optional
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -7,8 +9,10 @@ from cloudbot.event import CommandEvent, Event, RegexEvent
 from cloudbot.util.tokenbucket import TokenBucket
 from plugins.core import core_sieve
 
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
-# noinspection PyUnusedFunction
+
 @pytest.fixture(autouse=True)
 def reset_buckets() -> Iterator[None]:
     """
@@ -154,7 +158,7 @@ def test_check_acls_no_chan() -> None:
 
 
 @pytest.mark.asyncio()
-async def test_permissions(event_loop) -> None:
+async def test_permissions() -> None:
     event = make_command_event()
     event.hook.permissions = ["admin"]
 
@@ -168,7 +172,7 @@ async def test_permissions(event_loop) -> None:
 
 
 @pytest.mark.asyncio()
-async def test_permissions_no_perms(event_loop) -> None:
+async def test_permissions_no_perms() -> None:
     event = make_command_event()
     event.hook.permissions = []
 
@@ -181,7 +185,7 @@ async def test_permissions_no_perms(event_loop) -> None:
         assert res is event
 
 
-def make_command_event(chan: Optional[str] = "#foo") -> CommandEvent:
+def make_command_event(chan: str | None = "#foo") -> CommandEvent:
     conn = MagicMock()
     conn.name = "foobarconn"
     conn.config = {}
@@ -205,7 +209,7 @@ def make_command_event(chan: Optional[str] = "#foo") -> CommandEvent:
     return event
 
 
-def test_disabled():
+def test_disabled() -> None:
     event = make_command_event()
     event.conn.config["disabled_commands"] = [event.triggered_command]
     assert core_sieve.check_disabled(event.bot, event, event.hook) is None
@@ -215,6 +219,6 @@ def test_disabled():
     assert core_sieve.check_disabled(event.bot, event, event.hook) is event
 
 
-def test_disabled_non_command():
+def test_disabled_non_command() -> None:
     event = Event(hook=MagicMock(type="ievent"))
     assert core_sieve.check_disabled(event.bot, event, event.hook) is event

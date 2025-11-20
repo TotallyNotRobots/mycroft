@@ -3,25 +3,29 @@ from unittest.mock import call
 import pytest
 
 from plugins.core import autojoin
-from tests.util.mock_conn import MockConn
+from tests.util.mock_conn import MockClient
 
 
-def test_add_chan(mock_db):
+@pytest.mark.asyncio
+async def test_add_chan(mock_db, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     autojoin.chan_cache.clear()
     autojoin.table.create(mock_db.engine)
     db = mock_db.session()
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     chan = "#foo"
     nick = conn.nick
     autojoin.add_chan(db, conn, chan, nick)
     assert mock_db.get_data(autojoin.table) == [("testconn", "#foo")]
 
 
-def test_add_chan_again(mock_db):
+@pytest.mark.asyncio
+async def test_add_chan_again(mock_db, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     autojoin.chan_cache.clear()
     autojoin.table.create(mock_db.engine)
     db = mock_db.session()
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     chan = "#foo"
     nick = conn.nick
     autojoin.add_chan(db, conn, chan, nick)
@@ -30,21 +34,25 @@ def test_add_chan_again(mock_db):
     assert mock_db.get_data(autojoin.table) == [("testconn", "#foo")]
 
 
-def test_add_chan_other_nick(mock_db):
+@pytest.mark.asyncio
+async def test_add_chan_other_nick(mock_db, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     autojoin.chan_cache.clear()
     autojoin.table.create(mock_db.engine)
     db = mock_db.session()
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     chan = "#foo"
     nick = "other"
     autojoin.add_chan(db, conn, chan, nick)
     assert mock_db.get_data(autojoin.table) == []
 
 
-def test_kick(mock_db):
+@pytest.mark.asyncio
+async def test_kick(mock_db, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     autojoin.chan_cache.clear()
     autojoin.table.create(mock_db.engine)
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     chan = "#foo"
     db = mock_db.session()
     mock_db.add_row(autojoin.table, conn=conn.name.lower(), chan=chan.lower())
@@ -54,10 +62,12 @@ def test_kick(mock_db):
     assert mock_db.get_data(autojoin.table) == []
 
 
-def test_kick_other(mock_db):
+@pytest.mark.asyncio
+async def test_kick_other(mock_db, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     autojoin.chan_cache.clear()
     autojoin.table.create(mock_db.engine)
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     chan = "#foo"
     db = mock_db.session()
     mock_db.add_row(autojoin.table, conn=conn.name.lower(), chan=chan.lower())
@@ -68,14 +78,15 @@ def test_kick_other(mock_db):
 
 
 @pytest.mark.asyncio()
-async def test_joins(mock_db):
+async def test_joins(mock_db, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     autojoin.chan_cache.clear()
     autojoin.table.create(mock_db.engine)
-    conn = MockConn()
+    conn = MockClient(bot=bot)
     chan = "#foo"
     db = mock_db.session()
     mock_db.add_row(autojoin.table, conn=conn.name.lower(), chan=chan.lower())
 
     autojoin.load_cache(db)
     await autojoin.do_joins(conn)
-    assert conn.join.mock_calls == [call("#foo")]
+    assert conn.mock_calls() == [call.join("#foo", None)]

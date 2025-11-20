@@ -1,9 +1,14 @@
 # plugin to keep track of bot state
+from __future__ import annotations
 
 import logging
 from collections import deque
+from typing import TYPE_CHECKING
 
 from cloudbot import hook
+
+if TYPE_CHECKING:
+    from cloudbot.client import Client
 
 logger = logging.getLogger("cloudbot")
 
@@ -11,7 +16,7 @@ logger = logging.getLogger("cloudbot")
 # functions called for bot state tracking
 
 
-def bot_left_channel(conn, chan):
+def bot_left_channel(conn: Client, chan) -> None:
     logger.info("[%s|tracker] Bot left channel %r", conn.name, chan)
     if chan in conn.channels:
         conn.channels.remove(chan)
@@ -19,7 +24,7 @@ def bot_left_channel(conn, chan):
         del conn.history[chan]
 
 
-def bot_joined_channel(conn, chan):
+def bot_joined_channel(conn: Client, chan) -> None:
     logger.info("[%s|tracker] Bot joined channel %r", conn.name, chan)
     if chan not in conn.channels:
         conn.channels.append(chan)
@@ -28,7 +33,7 @@ def bot_joined_channel(conn, chan):
 
 
 @hook.irc_raw("KICK")
-async def on_kick(conn, chan, target, loop):
+async def on_kick(conn: Client, chan, target, loop) -> None:
     # if the bot has been kicked, remove from the channel list
     if target == conn.nick:
         bot_left_channel(conn, chan)
@@ -44,7 +49,7 @@ async def on_kick(conn, chan, target, loop):
 
 
 @hook.irc_raw("NICK")
-async def on_nick(irc_paramlist, conn, nick):
+async def on_nick(irc_paramlist, conn: Client, nick) -> None:
     old_nick = nick
     new_nick = str(irc_paramlist[0])
 
@@ -61,12 +66,12 @@ async def on_nick(irc_paramlist, conn, nick):
 # for channels the host tells us we're joining without us joining it ourselves
 # mostly when using a BNC which saves channels
 @hook.irc_raw("JOIN")
-async def on_join(conn, chan, nick):
+async def on_join(conn: Client, chan, nick) -> None:
     if nick == conn.nick:
         bot_joined_channel(conn, chan)
 
 
 @hook.irc_raw("PART")
-async def on_part(conn, chan, nick):
+async def on_part(conn: Client, chan, nick) -> None:
     if nick == conn.nick:
         bot_left_channel(conn, chan)

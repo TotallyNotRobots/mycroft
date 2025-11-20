@@ -1,4 +1,5 @@
 # convenience wrapper for urllib2 & friends
+from __future__ import annotations
 
 import http.cookiejar
 import json
@@ -6,13 +7,16 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import warnings
-from typing import Dict, Union
+from typing import TYPE_CHECKING, Any
 from urllib.parse import quote_plus as _quote_plus
 
 from bs4 import BeautifulSoup
 from lxml import etree, html
 from multidict import MultiDict
 from yarl import URL
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 # security
 parser = etree.XMLParser(resolve_entities=False, no_network=True)
@@ -50,7 +54,7 @@ def get_html(*args, **kwargs):
     return html.fromstring(get(*args, **kwargs))
 
 
-def parse_soup(text, features=None, **kwargs):
+def parse_soup(text, features=None, **kwargs) -> BeautifulSoup:
     """
     Parse HTML using BeautifulSoup
 
@@ -64,7 +68,7 @@ def parse_soup(text, features=None, **kwargs):
     return BeautifulSoup(text, features=features, **kwargs)
 
 
-def get_soup(*args, **kwargs):
+def get_soup(*args, **kwargs) -> BeautifulSoup:
     return parse_soup(get(*args, **kwargs))
 
 
@@ -81,7 +85,7 @@ def parse_xml(text):
     >>> elem.text
     'bar'
     """
-    return etree.fromstring(text, parser=parser)  # nosec
+    return etree.fromstring(text, parser=parser)
 
 
 def get_json(*args, **kwargs):
@@ -134,8 +138,7 @@ def open_request(
     return opener.open(request)
 
 
-# noinspection PyShadowingBuiltins
-def open(
+def open(  # noqa: A001
     url,
     query_params=None,
     user_agent=None,
@@ -146,7 +149,7 @@ def open(
     timeout=None,
     headers=None,
     **kwargs,
-):  # pylint: disable=locally-disabled, redefined-builtin  # pragma: no cover
+):  # pragma: no cover
     warnings.warn(
         "http.open() is deprecated, use http.open_request() instead.",
         DeprecationWarning,
@@ -166,7 +169,7 @@ def open(
     )
 
 
-def prepare_url(url, queries):
+def prepare_url(url: str, queries: Mapping[str, str]) -> str:
     """
     >>> str(unify_url(prepare_url("https://example.com?foo=bar", {'a': 1, 'b': 2})))
     'https://example.com/?a=1&b=2&foo=bar'
@@ -174,10 +177,10 @@ def prepare_url(url, queries):
     if queries:
         scheme, netloc, path, query, fragment = urllib.parse.urlsplit(url)
 
-        query = dict(urllib.parse.parse_qsl(query))
-        query.update(queries)
+        args = dict(urllib.parse.parse_qsl(query))
+        args.update(queries)
         query = urllib.parse.urlencode(
-            {to_utf8(key): to_utf8(value) for key, value in query.items()}
+            {to_utf8(key): to_utf8(value) for key, value in args.items()}
         )
 
         url = urllib.parse.urlunsplit((scheme, netloc, path, query, fragment))
@@ -185,7 +188,7 @@ def prepare_url(url, queries):
     return url
 
 
-def to_utf8(s):
+def to_utf8(s: Any) -> bytes:
     """
     >>> to_utf8('foo bar')
     b'foo bar'
@@ -211,7 +214,7 @@ def quote_plus(s):
     return _quote_plus(to_utf8(s))
 
 
-def unescape(s):
+def unescape(s: str):
     """
     >>> unescape('')
     ''
@@ -222,10 +225,11 @@ def unescape(s):
     """
     if not s.strip():
         return s
+
     return html.fromstring(s).text_content()
 
 
-UrlOrStr = Union[str, URL]
+UrlOrStr = str | URL
 
 
 def unify_url(url: UrlOrStr) -> URL:
@@ -238,4 +242,4 @@ def compare_urls(a: UrlOrStr, b: UrlOrStr) -> bool:
     return unify_url(a) == unify_url(b)
 
 
-GetParams = Dict[str, Union[str, int]]
+GetParams = dict[str, str | int]

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import collections
 import gc
@@ -9,50 +11,113 @@ import warnings
 from concurrent.futures.thread import ThreadPoolExecutor
 from functools import partial
 from pathlib import Path
-from typing import Any, Dict, Optional, Type
+from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import Table, create_engine
+from sqlalchemy import create_engine
 from sqlalchemy import inspect as sa_inspect
-from sqlalchemy.engine import Engine
-from sqlalchemy.orm import Session, scoped_session, sessionmaker
+from sqlalchemy.orm import scoped_session, sessionmaker
+from typing_extensions import override
 from watchdog.observers import Observer
 
-from cloudbot.client import Client
 from cloudbot.config import Config
 from cloudbot.event import CommandEvent, Event, EventType, RegexEvent
 from cloudbot.hook import Action
 from cloudbot.plugin import PluginManager
 from cloudbot.reloader import ConfigReloader, PluginReloader
-from cloudbot.util import async_util, database, formatting
+from cloudbot.util import CLIENT_ATTR, database, formatting
 from cloudbot.util.executor_pool import ExecutorPool
 from cloudbot.util.mapping import KeyFoldDict
+
+if TYPE_CHECKING:
+    from sqlalchemy.engine import Engine
+
+    from cloudbot.client import Client
+
+__all__ = [
+    "bot",
+    "bot_instance",
+    "AbstractBot",
+    "CloudBot",
+]
 
 logger = logging.getLogger("cloudbot")
 
 
-class BotInstanceHolder:
-    def __init__(self):
-        self._instance = None
+class AbstractBot:
+    def __init__(
+        self, *, config: Config, loop: asyncio.AbstractEventLoop | None = None
+    ) -> None:
+        self.config = config
+        self.loop = loop
 
-    def get(self):
-        # type: () -> CloudBot
+    def get_connection_configs(self) -> KeyFoldDict:
+        out = KeyFoldDict()
+        for config in self.config["connections"]:
+            # strip all spaces and capitalization from the connection name
+            original_name = config["name"]
+            name = clean_name(original_name)
+            if name in out:
+                other_name = out[name]["name"]
+                raise ValueError(
+                    f"Duplicate connection names found after sanitize: {original_name!r} and {other_name!r}"
+                )
+
+            out[name] = config
+
+        return out
+
+    def get_plugin_manager(self) -> PluginManager:
+        raise NotImplementedError
+
+    @property
+    def plugin_manager(self) -> PluginManager:
+        return self.get_plugin_manager()
+
+    async def process(self, event: Event) -> None:
+        raise NotImplementedError
+
+
+class GlobalBotNotSet(ValueError):
+    def __init__(self) -> None:
+        super().__init__("Not bot instance available")
+
+
+class BotInstanceHolder:
+    def __init__(self) -> None:
+        self._instance: AbstractBot | None = None
+
+    def get_or_raise(self) -> AbstractBot:
+        instance = self.get()
+        if instance is None:
+            raise GlobalBotNotSet
+
+        return instance
+
+    def get(self) -> AbstractBot | None:
         return self._instance
 
-    def set(self, value):
-        # type: (CloudBot) -> None
+    def set(self, value: AbstractBot | None) -> None:
         self._instance = value
 
     @property
-    def config(self):
-        # type: () -> Config
-        if not self.get():
-            raise ValueError("No bot instance available")
-
-        return self.get().config
+    def config(self) -> Config:
+        return self.get_or_raise().config
 
 
 # Store a global instance of the bot to allow easier access to global data
-bot = BotInstanceHolder()
+bot_instance = BotInstanceHolder()
+bot: BotInstanceHolder
+
+
+def __getattr__(item: str):
+    if item == "bot":
+        warnings.warn(
+            "'bot' module-level value is deprecated, use 'bot_instance' instead.",
+            DeprecationWarning,
+        )
+        return bot_instance
+
+    raise AttributeError(item)
 
 
 def clean_name(n):
@@ -89,27 +154,26 @@ def get_cmd_regex(event):
     return cmd_re
 
 
-class CloudBot:
+class CloudBot(AbstractBot):
     def __init__(
         self,
         *,
-        loop: asyncio.AbstractEventLoop = None,
-        base_dir: Optional[Path] = None,
+        loop: asyncio.AbstractEventLoop | None = None,
+        base_dir: Path | None = None,
+        create_connections: bool = True,
     ) -> None:
-        loop = loop or asyncio.get_event_loop()
-        if bot.get():
+        if bot_instance.get():
             raise ValueError("There seems to already be a bot running!")
 
-        bot.set(self)
+        bot_instance.set(self)
         # basic variables
         self.base_dir = base_dir or Path().resolve()
         self.plugin_dir = self.base_dir / "plugins"
-        self.loop = loop
         self.start_time = time.time()
         self.running = True
-        self.clients: Dict[str, Type[Client]] = {}
+        self.clients: dict[str, type[Client]] = {}
         # future which will be called when the bot stopsIf you
-        self.stopped_future = async_util.create_future(self.loop)
+        self.stopped_future: asyncio.Future[bool] | None = None
 
         # stores each bot server connection
         self.connections = KeyFoldDict()
@@ -118,7 +182,7 @@ class CloudBot:
         self.logger = logger
 
         # for plugins to abuse
-        self.memory: Dict[str, Any] = collections.defaultdict()
+        self.memory: dict[str, Any] = collections.defaultdict()
 
         # declare and create data folder
         self.data_path = self.base_dir / "data"
@@ -128,15 +192,15 @@ class CloudBot:
             self.data_path.mkdir(parents=True)
 
         # set up config
-        self.config = Config(self)
+        super().__init__(config=Config(), loop=loop)
         logger.debug("Config system initialised.")
 
         self.executor = ThreadPoolExecutor(
             max_workers=self.config.get("thread_count")
         )
 
-        self.old_db = self.config.get("old_database")
-        self.do_db_migrate = self.config.get("migrate_db")
+        self.old_db: str | None = self.config.get("old_database")
+        self.do_db_migrate: bool = self.config.get("migrate_db", False)
 
         # set values for reloading
         reloading_conf = self.config.get("reloading", {})
@@ -157,13 +221,12 @@ class CloudBot:
 
         # setup db
         db_path = self.config.get("database", "sqlite:///cloudbot.db")
-        self.db_engine = create_engine(db_path)
+        self.db_engine = create_engine(db_path, future=True)
         database.configure(self.db_engine)
         self.db_executor_pool = ExecutorPool(
             50,
             max_workers=1,
             thread_name_prefix="cloudbot-db",
-            loop=self.loop,
             executor_type=ThreadPoolExecutor,
         )
 
@@ -175,7 +238,8 @@ class CloudBot:
         self.load_clients()
 
         # create bot connections
-        self.create_connections()
+        if create_connections:
+            self.create_connections()
 
         self.observer = Observer()
 
@@ -185,7 +249,11 @@ class CloudBot:
         if self.config_reloading_enabled:
             self.config_reloader = ConfigReloader(self)
 
-        self.plugin_manager = PluginManager(self)
+        self._plugin_manager = PluginManager(self)
+
+    @override
+    def get_plugin_manager(self) -> PluginManager:
+        return self._plugin_manager
 
     @property
     def data_dir(self) -> str:
@@ -194,12 +262,16 @@ class CloudBot:
         )
         return str(self.data_path)
 
-    async def run(self):
+    async def run(self) -> bool:
         """
         Starts CloudBot.
         This will load plugins, connect to IRC, and process input.
         :return: True if CloudBot should be restarted, False otherwise
         """
+        if self.loop is None:
+            self.loop = asyncio.get_running_loop()
+
+        self.stopped_future = asyncio.Future[bool]()
         self.loop.set_default_executor(self.executor)
         # Initializes the bot, plugins and connections
         await self._init_routine()
@@ -211,17 +283,15 @@ class CloudBot:
         logger.debug("Unload complete")
         return restart
 
-    def get_client(self, name: str) -> Type[Client]:
+    def get_client(self, name: str) -> type[Client]:
         return self.clients[name]
 
-    def register_client(self, name, cls):
+    def register_client(self, name, cls) -> None:
         self.clients[name] = cls
 
-    def create_connections(self):
+    def create_connections(self) -> None:
         """Create a BotConnection for all the networks defined in the config"""
-        for config in self.config["connections"]:
-            # strip all spaces and capitalization from the connection name
-            name = clean_name(config["name"])
+        for name, config in self.get_connection_configs().items():
             nick = config["nick"]
             _type = config.get("type", "irc")
 
@@ -235,7 +305,7 @@ class CloudBot:
             )
             logger.debug("[%s] Created connection.", name)
 
-    async def stop(self, reason=None, *, restart=False):
+    async def stop(self, reason=None, *, restart=False) -> None:
         """quits all networks and shuts the bot down"""
         logger.info("Stopping bot.")
 
@@ -277,19 +347,22 @@ class CloudBot:
         self.running = False
         # Give the stopped_future a result, so that run() will exit
         logger.debug("Setting future result for shutdown")
-        self.stopped_future.set_result(restart)
+        if self.stopped_future:
+            self.stopped_future.set_result(restart)
 
-    async def restart(self, reason=None):
+    async def restart(self, reason=None) -> None:
         """shuts the bot down and restarts it"""
         await self.stop(reason=reason, restart=True)
 
-    async def _init_routine(self):
+    async def _init_routine(self) -> None:
         # Load plugins
         await self.plugin_manager.load_all(self.plugin_dir)
 
         if self.old_db and self.do_db_migrate:
-            self.migrate_db()
-            self.stopped_future.set_result(False)
+            self.migrate_db(old_db_url=self.old_db)
+            if self.stopped_future:
+                self.stopped_future.set_result(False)
+
             return
 
         # If we we're stopped while loading plugins, cancel that and just stop
@@ -319,7 +392,7 @@ class CloudBot:
         # Run a manual garbage collection cycle, to clean up any unused objects created during initialization
         gc.collect()
 
-    def load_clients(self):
+    def load_clients(self) -> None:
         """
         Load all clients from the "clients" directory
         """
@@ -333,18 +406,19 @@ class CloudBot:
                     continue
 
                 try:
-                    _type = obj._cloudbot_client  # type: ignore
+                    _type = getattr(obj, CLIENT_ATTR)
                 except AttributeError:
                     continue
 
                 self.register_client(_type, obj)
 
-    async def process(self, event):
+    @override
+    async def process(self, event) -> None:
         run_before_tasks = []
         tasks = []
         halted = False
 
-        def add_hook(hook, _event, _run_before=False):
+        def add_hook(hook, _event, _run_before=False) -> bool:
             nonlocal halted
             if halted:
                 return False
@@ -465,7 +539,7 @@ class CloudBot:
         await asyncio.gather(*run_before_tasks)
         await asyncio.gather(*tasks)
 
-    async def reload_config(self):
+    async def reload_config(self) -> None:
         self.config.load_config()
 
         # reload permissions
@@ -479,24 +553,33 @@ class CloudBot:
 
         await asyncio.gather(*tasks)
 
-    def migrate_db(self) -> None:
+    def migrate_db(self, *, old_db_url: str) -> None:
         logger.info("Migrating database")
-        engine: Engine = create_engine(self.old_db)
-        old_session: Session = scoped_session(sessionmaker(bind=engine))()
-        new_session: Session = database.Session()
-        table: Table
-        inspector = sa_inspect(engine)
-        for table in database.metadata.tables.values():
-            logger.info("Migrating table %s", table.name)
-            if not inspector.has_table(table.name):
-                continue
+        engine: Engine = create_engine(old_db_url, future=True)
+        with (
+            scoped_session(
+                sessionmaker(bind=engine, future=True)
+            )() as old_session,
+            database.Session() as new_session,
+        ):
+            inspector = sa_inspect(engine)
+            for table in database.metadata.tables.values():
+                logger.info("Migrating table %s", table.name)
+                if not inspector.has_table(table.name):
+                    continue
 
-            old_data = old_session.execute(table.select()).fetchall()
-            if not old_data:
-                continue
+                old_data = (
+                    old_session.execute(table.select()).mappings().fetchall()
+                )
+                if not old_data:
+                    continue
 
-            table.create(bind=self.db_engine, checkfirst=True)
-            new_session.execute(table.insert(), [dict(row) for row in old_data])
-            new_session.commit()
-            old_session.execute(table.delete())
-            old_session.commit()
+                table.create(bind=self.db_engine, checkfirst=True)
+                new_session.execute(
+                    table.insert(), [dict(row) for row in old_data]
+                )
+                new_session.commit()
+                old_session.execute(table.delete())
+                old_session.commit()
+
+        engine.dispose()

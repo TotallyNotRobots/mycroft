@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 import random
@@ -8,13 +10,16 @@ import traceback
 from functools import partial
 from itertools import chain
 from pathlib import Path
-from typing import Dict, Mapping, Optional, Tuple, Union, cast
+from typing import TYPE_CHECKING, Literal
 
 from irclib.parser import Message
 
 from cloudbot.client import Client, ClientConnectError, client
 from cloudbot.event import Event, EventType, IrcOutEvent
-from cloudbot.util import async_util, colors
+from cloudbot.util import colors
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 logger = logging.getLogger("cloudbot")
 
@@ -96,11 +101,11 @@ def decode(bytestring):
     return bytestring.decode("utf-8", errors="ignore")
 
 
-def _get_param(msg: Message, index_map: Mapping[str, int]) -> Optional[str]:
+def _get_param(msg: Message, index_map: Mapping[str, int]) -> str | None:
     if msg.command in index_map:
         idx = index_map[msg.command]
         if idx < len(msg.parameters):
-            return cast(str, msg.parameters[idx])
+            return str(msg.parameters[idx])
 
     return None
 
@@ -111,7 +116,9 @@ class IrcClient(Client):
     An implementation of Client for IRC.
     """
 
-    def __init__(self, bot, _type, name, nick, *, channels=None, config=None):
+    def __init__(
+        self, bot, _type, name, nick, *, channels=None, config=None
+    ) -> None:
         """ """
         super().__init__(
             bot, _type, name, nick, channels=channels, config=config
@@ -130,7 +137,7 @@ class IrcClient(Client):
             conn_config.get("bind_port"),
         )
 
-        self.local_bind: Union[bool, Tuple[str, str]]
+        self.local_bind: Literal[False] | tuple[str, str]
         if not (local_bind[0] or local_bind[1]):
             self.local_bind = False
         else:
@@ -140,15 +147,15 @@ class IrcClient(Client):
         self.ssl_context = self.make_ssl_context(conn_config)
 
         # transport and protocol
-        self._transport = None
-        self._protocol = None
+        self._transport: asyncio.Transport | None = None
+        self._protocol: _IrcProtocol | None = None
 
         self._connecting = False
 
-        self._channel_keys: Dict[str, str] = {}
+        self._channel_keys: dict[str, str | None] = {}
 
     def set_channel_key(
-        self, channel: str, key: str, *, override: bool = True
+        self, channel: str, key: str | None, *, override: bool = True
     ) -> None:
         if override or channel not in self._channel_keys:
             self._channel_keys[channel] = key
@@ -166,10 +173,10 @@ class IrcClient(Client):
     def get_channel_key(
         self,
         channel: str,
-        default: Optional[str] = None,
+        default: str | None = None,
         *,
         set_key: bool = True,
-    ) -> Optional[str]:
+    ) -> str | None:
         if channel in self._channel_keys:
             key = self._channel_keys[channel]
             if key is not None:
@@ -180,7 +187,7 @@ class IrcClient(Client):
 
         return default
 
-    def make_ssl_context(self, conn_config):
+    def make_ssl_context(self, conn_config) -> ssl.SSLContext | None:
         if self.use_ssl:
             ssl_context = ssl.create_default_context()
             client_cert = conn_config.get("client_cert")
@@ -201,13 +208,13 @@ class IrcClient(Client):
 
         return ssl_context
 
-    def describe_server(self):
+    def describe_server(self) -> str:
         if self.use_ssl:
             return f"+{self.server}:{self.port}"
 
         return f"{self.server}:{self.port}"
 
-    async def auto_reconnect(self):
+    async def auto_reconnect(self) -> None:
         """
         This method should be called by code that attempts to automatically reconnect to a server
 
@@ -266,7 +273,7 @@ class IrcClient(Client):
         finally:
             self._connecting = False
 
-    async def _connect(self, timeout=None):
+    async def _connect(self, timeout=None) -> None:
         # connect to the clients server
         if self.connected:
             logger.info("[%s] Reconnecting", self.name)
@@ -276,16 +283,16 @@ class IrcClient(Client):
 
         self._active = True
 
-        optional_params = {}
-        if self.local_bind:
-            optional_params["local_addr"] = self.local_bind
-
         coro = self.loop.create_connection(
             partial(_IrcProtocol, self),
             host=self.server,
             port=self.port,
             ssl=self.ssl_context,
-            **optional_params,
+            local_addr=(
+                (self.local_bind[0], int(self.local_bind[1]))
+                if self.local_bind
+                else None
+            ),
         )
 
         if timeout is not None:
@@ -303,7 +310,7 @@ class IrcClient(Client):
         # TODO stop connecting if a connect hook fails?
         await asyncio.gather(*tasks)
 
-    def quit(self, reason=None, set_inactive=True):
+    def quit(self, reason=None, set_inactive=True) -> None:
         if set_inactive:
             self._active = False
 
@@ -313,33 +320,32 @@ class IrcClient(Client):
             else:
                 self.cmd("QUIT")
 
-    def close(self):
+    def close(self) -> None:
         self.quit()
         if self._protocol:
             self._protocol.close()
 
-    def message(self, target, *messages):
+    def message(self, target, *messages) -> None:
         for text in messages:
             self.cmd("PRIVMSG", target, text)
 
-    def admin_log(self, text, console=True):
-        log_chan = self.config.get("log_channel")
-        if log_chan:
+    def admin_log(self, text, console=True) -> None:
+        if log_chan := self.config.get("log_channel"):
             self.message(log_chan, text)
 
         if console:
             logger.info("[%s|admin] %s", self.name, text)
 
-    def action(self, target, text):
+    def action(self, target, text) -> None:
         self.ctcp(target, "ACTION", text)
 
-    def notice(self, target, text):
+    def notice(self, target, text) -> None:
         self.cmd("NOTICE", target, text)
 
-    def set_nick(self, nick):
+    def set_nick(self, nick) -> None:
         self.cmd("NICK", nick)
 
-    def join(self, channel, key=None):
+    def join(self, channel, key=None) -> None:
         key = self.get_channel_key(channel, key)
         if key:
             self.cmd("JOIN", channel, key)
@@ -349,24 +355,24 @@ class IrcClient(Client):
         if channel not in self.channels:
             self.channels.append(channel)
 
-    def part(self, channel):
+    def part(self, channel) -> None:
         self.cmd("PART", channel)
         if channel in self.channels:
             self.channels.remove(channel)
 
-    def set_pass(self, password):
+    def set_pass(self, password) -> None:
         if not password:
             return
         self.cmd("PASS", password)
 
-    def ctcp(self, target, ctcp_type, text):
+    def ctcp(self, target, ctcp_type, text) -> None:
         """
         Makes the bot send a PRIVMSG CTCP of type <ctcp_type> to the target
         """
         out = f"\x01{ctcp_type} {text}\x01"
         self.cmd("PRIVMSG", target, out)
 
-    def cmd(self, command, *params):
+    def cmd(self, command, *params) -> None:
         """
         Sends a raw IRC command of type <command> with params <params>
         :param command: The IRC command to send
@@ -391,13 +397,19 @@ class IrcClient(Client):
         """
         Sends a raw IRC line unchecked. Doesn't do connected check, and is *not* threadsafe
         """
-        async_util.wrap_future(
+        if self._protocol is None:
+            raise ValueError("Tried to send without a protocol")
+
+        asyncio.ensure_future(
             self._protocol.send(line, log=log), loop=self.loop
         )
 
     @property
-    def connected(self):
-        return self._protocol and self._protocol.connected
+    def connected(self) -> bool:
+        if not self._protocol:
+            return False
+
+        return self._protocol.connected
 
     def is_nick_valid(self, nick):
         return bool(irc_nick_re.fullmatch(nick))
@@ -406,7 +418,7 @@ class IrcClient(Client):
 class _IrcProtocol(asyncio.Protocol):
     """ """
 
-    def __init__(self, conn):
+    def __init__(self, conn: IrcClient) -> None:
         """ """
         self.loop = conn.loop
         self.bot = conn.bot
@@ -420,12 +432,12 @@ class _IrcProtocol(asyncio.Protocol):
         self._connecting = True
 
         # transport
-        self._transport = None
+        self._transport: asyncio.Transport | None = None
 
         # Future that waits until we are connected
-        self._connected_future = async_util.create_future(self.loop)
+        self._connected_future = self.loop.create_future()
 
-    def connection_made(self, transport):
+    def connection_made(self, transport) -> None:
         self._transport = transport
         self._connecting = False
         self._connected = True
@@ -433,14 +445,14 @@ class _IrcProtocol(asyncio.Protocol):
         # we don't need the _connected_future, everything uses it will check _connected first.
         del self._connected_future
 
-    def connection_lost(self, exc):
+    def connection_lost(self, exc) -> None:
         self._connected = False
         if exc:
             logger.error("[%s] Connection lost: %s", self.conn.name, exc)
 
-        async_util.wrap_future(self.conn.auto_reconnect(), loop=self.loop)
+        asyncio.ensure_future(self.conn.auto_reconnect(), loop=self.loop)
 
-    def close(self):
+    def close(self) -> None:
         self._connecting = False
         self._connected = False
         if self._transport:
@@ -456,9 +468,13 @@ class _IrcProtocol(asyncio.Protocol):
 
     async def send(self, line, log=True):
         # make sure we are connected before sending
-        if not self.connected:
+        if not self.connected or self._transport is None:
             if self._connecting:
                 await self._connected_future
+                if self._transport is None:
+                    raise ValueError(
+                        "Connected future set, but transport missing!"
+                    )
             else:
                 raise ValueError(
                     "Attempted to send data to a closed connection"
@@ -492,7 +508,7 @@ class _IrcProtocol(asyncio.Protocol):
 
         if not filtered:
             # No outgoing sieves loaded or one of the sieves errored, fall back to old behavior
-            line = old_line[:510] + "\r\n"
+            line = f"{old_line[:510]}\r\n"
             line = line.encode("utf-8", "replace")
 
         if not isinstance(line, bytes):
@@ -504,7 +520,7 @@ class _IrcProtocol(asyncio.Protocol):
 
         self._transport.write(line)
 
-    def data_received(self, data):
+    def data_received(self, data) -> None:
         self._input_buffer += data
 
         while b"\r\n" in self._input_buffer:
@@ -522,7 +538,7 @@ class _IrcProtocol(asyncio.Protocol):
                 )
             else:
                 # handle the message, async
-                async_util.wrap_future(self.bot.process(event), loop=self.loop)
+                asyncio.ensure_future(self.bot.process(event), loop=self.loop)
 
     def parse_line(self, line: str) -> Event:
         message = Message.parse(line)
@@ -531,7 +547,7 @@ class _IrcProtocol(asyncio.Protocol):
 
         # Reply to pings immediately
         if command == "PING":
-            self.conn.send("PONG " + command_params[-1], log=False)
+            self.conn.send(f"PONG {command_params[-1]}", log=False)
 
         # Parse the command and params
         # Content
@@ -546,33 +562,36 @@ class _IrcProtocol(asyncio.Protocol):
         target = _get_param(message, target_params)
 
         # Parse for CTCP
-        if event_type is EventType.message and content_raw.startswith("\x01"):
-            possible_ctcp = content_raw[1:]
-            if content_raw.endswith("\x01"):
-                possible_ctcp = possible_ctcp[:-1]
+        ctcp_text: str | None = None
+        if event_type is EventType.message:
+            if content_raw is None:
+                raise ValueError(f"Missing content_raw for {event_type}")
 
-            if "\x01" in possible_ctcp:
-                logger.debug(
-                    "[%s] Invalid CTCP message received, "
-                    "treating it as a mornal message",
-                    self.conn.name,
-                )
-                ctcp_text = None
-            else:
-                ctcp_text = possible_ctcp
-                ctcp_text_split = ctcp_text.split(None, 1)
-                if ctcp_text_split[0] == "ACTION":
-                    # this is a CTCP ACTION, set event_type and content accordingly
-                    event_type = EventType.action
-                    content = irc_clean(ctcp_text_split[1])
+            if content_raw.startswith("\x01"):
+                possible_ctcp = content_raw[1:]
+                if content_raw.endswith("\x01"):
+                    possible_ctcp = possible_ctcp[:-1]
+
+                if "\x01" in possible_ctcp:
+                    logger.debug(
+                        "[%s] Invalid CTCP message received, "
+                        "treating it as a mornal message",
+                        self.conn.name,
+                    )
+                    ctcp_text = None
                 else:
-                    # this shouldn't be considered a regular message
-                    event_type = EventType.other
-        else:
-            ctcp_text = None
+                    ctcp_text = possible_ctcp
+                    ctcp_text_split = ctcp_text.split(None, 1)
+                    if ctcp_text_split[0] == "ACTION":
+                        # this is a CTCP ACTION, set event_type and content accordingly
+                        event_type = EventType.action
+                        content = irc_clean(ctcp_text_split[1])
+                    else:
+                        # this shouldn't be considered a regular message
+                        event_type = EventType.other
 
         # Channel
-        channel = _get_param(message, chan_params)
+        channel: str | None = _get_param(message, chan_params)
 
         prefix = message.prefix
         if prefix is None:
@@ -594,7 +613,7 @@ class _IrcProtocol(asyncio.Protocol):
 
             # Channel for a PM is the sending user
             if channel == self.conn.nick.lower():
-                channel = nick.lower()
+                channel = nick.lower() if nick else nick
         else:
             # If the channel isn't set, it's the sending user/server
             channel = nick.lower() if nick else nick
@@ -623,5 +642,5 @@ class _IrcProtocol(asyncio.Protocol):
         return event
 
     @property
-    def connected(self):
+    def connected(self) -> bool:
         return self._connected

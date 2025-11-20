@@ -23,7 +23,7 @@ def pluginlist(bot):
 
 
 @hook.command(permissions=["botcontrol"])
-async def pluginload(bot, text, reply):
+async def pluginload(bot, text, reply) -> str:
     """<plugin path> - (Re)load <plugin> manually"""
     manager = bot.plugin_manager
     path = str(Path(text.strip()).resolve())
@@ -36,13 +36,11 @@ async def pluginload(bot, text, reply):
         reply("Plugin failed to load.")
         raise
     else:
-        return "Plugin {}loaded successfully.".format(
-            "re" if was_loaded else ""
-        )
+        return f"Plugin {'re' if was_loaded else ''}loaded successfully."
 
 
 @hook.command(permissions=["botcontrol"])
-async def pluginunload(bot, text):
+async def pluginunload(bot, text) -> str:
     """<plugin path> - Unload <plugin> manually"""
     manager = bot.plugin_manager
     path = str(Path(text.strip()).resolve())

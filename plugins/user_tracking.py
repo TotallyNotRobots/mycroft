@@ -5,6 +5,8 @@ Author:
     - linuxdaemon <linuxdaemon@snoonet.org>
 """
 
+from __future__ import annotations
+
 import asyncio
 import datetime
 import logging
@@ -12,6 +14,7 @@ import re
 import string
 from collections import defaultdict
 from contextlib import suppress
+from typing import TYPE_CHECKING
 
 import sqlalchemy.exc
 from sqlalchemy import (
@@ -27,8 +30,11 @@ from sqlalchemy import (
 from cloudbot import hook
 from cloudbot.event import EventType
 from cloudbot.util import database
-from cloudbot.util.async_util import create_future, wrap_future
 from cloudbot.util.backoff import Delayer
+
+if TYPE_CHECKING:
+    from cloudbot.client import Client
+    from cloudbot.clients.irc import IrcClient
 
 address_table = Table(
     "addrs",
@@ -67,13 +73,13 @@ masks_table = Table(
 )
 
 RFC_CASEMAP = str.maketrans(
-    dict(zip(string.ascii_uppercase + "[]\\", string.ascii_lowercase + "{}|"))
+    dict(zip(string.ascii_uppercase + "[]\\", f"{string.ascii_lowercase}{{}}|"))
 )
 
 logger = logging.getLogger("cloudbot")
 
 
-def update_user_data(db, table, column_name, now, nick, value):
+def update_user_data(db, table, column_name, now, nick, value) -> None:
     """
     :type db: sqlalchemy.orm.Session
     :type table: Table
@@ -83,7 +89,7 @@ def update_user_data(db, table, column_name, now, nick, value):
     :type value: str
     """
 
-    def _insert_or_update():
+    def _insert_or_update() -> None:
         try:
             db.execute(table.insert().values(**args))
         except sqlalchemy.exc.IntegrityError:
@@ -119,12 +125,12 @@ def update_user_data(db, table, column_name, now, nick, value):
                 break
 
 
-def _set_result(fut, result):
+def _set_result(fut, result) -> None:
     if not fut.done():
         fut.set_result(result)
 
 
-def get_regex_cache(conn):
+def get_regex_cache(conn: Client):
     try:
         cache = conn.memory["sherlock"]["re_cache"]
     except LookupError:
@@ -133,7 +139,7 @@ def get_regex_cache(conn):
     return cache
 
 
-def get_regex(conn, name):
+def get_regex(conn: Client, name):
     cache = get_regex_cache(conn)
     try:
         regex = cache[name.lower()]
@@ -188,13 +194,13 @@ async def await_response(fut):
     return await asyncio.wait_for(fut, 60)
 
 
-async def await_command_response(conn, name, cmd, nick):
+async def await_command_response(conn: IrcClient, name, cmd, nick):
     futs = conn.memory["sherlock"]["futures"][name]
     nick_cf = rfc_casefold(nick)
     try:
         fut = futs[nick_cf]
     except LookupError:
-        futs[nick_cf] = fut = create_future(conn.loop)
+        futs[nick_cf] = fut = asyncio.Future[str]()
         conn.cmd(cmd, nick)
 
     try:
@@ -206,19 +212,19 @@ async def await_command_response(conn, name, cmd, nick):
     return res
 
 
-async def get_user_host(conn, nick):
+async def get_user_host(conn: IrcClient, nick):
     return await await_command_response(conn, "user_host", "USERHOST", nick)
 
 
-async def get_user_ip(conn, nick):
+async def get_user_ip(conn: IrcClient, nick):
     return await await_command_response(conn, "user_ip", "USERIP", nick)
 
 
-async def get_user_mask(conn, nick):
+async def get_user_mask(conn: IrcClient, nick):
     return await await_command_response(conn, "user_mask", "WHO", nick)
 
 
-async def get_user_whowas(conn, nick):
+async def get_user_whowas(conn: IrcClient, nick):
     nick_cf = rfc_casefold(nick)
     futs = conn.memory["sherlock"]["futures"]
     send_command = False
@@ -226,13 +232,13 @@ async def get_user_whowas(conn, nick):
         mask_fut = futs["user_whowas_mask"][nick_cf]
     except LookupError:
         send_command = True
-        futs["user_whowas_mask"][nick_cf] = mask_fut = create_future(conn.loop)
+        futs["user_whowas_mask"][nick_cf] = mask_fut = asyncio.Future[str]()
 
     try:
         host_fut = futs["user_whowas_host"][nick_cf]
     except LookupError:
         send_command = True
-        futs["user_whowas_host"][nick_cf] = host_fut = create_future(conn.loop)
+        futs["user_whowas_host"][nick_cf] = host_fut = asyncio.Future[str]()
 
     if send_command:
         conn.cmd("WHOWAS", nick)
@@ -244,8 +250,8 @@ async def get_user_whowas(conn, nick):
         return None, None
 
 
-@hook.command("testdata", permissions=["botcontrol"])
-async def get_nick_data(conn, text):
+@hook.command("testdata", permissions=["botcontrol"], clients=["irc"])
+async def get_nick_data(conn: IrcClient, text) -> str:
     """<nick> - Get data for <nick> to debug"""
     start = datetime.datetime.now()
     ip = await get_user_ip(conn, text)
@@ -256,20 +262,20 @@ async def get_nick_data(conn, text):
 
 
 @hook.on_start()
-def clear_regex_cache(bot):
+def clear_regex_cache(bot) -> None:
     for conn in bot.connections.values():
         get_regex_cache(conn).clear()
 
 
 @hook.on_start()
-def init_futures(bot):
+def init_futures(bot) -> None:
     for conn in bot.connections.values():
         conn.memory["sherlock"] = {
             "futures": defaultdict(dict),
         }
 
 
-def _is_server(nick, server_info):
+def _is_server(nick, server_info) -> bool:
     if nick.casefold() == server_info["server_name"]:
         return True
 
@@ -281,7 +287,7 @@ def _is_server(nick, server_info):
 
 
 @hook.event(EventType.notice)
-async def on_notice(db, nick, chan, conn, event):
+async def on_notice(db, nick, chan, conn: Client, event) -> None:
     try:
         server_info = conn.memory["server_info"]
     except LookupError:
@@ -302,7 +308,9 @@ async def on_notice(db, nick, chan, conn, event):
 
 
 @hook.irc_raw(list(response_map.keys()))
-async def handle_response_numerics(conn, irc_command, irc_paramlist):
+async def handle_response_numerics(
+    conn: Client, irc_command, irc_paramlist
+) -> None:
     try:
         name, handler = response_map[irc_command]
     except LookupError:
@@ -329,19 +337,19 @@ async def handle_snotice(db, event):
             await handler(db, event, match)
             break
     else:
-        raise ValueError("Unmatched snotice: " + content)
+        raise ValueError(f"Unmatched snotice: {content}")
 
 
 async def set_user_data(
     event, db, table, column_name, now, nick, value_func, conn=None
-):
+) -> None:
     value = await value_func(event.conn if conn is None else conn, nick)
     await event.async_call(
         update_user_data, db, table, column_name, now, nick, value
     )
 
 
-async def on_nickchange(db, event, match):
+async def on_nickchange(db, event, match) -> None:
     conn = event.conn
     old_nick = match.group("oldnick")
     new_nick = match.group("newnick")
@@ -356,9 +364,9 @@ async def on_nickchange(db, event, match):
     nick_change_futs = futures["nick_changes"]
 
     futs = {
-        "addr": create_future(conn.loop),
-        "host": create_future(conn.loop),
-        "mask": create_future(conn.loop),
+        "addr": asyncio.Future[str](),
+        "host": asyncio.Future[str](),
+        "mask": asyncio.Future[str](),
     }
 
     data_futs[new_nick_cf] = futs
@@ -366,7 +374,7 @@ async def on_nickchange(db, event, match):
     try:
         old_futs = data_futs.pop(old_nick_cf)
     except LookupError:
-        nick_change_futs[old_nick_cf] = fut = create_future(conn.loop)
+        nick_change_futs[old_nick_cf] = fut = asyncio.Future[str]()
         try:
             old_futs = await asyncio.wait_for(fut, 30)
         except asyncio.TimeoutError:
@@ -382,7 +390,7 @@ async def on_nickchange(db, event, match):
     else:
         _set_result(nick_fut, futs)
 
-    async def _handle_set(table, name, value_func):
+    async def _handle_set(table, name, value_func) -> None:
         try:
             value = await value_func(event.conn, new_nick)
         except (asyncio.TimeoutError, asyncio.CancelledError):
@@ -402,10 +410,10 @@ async def on_nickchange(db, event, match):
             ),
         )
 
-    async def _do_mask():
+    async def _do_mask() -> None:
         await _handle_set(masks_table, "mask", get_user_mask)
 
-    async def _timeout_whowas():
+    async def _timeout_whowas() -> None:
         try:
             await asyncio.gather(
                 _handle_set(hosts_table, "host", get_user_host),
@@ -468,7 +476,7 @@ async def on_nickchange(db, event, match):
         del data_futs[new_nick_cf]
 
 
-async def on_user_connect(db, event, match):
+async def on_user_connect(db, event, match) -> None:
     nick = match.group("nick")
     host = match.group("host")
     addr = match.group("addr")
@@ -478,7 +486,7 @@ async def on_user_connect(db, event, match):
     nick_cf = rfc_casefold(nick)
     conn = event.conn
 
-    mask_fut = create_future(conn.loop)
+    mask_fut = asyncio.Future[str]()
 
     futs = {
         "mask": mask_fut,
@@ -488,7 +496,7 @@ async def on_user_connect(db, event, match):
 
     data_futs[nick_cf] = futs
 
-    async def _handle_set(table, name, value_func):
+    async def _handle_set(table, name, value_func) -> None:
         try:
             value = await value_func(event.conn, nick)
         except (asyncio.TimeoutError, asyncio.CancelledError):
@@ -500,7 +508,7 @@ async def on_user_connect(db, event, match):
             update_user_data, db, table, name, now, nick, value
         )
 
-    async def _do_mask():
+    async def _do_mask() -> None:
         await _handle_set(masks_table, "mask", get_user_mask)
 
     await asyncio.gather(
@@ -517,7 +525,7 @@ async def on_user_connect(db, event, match):
         del data_futs[nick_cf]
 
 
-async def on_user_quit(db, event, match):
+async def on_user_quit(db, event, match) -> None:
     nick = match.group("nick")
     host = match.group("host")
     addr = match.group("addr")
@@ -535,7 +543,7 @@ async def on_user_quit(db, event, match):
     try:
         old_futs = data_futs.pop(nick_cf)
     except LookupError:
-        nick_change_futs[nick_cf] = fut = create_future(conn.loop)
+        nick_change_futs[nick_cf] = fut = asyncio.Future[str]()
         try:
             old_futs = await asyncio.wait_for(fut, 30)
         except asyncio.TimeoutError:
@@ -550,7 +558,7 @@ async def on_user_quit(db, event, match):
     with suppress(KeyError):
         _set_result(old_futs["addr"], addr)
 
-    async def _do_whowas():
+    async def _do_whowas() -> None:
         mask, _ = await get_user_whowas(event.conn, nick)
         if mask:
             with suppress(KeyError):
@@ -586,7 +594,7 @@ async def ignore_timeout(coro):
 
 
 @hook.irc_raw("352")
-async def on_who(conn, irc_paramlist):
+async def on_who(conn: Client, irc_paramlist) -> None:
     try:
         lines, fut = conn.memory["sherlock"]["futures"]["who_0"][0]
     except LookupError:
@@ -597,7 +605,7 @@ async def on_who(conn, irc_paramlist):
 
 
 @hook.irc_raw("315")
-async def on_who_end(conn, irc_paramlist):
+async def on_who_end(conn: Client, irc_paramlist) -> None:
     name = irc_paramlist[1]
     if name != "0":
         return
@@ -611,8 +619,8 @@ async def on_who_end(conn, irc_paramlist):
 
 
 @hook.on_start()
-async def get_initial_data(bot, loop, db, event):
-    wrap_future(
+async def get_initial_data(bot, loop, db, event) -> None:
+    asyncio.ensure_future(
         asyncio.gather(
             *[
                 get_initial_connection_data(conn, loop, db, event)
@@ -625,7 +633,7 @@ async def get_initial_data(bot, loop, db, event):
 
 @hook.irc_raw("376")
 @hook.command("getdata", permissions=["botcontrol"], autohelp=False)
-async def get_initial_connection_data(conn, loop, db, event):
+async def get_initial_connection_data(conn: IrcClient, loop, db, event):
     """
     - Update all user data
 
@@ -638,7 +646,7 @@ async def get_initial_connection_data(conn, loop, db, event):
         # Ignore initial data update on development instances
         return
 
-    fut = create_future(loop)
+    fut = asyncio.Future[list[str]]()
     try:
         lines, fut = conn.memory["sherlock"]["futures"]["who_0"][0]
     except LookupError:
@@ -668,7 +676,7 @@ async def get_initial_connection_data(conn, loop, db, event):
         users.append((nick, host))
 
     futs = [
-        wrap_future(
+        asyncio.ensure_future(
             event.async_call(
                 update_user_data, db, masks_table, "mask", now, nick, mask
             )

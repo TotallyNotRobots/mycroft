@@ -1,38 +1,56 @@
+from __future__ import annotations
+
+import asyncio
 import datetime
 import importlib
 import logging
-from typing import List
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import freezegun
 import pytest
+import pytest_asyncio
 from responses import RequestsMock
+from sqlalchemy import orm as sa_orm
 from sqlalchemy.orm import close_all_sessions
 
 import cloudbot
-from cloudbot.bot import bot
+from cloudbot.bot import bot_instance
 from cloudbot.util import database
 from cloudbot.util.database import Session
 from tests.util.mock_bot import MockBot
 from tests.util.mock_db import MockDB
 
-
-@pytest.fixture(autouse=True)
-def clear_metadata():
-    database.metadata.clear()
-    yield
-    database.metadata.clear()
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 
 @pytest.fixture()
-def tmp_logs(tmp_path):
+def temp_metadata():
+    new_base = sa_orm.declarative_base()
+    with (
+        patch("cloudbot.util.database.Base", new=new_base),
+        patch("cloudbot.util.database.base", new=new_base),
+        patch("cloudbot.util.database.metadata", new=new_base.metadata),
+    ):
+        yield
+
+
+@pytest.fixture()
+def tmp_logs(tmp_path) -> None:
     cloudbot._setup(tmp_path)
 
 
 @pytest.fixture()
-def caplog_bot(caplog):
+def caplog_bot(
+    caplog: pytest.LogCaptureFixture,
+) -> Generator[pytest.LogCaptureFixture]:
     caplog.set_level(logging.WARNING, "asyncio")
+    caplog.set_level(logging.WARNING, "alembic")
+    caplog.set_level(0, "cloudbot")
+    caplog.set_level(0, "plugins")
     caplog.set_level(0)
+    logging.getLogger("cloudbot").propagate = True
     yield caplog
 
 
@@ -50,22 +68,31 @@ def patch_import_reload():
 
 @pytest.fixture()
 def mock_db(tmp_path):
-    db = MockDB("sqlite:///" + str(tmp_path / "database.db"))
+    db = MockDB(f"sqlite:///{tmp_path / 'database.db'!s}")
     database.configure(db.engine)
-    yield db
-    close_all_sessions()
-    Session.remove()
-    database.configure()
+    try:
+        yield db
+    finally:
+        close_all_sessions()
+        Session.remove()
+        database.configure()
+        db.close()
 
 
 @pytest.fixture()
-def mock_bot_factory(event_loop, tmp_path):
-    instances: List[MockBot] = []
+def mock_bot_factory(tmp_path, unset_bot, mock_db):
+    instances: list[MockBot] = []
 
-    def _factory(*args, **kwargs):
-        kwargs.setdefault("loop", event_loop)
+    def _factory(**kwargs):
+        loop = kwargs.get("loop")
+        if loop is None:
+            loop = asyncio.get_running_loop()
+
+        kwargs["loop"] = loop
         kwargs.setdefault("base_dir", tmp_path)
-        _bot = MockBot(*args, **kwargs)
+        kwargs.setdefault("db", mock_db)
+        _bot = MockBot(**kwargs)
+        bot_instance.set(_bot)
         instances.append(_bot)
         return _bot
 
@@ -76,8 +103,8 @@ def mock_bot_factory(event_loop, tmp_path):
             b.close()
 
 
-@pytest.fixture()
-def mock_bot(mock_bot_factory):
+@pytest_asyncio.fixture()
+async def mock_bot(mock_bot_factory):
     yield mock_bot_factory()
 
 
@@ -100,4 +127,4 @@ def unset_bot():
     try:
         yield
     finally:
-        bot.set(None)
+        bot_instance.set(None)

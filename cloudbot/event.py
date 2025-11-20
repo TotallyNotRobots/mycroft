@@ -1,11 +1,21 @@
+from __future__ import annotations
+
 import enum
 import logging
+from collections.abc import Mapping
 from functools import partial
-from typing import Any, Iterator, Mapping
+from typing import TYPE_CHECKING, Any
 
 from irclib.parser import Message
 
 from cloudbot.util.database import Session
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    import sqlalchemy.orm as sa_orm
+
+    from cloudbot.util.executor_pool import ExecutorWrapper
 
 logger = logging.getLogger("cloudbot")
 
@@ -45,7 +55,7 @@ class Event(Mapping[str, Any]):
         irc_paramlist=None,
         irc_ctcp_text=None,
         irc_tags=None,
-    ):
+    ) -> None:
         """
         All of these parameters except for `bot` and `hook` are optional.
         The irc_* parameters should only be specified for IRC events.
@@ -72,8 +82,8 @@ class Event(Mapping[str, Any]):
                                 should be removed from the front.
         :param irc_ctcp_text: CTCP text if this message is a CTCP command
         """
-        self.db = None
-        self.db_executor = None
+        self.db: sa_orm.Session | None = None
+        self.db_executor: ExecutorWrapper | None = None
         self.bot = bot
         self.conn = conn
         self.hook = hook
@@ -187,7 +197,7 @@ class Event(Mapping[str, Any]):
 
         if self.db is not None:
             # logger.debug("Closing database session for {}:threaded=False".format(self.hook.description))
-            # be sure the close the database in the database executor, as it is only accessable in that one thread
+            # be sure the close the database in the database executor, as it is only accessible in that one thread
             await self.async_call(self.db.close)
             self.db = None
 
@@ -232,7 +242,7 @@ class Event(Mapping[str, Any]):
 
         self.conn.message(target, message)
 
-    def admin_log(self, message, broadcast=False):
+    def admin_log(self, message, broadcast=False) -> None:
         """Log a message in the current connections admin log
 
         :param message: The message to log
@@ -244,7 +254,7 @@ class Event(Mapping[str, Any]):
             if conn and conn.connected:
                 conn.admin_log(message, console=not broadcast)
 
-    def reply(self, *messages, target=None):
+    def reply(self, *messages: str, target: str | None = None) -> None:
         """sends a message to the current channel/user with a prefix"""
         reply_ping = self.conn.config.get("reply_ping", True)
         if target is None:
@@ -293,7 +303,6 @@ class Event(Mapping[str, Any]):
         if not hasattr(self.conn, "ctcp"):
             raise ValueError("CTCP can only be used on IRC connections")
 
-        # noinspection PyUnresolvedReferences
         self.conn.ctcp(target, ctcp_type, message)
 
     def notice(self, message, target=None):
@@ -322,7 +331,7 @@ class Event(Mapping[str, Any]):
             self.mask, permission, notice=notice
         )
 
-    async def check_permission(self, permission, notice=True):
+    async def check_permission(self, permission, notice=True) -> bool:
         """returns whether or not the current user has a given permission"""
         if self.has_permission(permission, notice=notice):
             return True
@@ -336,7 +345,7 @@ class Event(Mapping[str, Any]):
 
         return False
 
-    async def check_permissions(self, *perms, notice=True):
+    async def check_permissions(self, *perms, notice=True) -> bool:
         for perm in perms:
             if await self.check_permission(perm, notice=notice):
                 return True
@@ -386,7 +395,7 @@ class CommandEvent(Event):
         irc_prefix=None,
         irc_command=None,
         irc_paramlist=None,
-    ):
+    ) -> None:
         """
         :param text: The arguments for the command
         :param triggered_command: The command that was triggered
@@ -424,13 +433,9 @@ class CommandEvent(Event):
             raise ValueError("Triggered command not set on this event")
 
         if self.hook.doc is None:
-            message = "{}{} requires additional arguments.".format(
-                self.triggered_prefix, self.triggered_command
-            )
+            message = f"{self.triggered_prefix}{self.triggered_command} requires additional arguments."
         else:
-            message = "{}{} {}".format(
-                self.triggered_prefix, self.triggered_command, self.hook.doc
-            )
+            message = f"{self.triggered_prefix}{self.triggered_command} {self.hook.doc}"
 
         self.notice(message, target=target)
 
@@ -457,7 +462,7 @@ class RegexEvent(Event):
         irc_prefix=None,
         irc_command=None,
         irc_paramlist=None,
-    ):
+    ) -> None:
         """
         :param: match: The match objected returned by the regex search method
         """
@@ -484,18 +489,18 @@ class RegexEvent(Event):
 
 
 class CapEvent(Event):
-    def __init__(self, *args, cap, cap_param=None, **kwargs):
+    def __init__(self, *args, cap, cap_param=None, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.cap = cap
         self.cap_param = cap_param
 
 
 class IrcOutEvent(Event):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.parsed_line = None
+        self.parsed_line: Message | None = None
 
-    async def prepare(self):
+    async def prepare(self) -> None:
         await super().prepare()
 
         if "parsed_line" in self.hook.required_args:
@@ -507,7 +512,7 @@ class IrcOutEvent(Event):
                 )
                 self.parsed_line = None
 
-    def prepare_threaded(self):
+    def prepare_threaded(self) -> None:
         super().prepare_threaded()
 
         if "parsed_line" in self.hook.required_args:
@@ -533,7 +538,7 @@ class PostHookEvent(Event):
         result=None,
         error=None,
         **kwargs,
-    ):
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.launched_hook = launched_hook
         self.launched_event = launched_event
