@@ -4,7 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## v1.5.0 (2024-05-08)
+
+### Feat
+
+- **duckhunt**: add duckmerge permission for more granular grants
+
+### Fix
+
+- **reloader**: only handle modification events for config reloader
+
+### Refactor
+
+- remove old noinspection comments from PyCharm
+- move to using attribute constants for hook attributes
+
+## [1.4.0] 2024-04-29
 ### Added
 - Added a stab command to stab other users
 - Add Python 3.8, 3.9 to testing matrix
@@ -23,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Expand youtube.py error information
 - Handle 'a' vs 'an' in drinks plugin
 - Apply rate limiting to regex hooks
+- Replaced dynamic permissions config with DB based system
 ### Fixed
 - Fixed config reloading
 - Fix matching exception in horoscope test
@@ -48,6 +64,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed yandex translate plugin
 - Removed soundcloud plugin due to API removal
 - Removed imdb.py, the backing app is not being maintained and is broken
+- Removed quran.py as API no longer exists
+
+## Breaking
+- Removed support for Python <3.8
 
 ## [1.3.0] 2020-03-17
 ### Added
@@ -127,8 +147,9 @@ This update is pretty big. Be warned.
 ## [1.0.0]
 - Initial stable release
 
-[Unreleased]: https://github.com/TotallyNotRobots/CloudBot/compare/v1.3.0...HEAD
-[1.2.0]: https://github.com/TotallyNotRobots/CloudBot/compare/v1.2.0...v1.3.0
+[Unreleased]: https://github.com/TotallyNotRobots/CloudBot/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/TotallyNotRobots/CloudBot/compare/v1.3.0...v1.4.0
+[1.3.0]: https://github.com/TotallyNotRobots/CloudBot/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/TotallyNotRobots/CloudBot/compare/1.1.0...v1.2.0
 [1.1.0]: https://github.com/TotallyNotRobots/CloudBot/compare/1.0.9...1.1.0
 [1.0.9]: https://github.com/TotallyNotRobots/CloudBot/compare/1.0.8...1.0.9

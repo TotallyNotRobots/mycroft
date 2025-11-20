@@ -1,75 +1,77 @@
+from __future__ import annotations
+
 import asyncio
 import importlib
 import logging
 import sys
-import typing
 from collections import defaultdict
 from functools import partial
 from operator import attrgetter
 from pathlib import Path
-from typing import (
-    Dict,
-    List,
-    MutableMapping,
-    Optional,
-    Tuple,
-    Type,
-    TypedDict,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, TypedDict, cast
 from weakref import WeakValueDictionary
 
 import sqlalchemy
-from sqlalchemy import Table
 
-from cloudbot.event import Event, EventType, PostHookEvent
+from cloudbot.event import Event, PostHookEvent
 from cloudbot.plugin_hooks import (
-    CapHook,
-    CommandHook,
-    ConfigHook,
-    EventHook,
-    IrcOutHook,
-    OnCapAckHook,
-    OnCapAvaliableHook,
-    OnConnectHook,
-    OnStartHook,
-    OnStopHook,
-    PeriodicHook,
-    PermHook,
-    PostHookHook,
-    RawHook,
-    RegexHook,
-    SieveHook,
     hook_name_to_plugin,
 )
-from cloudbot.util import HOOK_ATTR, LOADED_ATTR, async_util, database
+from cloudbot.util import HOOK_ATTR, LOADED_ATTR, database
 from cloudbot.util.func_utils import call_with_args
+
+if TYPE_CHECKING:
+    import os
+    from collections.abc import MutableMapping
+    from re import Pattern
+
+    from sqlalchemy import Table
+
+    from cloudbot.event import EventType
+    from cloudbot.plugin_hooks import (
+        CapHook,
+        CommandHook,
+        ConfigHook,
+        EventHook,
+        IrcOutHook,
+        OnCapAckHook,
+        OnCapAvaliableHook,
+        OnConnectHook,
+        OnStartHook,
+        OnStopHook,
+        PeriodicHook,
+        PermHook,
+        PostHookHook,
+        RawHook,
+        RegexHook,
+        SieveHook,
+    )
 
 logger = logging.getLogger("cloudbot")
 
 
 class HookDict(TypedDict):
-    command: List[CommandHook]
-    on_connect: List[OnConnectHook]
-    on_start: List[OnStartHook]
-    on_stop: List[OnStopHook]
-    on_cap_available: List[OnCapAvaliableHook]
-    on_cap_ack: List[OnCapAckHook]
-    sieve: List[SieveHook]
-    event: List[EventHook]
-    regex: List[RegexHook]
-    periodic: List[PeriodicHook]
-    irc_raw: List[RawHook]
-    irc_out: List[IrcOutHook]
-    post_hook: List[PostHookHook]
-    config: List[ConfigHook]
-    perm_check: List[PermHook]
+    command: list[CommandHook]
+    on_connect: list[OnConnectHook]
+    on_start: list[OnStartHook]
+    on_stop: list[OnStopHook]
+    on_cap_available: list[OnCapAvaliableHook]
+    on_cap_ack: list[OnCapAckHook]
+    sieve: list[SieveHook]
+    event: list[EventHook]
+    regex: list[RegexHook]
+    periodic: list[PeriodicHook]
+    irc_raw: list[RawHook]
+    irc_out: list[IrcOutHook]
+    post_hook: list[PostHookHook]
+    config: list[ConfigHook]
+    perm_check: list[PermHook]
 
 
 def find_hooks(parent, module) -> HookDict:
     hooks = defaultdict(list)
     for func in module.__dict__.values():
-        if hasattr(func, HOOK_ATTR) and not hasattr(func, "_not_" + HOOK_ATTR):
+        if hasattr(func, HOOK_ATTR) and not hasattr(func, f"_not_{HOOK_ATTR}"):
             # if it has cloudbot hook
 
             try:
@@ -85,10 +87,10 @@ def find_hooks(parent, module) -> HookDict:
             # delete the hook to free memory
             delattr(func, HOOK_ATTR)
 
-    return cast(HookDict, hooks)
+    return cast("HookDict", hooks)
 
 
-def find_tables(code):
+def find_tables(code) -> list[sqlalchemy.Table]:
     tables = []
     for obj in code.__dict__.values():
         if (
@@ -98,10 +100,33 @@ def find_tables(code):
             # if it's a Table, and it's using our metadata, append it to the list
             tables.append(obj)
         elif isinstance(obj, type) and issubclass(obj, database.Base):
-            obj = cast(Type[database.Base], obj)
-            tables.append(obj.__table__)
+            tables.append(cast("sqlalchemy.Table", obj.__table__))
 
     return tables
+
+
+def safe_resolve(path_obj: Path) -> Path:
+    """Resolve the parts of a path that exist, allowing a non-existent path
+    to be resolved to allow resolution of its parents
+
+    :param path_obj: The `Path` object to resolve
+    :return: The safely resolved `Path`
+    """
+    unresolved = []
+    while not path_obj.exists():
+        unresolved.append(path_obj.name)
+        path_obj = path_obj.parent
+
+    path_obj = path_obj.resolve()
+
+    for part in reversed(unresolved):
+        path_obj /= part
+
+    return path_obj
+
+
+class HookHookDict(TypedDict):
+    post: list[PostHookHook]
 
 
 class PluginManager:
@@ -119,39 +144,39 @@ class PluginManager:
     - SievePlugin is a catch-all sieve, which all other plugins go through before being executed.
     """
 
-    def __init__(self, bot):
+    def __init__(self, bot) -> None:
         """
         Creates a new PluginManager. You generally only need to do this from inside cloudbot.bot.CloudBot
         """
         self.bot = bot
 
-        self.plugins: Dict[str, Plugin] = {}
+        self.plugins: dict[str, Plugin] = {}
         self._plugin_name_map: MutableMapping[str, Plugin] = (
             WeakValueDictionary()
         )
-        self.commands: Dict[str, CommandHook] = {}
-        self.raw_triggers: Dict[str, List[RawHook]] = defaultdict(list)
-        self.catch_all_triggers: List[RawHook] = []
-        self.event_type_hooks: Dict[EventType, List[EventHook]] = defaultdict(
+        self.commands: dict[str, CommandHook] = {}
+        self.raw_triggers: dict[str, list[RawHook]] = defaultdict(list)
+        self.catch_all_triggers: list[RawHook] = []
+        self.event_type_hooks: dict[EventType, list[EventHook]] = defaultdict(
             list
         )
-        self.regex_hooks: List[Tuple[typing.Pattern, RegexHook]] = []
-        self.sieves = []
-        self.cap_hooks: Dict[str, Dict[str, List[CapHook]]] = {
+        self.regex_hooks: list[tuple[Pattern[str], RegexHook]] = []
+        self.sieves: list[SieveHook] = []
+        self.cap_hooks: dict[str, dict[str, list[CapHook]]] = {
             "on_available": defaultdict(list),
             "on_ack": defaultdict(list),
         }
-        self.connect_hooks = []
-        self.out_sieves = []
-        self.hook_hooks = defaultdict(list)
-        self.perm_hooks = defaultdict(list)
-        self.config_hooks: List[ConfigHook] = []
+        self.connect_hooks: list[OnConnectHook] = []
+        self.out_sieves: list[IrcOutHook] = []
+        self.hook_hooks = HookHookDict({"post": []})
+        self.perm_hooks: dict[str, list[PermHook]] = defaultdict(list)
+        self.config_hooks: list[ConfigHook] = []
 
-    def _add_plugin(self, plugin: "Plugin"):
+    def _add_plugin(self, plugin: Plugin) -> None:
         self.plugins[plugin.file_path] = plugin
         self._plugin_name_map[plugin.title] = plugin
 
-    def _rem_plugin(self, plugin: "Plugin"):
+    def _rem_plugin(self, plugin: Plugin) -> None:
         del self.plugins[plugin.file_path]
         del self._plugin_name_map[plugin.title]
 
@@ -163,26 +188,20 @@ class PluginManager:
         """
         return self._plugin_name_map.get(title)
 
-    def safe_resolve(self, path_obj: Path) -> Path:
-        """Resolve the parts of a path that exist, allowing a non-existant path
-        to be resolved to allow resolution of its parents
-
-        :param path_obj: The `Path` object to resolve
-        :return: The safely resolved `Path`
+    def file_path_to_import(self, file_path: str | os.PathLike) -> str:
         """
-        unresolved = []
-        while not path_obj.exists():
-            unresolved.append(path_obj.name)
-            path_obj = path_obj.parent
+        Convert a path to a python file to the import path
 
-        path_obj = path_obj.resolve()
+        :param file_path: Path to the file
+        :return: The import path for the module
+        """
+        path = Path(file_path)
+        file_path = safe_resolve(path)
+        # Resolve the path relative to the current directory
+        plugin_path = file_path.relative_to(self.bot.base_dir)
+        return ".".join(plugin_path.parts).rsplit(".", 1)[0]
 
-        for part in reversed(unresolved):
-            path_obj /= part
-
-        return path_obj
-
-    def get_plugin(self, path) -> Optional["Plugin"]:
+    def get_plugin(self, path) -> Plugin | None:
         """
         Find a loaded plugin from its filename
 
@@ -191,9 +210,9 @@ class PluginManager:
         """
         path_obj = Path(path)
 
-        return self.plugins.get(str(self.safe_resolve(path_obj)))
+        return self.plugins.get(str(safe_resolve(path_obj)))
 
-    def can_load(self, plugin_title, noisy=True):
+    def can_load(self, plugin_title, noisy=True) -> bool:
         pl = self.bot.config.get("plugin_loading")
         if not pl:
             return True
@@ -222,7 +241,22 @@ class PluginManager:
 
         return True
 
-    async def load_all(self, plugin_dir):
+    def get_plugin_tables(
+        self, plugin_dir: Path, *, reload: bool = False
+    ) -> None:
+        """Load all plugins but don't execute any hooks
+
+        Used by alembic/env.py
+        """
+        for path in plugin_dir.rglob("[!_]*.py"):
+            self._load_mod(
+                self.file_path_to_import(path.resolve()),
+                reload=reload,
+                # Don't set the loaded attribute since we are only partially loading
+                mark_loaded=False,
+            )
+
+    async def load_all(self, plugin_dir) -> None:
         """
         Load a plugin from each *.py file in the given directory.
 
@@ -235,28 +269,32 @@ class PluginManager:
         # Load plugins asynchronously :O
         await asyncio.gather(*[self.load_plugin(path) for path in path_list])
 
-    async def unload_all(self):
+    async def unload_all(self) -> None:
         await asyncio.gather(
             *[self.unload_plugin(path) for path in self.plugins],
         )
 
-    def _load_mod(self, name):
+    def _load_mod(
+        self, name: str, *, reload: bool = True, mark_loaded: bool = True
+    ):
         plugin_module = importlib.import_module(name)
         # if this plugin was loaded before, reload it
-        if hasattr(plugin_module, LOADED_ATTR):
+        if hasattr(plugin_module, LOADED_ATTR) and reload:
             plugin_module = importlib.reload(plugin_module)
 
-        setattr(plugin_module, LOADED_ATTR, True)
+        if mark_loaded:
+            setattr(plugin_module, LOADED_ATTR, True)
+
         return plugin_module
 
-    async def load_plugin(self, path):
+    async def load_plugin(self, path) -> None:
         """
         Loads a plugin from the given path and plugin object,
         then registers all hooks from that plugin.
         """
 
         path = Path(path)
-        file_path = self.safe_resolve(path)
+        file_path = safe_resolve(path)
         file_name = file_path.name
         # Resolve the path relative to the current directory
         plugin_path = file_path.relative_to(self.bot.base_dir)
@@ -314,7 +352,7 @@ class PluginManager:
             self._log_hook(on_cap_ack_hook)
 
         for periodic_hook in plugin.hooks["periodic"]:
-            task = async_util.wrap_future(self._start_periodic(periodic_hook))
+            task = asyncio.ensure_future(self._start_periodic(periodic_hook))
             plugin.tasks.append(task)
             self._log_hook(periodic_hook)
 
@@ -395,10 +433,10 @@ class PluginManager:
         plugin.hooks["on_start"].clear()
 
     def _sort_hooks(self) -> None:
-        def _sort_list(hooks):
+        def _sort_list(hooks) -> None:
             hooks.sort(key=attrgetter("priority"))
 
-        def _sort_dict(hooks):
+        def _sort_dict(hooks) -> None:
             for items in hooks.values():
                 _sort_list(items)
 
@@ -416,14 +454,14 @@ class PluginManager:
         _sort_dict(self.perm_hooks)
         _sort_list(self.config_hooks)
 
-    async def unload_plugin(self, path):
+    async def unload_plugin(self, path) -> bool:
         """
         Unloads the plugin from the given path, unregistering all hooks from the plugin.
 
         Returns True if the plugin was unloaded, False if the plugin wasn't loaded in the first place.
         """
         path = Path(path)
-        file_path = self.safe_resolve(path)
+        file_path = safe_resolve(path)
 
         # make sure this plugin is actually loaded
         plugin = self.get_plugin(file_path)
@@ -529,7 +567,7 @@ class PluginManager:
 
         return True
 
-    def _log_hook(self, hook):
+    def _log_hook(self, hook) -> None:
         """
         Logs registering a given hook
         """
@@ -570,7 +608,7 @@ class PluginManager:
         else:
             coro = self._execute_hook_sync(hook, event)
 
-        task = async_util.wrap_future(coro)
+        task = asyncio.ensure_future(coro)
         hook.plugin.tasks.append(task)
         try:
             out = await task
@@ -625,7 +663,7 @@ class PluginManager:
             coro = sieve.function(self.bot, event, hook)
 
         result, error = None, None
-        task = async_util.wrap_future(coro)
+        task = asyncio.ensure_future(coro)
         sieve.plugin.tasks.append(task)
         try:
             result = await task
@@ -657,7 +695,7 @@ class PluginManager:
 
         return result
 
-    async def _start_periodic(self, hook):
+    async def _start_periodic(self, hook) -> None:
         interval = hook.interval
         initial_interval = hook.initial_interval
         await asyncio.sleep(initial_interval)
@@ -695,7 +733,7 @@ class PluginManager:
         return await self._launch(hook, event)
 
 
-def _create_table(table: Table, bot):
+def _create_table(table: Table, bot) -> None:
     table.create(bot.db_engine, checkfirst=True)
 
 
@@ -704,9 +742,9 @@ class Plugin:
     Each Plugin represents a plugin file, and contains loaded hooks.
     """
 
-    def __init__(self, filepath, filename, title, code):
+    def __init__(self, filepath, filename, title, code) -> None:
         """ """
-        self.tasks = []
+        self.tasks: list[asyncio.Task[Any]] = []
         self.file_path = filepath
         self.file_name = filename
         self.title = title
@@ -717,7 +755,7 @@ class Plugin:
         # Keep a reference to this in case another plugin needs to access it
         self.code = code
 
-    async def create_tables(self, bot):
+    async def create_tables(self, bot) -> None:
         """
         Creates all sqlalchemy Tables that are registered in this plugin
         """
@@ -729,7 +767,7 @@ class Plugin:
             for table in self.tables:
                 await bot.loop.run_in_executor(None, _create_table, table, bot)
 
-    def unregister_tables(self, bot):
+    def unregister_tables(self, bot) -> None:
         """
         Unregisters all sqlalchemy Tables registered to the global metadata by this plugin
         """

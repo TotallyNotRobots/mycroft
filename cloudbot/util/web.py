@@ -13,22 +13,30 @@ License:
     GPL v3
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import time
 from operator import attrgetter
-from typing import Dict, Optional, Union
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 import requests
 from pbincli import api as pb_api
 from pbincli.format import Paste as pb_Paste
 from requests import (
     HTTPError,
-    PreparedRequest,
-    Request,
     RequestException,
-    Response,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator
+
+    from requests import (
+        PreparedRequest,
+        Request,
+        Response,
+    )
 
 # Constants
 DEFAULT_SHORTENER = "is.gd"
@@ -43,51 +51,53 @@ logger = logging.getLogger("cloudbot")
 
 # Public API
 
+_T = TypeVar("_T")
 
-class Registry:
-    class Item:
-        def __init__(self, item):
-            self.item = item
+
+class RegistryItem(Generic[_T]):
+    def __init__(self, item: _T) -> None:
+        self.item = item
+        self.working = True
+        self.last_check = 0.0
+        self.uses = 0
+
+    def failed(self) -> None:
+        self.working = False
+        self.last_check = time.time()
+
+    @property
+    def should_use(self) -> bool:
+        if self.working:
+            return True
+
+        if (time.time() - self.last_check) > (5 * 60):
+            # It's been 5 minutes, try again
             self.working = True
-            self.last_check = 0.0
-            self.uses = 0
+            return True
 
-        def failed(self):
-            self.working = False
-            self.last_check = time.time()
+        return False
 
-        @property
-        def should_use(self):
-            if self.working:
-                return True
 
-            if (time.time() - self.last_check) > (5 * 60):
-                # It's been 5 minutes, try again
-                self.working = True
-                return True
+class Registry(Generic[_T]):
+    def __init__(self) -> None:
+        self._items: dict[str, RegistryItem[_T]] = {}
 
-            return False
-
-    def __init__(self):
-        self._items: Dict[str, "Registry.Item"] = {}
-
-    def register(self, name, item):
+    def register(self, name: str, item: _T) -> None:
         if name in self._items:
             raise ValueError("Attempt to register duplicate item")
 
-        self._items[name] = self.Item(item)
+        self._items[name] = RegistryItem(item)
 
-    def get(self, name):
-        val = self._items.get(name)
-        if val:
+    def get(self, name: str) -> _T | None:
+        if val := self._items.get(name):
             return val.item
 
-        return val
+        return None
 
-    def get_item(self, name):
+    def get_item(self, name: str) -> RegistryItem[_T] | None:
         return self._items.get(name)
 
-    def get_working(self) -> Optional["Item"]:
+    def get_working(self) -> RegistryItem[_T] | None:
         working = [item for item in self._items.values() if item.should_use]
 
         if not working:
@@ -95,45 +105,57 @@ class Registry:
 
         return min(working, key=attrgetter("uses"))
 
-    def remove(self, name):
+    def remove(self, name: str) -> None:
         del self._items[name]
 
-    def items(self):
+    def items(self) -> Iterable[tuple[str, RegistryItem[_T]]]:
         return self._items.items()
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         return iter(self._items)
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: str) -> _T:
         return self._items[item].item
 
-    def set_working(self):
+    def set_working(self) -> None:
         for item in self._items.values():
             item.working = True
 
 
-def shorten(url, custom=None, key=None, service=DEFAULT_SHORTENER):
+def shorten(
+    url: str,
+    custom: str | None = None,
+    key: str | None = None,
+    service: str = DEFAULT_SHORTENER,
+) -> str:
     impl = shorteners[service]
     return impl.shorten(url, custom, key)
 
 
-def try_shorten(url, custom=None, key=None, service=DEFAULT_SHORTENER):
+def try_shorten(
+    url: str,
+    custom: str | None = None,
+    key: str | None = None,
+    service: str = DEFAULT_SHORTENER,
+) -> str:
     impl = shorteners[service]
     return impl.try_shorten(url, custom, key)
 
 
-def expand(url, service=None):
+def expand(url: str, service: str | None = None) -> str:
     if service:
         impl = shorteners[service]
     else:
-        impl = None
+        _impl = None
         for name in shorteners:
             if name in url:
-                impl = shorteners[name]
+                _impl = shorteners[name]
                 break
 
-        if impl is None:
+        if _impl is None:
             impl = Shortener()
+        else:
+            impl = _impl
 
     return impl.expand(url)
 
@@ -142,7 +164,12 @@ class NoPasteException(Exception):
     """No pastebins succeeded"""
 
 
-def paste(data, ext="txt", service=DEFAULT_PASTEBIN, raise_on_no_paste=False):
+def paste(
+    data: str | bytes,
+    ext: str = "txt",
+    service=DEFAULT_PASTEBIN,
+    raise_on_no_paste=False,
+) -> str:
     if service:
         impl = pastebins.get_item(service)
     else:
@@ -171,14 +198,14 @@ def paste(data, ext="txt", service=DEFAULT_PASTEBIN, raise_on_no_paste=False):
 
 class ServiceError(Exception):
     def __init__(
-        self, request: Union[Request, PreparedRequest], message: str
+        self, request: Request | PreparedRequest | None, message: str
     ) -> None:
         super().__init__(message)
         self.request = request
 
 
 class ServiceHTTPError(ServiceError):
-    def __init__(self, message: str, response: Response):
+    def __init__(self, message: str, response: Response) -> None:
         super().__init__(
             response.request,
             f"[HTTP {response.status_code}] {message}",
@@ -188,19 +215,23 @@ class ServiceHTTPError(ServiceError):
 
 
 class Shortener:
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
-    def shorten(self, url, custom=None, key=None):
+    def shorten(
+        self, url: str, custom: str | None = None, key: str | None = None
+    ) -> str:
         return url
 
-    def try_shorten(self, url, custom=None, key=None):
+    def try_shorten(
+        self, url: str, custom: str | None = None, key: str | None = None
+    ) -> str:
         try:
             return self.shorten(url, custom, key)
         except ServiceError:
             return url
 
-    def expand(self, url):
+    def expand(self, url: str) -> str:
         try:
             r = requests.get(url, allow_redirects=False)
             r.raise_for_status()
@@ -217,21 +248,23 @@ class Shortener:
 
 
 class Pastebin:
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
-    def paste(self, data, ext):
+    def paste(self, data: str | bytes, ext: str) -> str:
         raise NotImplementedError
 
 
-shorteners = Registry()
-pastebins = Registry()
+shorteners = Registry[Shortener]()
+pastebins = Registry[Pastebin]()
 
 # Internal Implementations
 
 
 class Isgd(Shortener):
-    def shorten(self, url, custom=None, key=None):
+    def shorten(
+        self, url: str, custom: str | None = None, key: str | None = None
+    ) -> str:
         p = {"url": url, "format": "json"}
         if custom:
             p["shorturl"] = custom
@@ -251,11 +284,11 @@ class Isgd(Shortener):
             raise ServiceError(r.request, str(e)) from e
 
         if "shorturl" in j:
-            return j["shorturl"]
+            return str(j["shorturl"])
 
         raise ServiceHTTPError(j["errormessage"], r)
 
-    def expand(self, url):
+    def expand(self, url: str) -> str:
         p = {"shorturl": url, "format": "json"}
         try:
             r = requests.get("https://is.gd/forward.php", params=p)
@@ -269,13 +302,15 @@ class Isgd(Shortener):
         j = r.json()
 
         if "url" in j:
-            return j["url"]
+            return str(j["url"])
 
         raise ServiceHTTPError(j["errormessage"], r)
 
 
 class Googl(Shortener):
-    def shorten(self, url, custom=None, key=None):
+    def shorten(
+        self, url: str, custom: str | None = None, key: str | None = None
+    ) -> str:
         h = {"content-type": "application/json"}
         k = {"key": key}
         p = {"longUrl": url}
@@ -296,11 +331,11 @@ class Googl(Shortener):
         j = r.json()
 
         if "error" not in j:
-            return j["id"]
+            return str(j["id"])
 
         raise ServiceHTTPError(j["error"]["message"], r)
 
-    def expand(self, url):
+    def expand(self, url: str) -> str:
         p = {"shortUrl": url}
         try:
             r = requests.get(
@@ -316,13 +351,15 @@ class Googl(Shortener):
         j = r.json()
 
         if "error" not in j:
-            return j["longUrl"]
+            return str(j["longUrl"])
 
         raise ServiceHTTPError(j["error"]["message"], r)
 
 
 class Gitio(Shortener):
-    def shorten(self, url, custom=None, key=None):
+    def shorten(
+        self, url: str, custom: str | None = None, key: str | None = None
+    ) -> str:
         p = {"url": url, "code": custom}
         try:
             r = requests.post("https://git.io", data=p)
@@ -344,18 +381,18 @@ class Gitio(Shortener):
 
 
 class Hastebin(Pastebin):
-    def __init__(self, base_url):
+    def __init__(self, base_url: str) -> None:
         super().__init__()
         self.url = base_url
 
-    def paste(self, data, ext):
+    def paste(self, data: str | bytes, ext: str) -> str:
         if isinstance(data, str):
             encoded = data.encode()
         else:
             encoded = data
 
         try:
-            r = requests.post(self.url + "/documents", data=encoded)
+            r = requests.post(f"{self.url}/documents", data=encoded)
             r.raise_for_status()
         except HTTPError as e:
             r = e.response
@@ -366,20 +403,20 @@ class Hastebin(Pastebin):
             j = r.json()
 
             if r.status_code is requests.codes.ok:
-                return "{}/{}.{}".format(self.url, j["key"], ext)
+                return f"{self.url}/{j['key']}.{ext}"
 
             raise ServiceHTTPError(j["message"], r)
 
 
 class PrivateBin(Pastebin):
-    def __init__(self, url):
+    def __init__(self, url) -> None:
         super().__init__()
         self.api_client = pb_api.PrivateBin(
             str(url),
             {"proxy": "", "nocheckcert": False, "noinsecurewarn": False},
         )
 
-    def paste(self, data, ext, password=None, expire="1day"):
+    def paste(self, data, ext, password=None, expire="1day") -> str:
         if ext in ("txt", "text"):
             syntax = "plaintext"
         elif ext in ("md", "markdown"):
@@ -431,9 +468,7 @@ class PrivateBin(Pastebin):
         if result["status"] != 0:
             raise ServiceError(None, result["message"])
 
-        return "{}?{}#{}".format(
-            self.api_client.server, result["id"], _paste.getHash()
-        )
+        return f"{self.api_client.server}?{result['id']}#{_paste.getHash()}"
 
 
 pastebins.register("hastebin", Hastebin(HASTEBIN_SERVER))

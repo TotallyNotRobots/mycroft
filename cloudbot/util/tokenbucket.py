@@ -23,7 +23,7 @@ class TokenBucket:
     False
     """
 
-    def __init__(self, _capacity, fill_rate):
+    def __init__(self, _capacity: float, fill_rate: float) -> None:
         """
         :param _capacity: The total amount of token the bucket can contain
         :param fill_rate: The rate at which tokens regenerate. (fill_rate per second)
@@ -33,7 +33,7 @@ class TokenBucket:
         self.fill_rate = float(fill_rate)
         self.timestamp = time()
 
-    def consume(self, tokens):
+    def consume(self, tokens: float) -> bool:
         """
         Consume tokens from the bucket.
         :param tokens: The number of tokens to consume
@@ -45,21 +45,21 @@ class TokenBucket:
             return False
         return True
 
-    def refill(self):
+    def refill(self) -> bool:
         """
         Sets the current token count to the max capacity
         """
         self._tokens = self.capacity
         return True
 
-    def empty(self):
+    def empty(self) -> bool:
         """
         Sets the current token count to zero
         """
         self._tokens = float(0)
         return True
 
-    def get_tokens(self):
+    def get_tokens(self) -> float:
         """
         Calculates and returns the current amount of tokens the bucker contains
 

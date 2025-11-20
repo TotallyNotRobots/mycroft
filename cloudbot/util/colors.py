@@ -73,15 +73,15 @@ IRC_FORMATTING_DICT = {
     "color": "\x03",
     "bold": "\x02",
     "b": "\x02",
-    "underlined": "\x1F",
-    "underline": "\x1F",
-    "ul": "\x1F",
-    "italics": "\x1D",
-    "italic": "\x1D",
-    "i": "\x1D",
+    "underlined": "\x1f",
+    "underline": "\x1f",
+    "ul": "\x1f",
+    "italics": "\x1d",
+    "italic": "\x1d",
+    "i": "\x1d",
     "reverse": "\x16",
-    "reset": "\x0F",
-    "clear": "\x0F",
+    "reset": "\x0f",
+    "clear": "\x0f",
 }
 
 COLOR_RE = re.compile(r"\$\(.*?\)", re.I)
@@ -98,9 +98,7 @@ def get_color(colour, return_formatted=True):
 
     if colour not in IRC_COLOUR_DICT:
         raise KeyError(
-            "The colour '{}' is not in the list of available colours.".format(
-                colour
-            )
+            f"The colour '{colour}' is not in the list of available colours."
         )
 
     if colour == "random":  # Special keyword for a random colour
@@ -126,9 +124,7 @@ def get_format(formatting):
 
     if formatting.lower() not in IRC_FORMATTING_DICT:
         raise KeyError(
-            "The formatting '{}' is not found in the list of available formats.".format(
-                formatting
-            )
+            f"The formatting '{formatting}' is not found in the list of available formats."
         )
 
     return IRC_FORMATTING_DICT[formatting.lower()]
@@ -137,24 +133,16 @@ def get_format(formatting):
 def get_available_formats():
     """List the formats you can use in self.getFormat in a comma separated list (string)"""
 
-    ret = ""
-    for formats in IRC_FORMATTING_DICT:
-        ret += formats + ", "
-
-    return ret[:-2]
+    return ", ".join(IRC_FORMATTING_DICT)
 
 
 def get_available_colours():
     """List the colours you can use in self.getColour in a comma separated list (string)"""
 
-    ret = ""
-    for colours in IRC_COLOUR_DICT:
-        ret += colours + ", "
-
-    return ret[:-2]
+    return ", ".join(IRC_COLOUR_DICT)
 
 
-def parse(string):
+def parse(string: str) -> str:
     """
     parse: Formats a string, replacing words wrapped in $( ) with actual colours or formatting.
     example:
@@ -213,11 +201,11 @@ def _convert(string):
     string = string[2:-1]
     ret = ""
     count = 1
-    formattings = string.lower().replace(" ", "").split(",")
-    for formatting in formattings:
+    formats = string.lower().replace(" ", "").split(",")
+    for formatting in formats:
         if formatting in IRC_COLOUR_DICT:
             if count % 2 == 0:
-                ret += "," + get_color(formatting, False)
+                ret += f",{get_color(formatting, False)}"
             else:
                 ret += get_color(formatting)
             count += 1

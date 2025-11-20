@@ -27,60 +27,60 @@ test_strip_irc_result = "I am $(bold)bold"
 test_strip_all_result = "I am bold"
 
 
-def test_parse():
+def test_parse() -> None:
     assert parse(test_input) == test_parse_output
 
 
-def test_strip():
+def test_strip() -> None:
     assert strip(test_input) == test_strip_output
     assert strip_irc(test_strip_irc_input) == test_strip_irc_result
     assert strip_all(test_strip_irc_input) == test_strip_all_result
 
 
-def test_available_colors():
+def test_available_colors() -> None:
     assert "dark_grey" in get_available_colours()
 
 
-def test_available_formats():
+def test_available_formats() -> None:
     assert "bold" in get_available_formats()
 
 
-def test_invalid_color():
+def test_invalid_color() -> None:
     with pytest.raises(KeyError) as excinfo:
         get_color("cake")
     assert "not in the list of available colours" in str(excinfo.value)
 
 
-def test_invalid_format():
+def test_invalid_format() -> None:
     with pytest.raises(KeyError) as excinfo:
         get_format("cake")
     assert "not found in the list of available formats" in str(excinfo.value)
 
 
-def test_get_color():
+def test_get_color() -> None:
     assert get_color("red") == "\x0304"
     assert get_color("red", return_formatted=False) == "04"
 
 
-def test_get_random_color():
-    assert get_color("random") in ["\x03" + i for i in IRC_COLOUR_DICT.values()]
+def test_get_random_color() -> None:
+    assert get_color("random") in [f"\x03{i}" for i in IRC_COLOUR_DICT.values()]
     assert get_color("random", return_formatted=False) in list(
         IRC_COLOUR_DICT.values()
     )
 
     with patch(
         "cloudbot.util.colors.randint",
-        # chosen by fair dice roll, guranteed to be random.
+        # chosen by fair dice roll, guaranteed to be random.
         return_value=4,
     ):
         assert get_color("random") == "\x0304"
 
 
-def test_get_format():
+def test_get_format() -> None:
     assert get_format("bold") == "\x02"
 
 
-def test_convert():
+def test_convert() -> None:
     assert _convert("$(red, green)") == "\x0304,09"
     assert _convert("$(red, bold)") == "\x0304\x02"
     assert _convert("$(red)") == "\x0304"

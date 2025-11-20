@@ -2,10 +2,12 @@
 Bot wide hook opt-out for channels
 """
 
+from __future__ import annotations
+
 from collections import defaultdict
 from functools import total_ordering
 from threading import RLock
-from typing import List, MutableMapping, Optional
+from typing import TYPE_CHECKING
 
 from irclib.util.compare import match_mask
 from sqlalchemy import (
@@ -24,6 +26,11 @@ from cloudbot.util.formatting import gen_markdown_table
 from cloudbot.util.mapping import DefaultKeyFoldDict
 from cloudbot.util.text import parse_bool
 
+if TYPE_CHECKING:
+    from collections.abc import MutableMapping
+
+    from cloudbot.client import Client
+
 optout_table = Table(
     "optout",
     database.metadata,
@@ -34,14 +41,14 @@ optout_table = Table(
     PrimaryKeyConstraint("network", "chan", "hook"),
 )
 
-optout_cache: MutableMapping[str, List["OptOut"]] = DefaultKeyFoldDict(list)
+optout_cache: MutableMapping[str, list[OptOut]] = DefaultKeyFoldDict(list)
 
 cache_lock = RLock()
 
 
 @total_ordering
 class OptOut:
-    def __init__(self, channel, hook_pattern, allow):
+    def __init__(self, channel, hook_pattern, allow) -> None:
         self.channel = channel.casefold()
         self.hook = hook_pattern.casefold()
         self.allow = allow
@@ -61,10 +68,8 @@ class OptOut:
 
         return NotImplemented
 
-    def __repr__(self):
-        return "{}({}, {}, {})".format(
-            self.__class__.__name__, self.channel, self.hook, self.allow
-        )
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.channel}, {self.hook}, {self.allow})"
 
     def match(self, channel, hook_name):
         return self.match_chan(channel) and match_mask(
@@ -85,12 +90,12 @@ async def check_channel_permissions(event, chan, *perms):
     return allowed
 
 
-def get_conn_optouts(conn_name) -> List[OptOut]:
+def get_conn_optouts(conn_name) -> list[OptOut]:
     with cache_lock:
         return optout_cache[conn_name.casefold()]
 
 
-def get_channel_optouts(conn_name, chan=None) -> List[OptOut]:
+def get_channel_optouts(conn_name, chan=None) -> list[OptOut]:
     with cache_lock:
         return [
             opt
@@ -99,7 +104,7 @@ def get_channel_optouts(conn_name, chan=None) -> List[OptOut]:
         ]
 
 
-def get_first_matching_optout(conn_name, chan, hook_name) -> Optional[OptOut]:
+def get_first_matching_optout(conn_name, chan, hook_name) -> OptOut | None:
     for optout in get_conn_optouts(conn_name):
         if optout.match(chan, hook_name):
             return optout
@@ -116,7 +121,7 @@ def format_optout_list(opts):
     return gen_markdown_table(headers, table)
 
 
-def set_optout(db, conn, chan, pattern, allowed):
+def set_optout(db, conn: str, chan, pattern, allowed) -> None:
     conn_cf = conn.casefold()
     chan_cf = chan.casefold()
     pattern_cf = pattern.casefold()
@@ -137,7 +142,7 @@ def set_optout(db, conn, chan, pattern, allowed):
     load_cache(db)
 
 
-def del_optout(db, conn, chan, pattern):
+def del_optout(db, conn: str, chan, pattern):
     conn_cf = conn.casefold()
     chan_cf = chan.casefold()
     pattern_cf = pattern.casefold()
@@ -154,7 +159,7 @@ def del_optout(db, conn, chan, pattern):
     return res.rowcount > 0
 
 
-def clear_optout(db, conn, chan=None):
+def clear_optout(db, conn: str, chan=None):
     conn_cf = conn.casefold()
     if chan:
         chan_cf = chan.casefold()
@@ -172,12 +177,10 @@ def clear_optout(db, conn, chan=None):
 
 
 @hook.onload()
-def load_cache(db):
+def load_cache(db) -> None:
     new_cache = defaultdict(list)
     for row in db.execute(optout_table.select()):
-        new_cache[row["network"]].append(
-            OptOut(row["chan"], row["hook"], row["allow"])
-        )
+        new_cache[row.network].append(OptOut(row.chan, row.hook, row.allow))
 
     for opts in new_cache.values():
         opts.sort(reverse=True)
@@ -187,7 +190,6 @@ def load_cache(db):
         optout_cache.update(new_cache)
 
 
-# noinspection PyUnusedLocal
 @hook.sieve(priority=Priority.HIGHEST)
 def optout_sieve(bot, event, _hook):
     if not event.chan or not event.conn:
@@ -196,7 +198,7 @@ def optout_sieve(bot, event, _hook):
     if _hook.plugin.title.startswith("core."):
         return event
 
-    hook_name = _hook.plugin.title + "." + _hook.function_name
+    hook_name = f"{_hook.plugin.title}.{_hook.function_name}"
     _optout = get_first_matching_optout(event.conn.name, event.chan, hook_name)
     if _optout and not _optout.allow:
         if _hook.type == "command":
@@ -208,7 +210,7 @@ def optout_sieve(bot, event, _hook):
 
 
 @hook.command()
-async def optout(text, event, chan, db, conn):
+async def optout(text, event, chan, db, conn: Client):
     """[chan] <pattern> [allow] - Set the global allow option for hooks matching <pattern> in [chan], or the current
     channel if not specified
     """
@@ -228,7 +230,7 @@ async def optout(text, event, chan, db, conn):
 
     pattern = args.pop(0)
 
-    allowed = False
+    allowed: bool = False
     if args:
         allow = args.pop(0)
         try:
@@ -238,15 +240,11 @@ async def optout(text, event, chan, db, conn):
 
     await event.async_call(set_optout, db, conn.name, chan, pattern, allowed)
 
-    return "{action} hooks matching {pattern} in {channel}.".format(
-        action="Enabled" if allowed else "Disabled",
-        pattern=pattern,
-        channel=chan,
-    )
+    return f"{'Enabled' if allowed else 'Disabled'} hooks matching {pattern} in {chan}."
 
 
 @hook.command()
-async def deloptout(text, event, chan, db, conn):
+async def deloptout(text, event, chan, db, conn: Client):
     """[chan] <pattern> - Delete global optout hooks matching <pattern> in [chan], or the current channel if not
     specified"""
     args = text.split()
@@ -298,7 +296,7 @@ async def check_global_perms(event):
 
 
 @hook.command("listoptout", autohelp=False)
-async def list_optout(conn, event, async_call):
+async def list_optout(conn: Client, event, async_call):
     """[channel] - View the opt out data for <channel> or the current channel if not specified. Specify "global" to
     view all data for this network
     """
@@ -314,7 +312,7 @@ async def list_optout(conn, event, async_call):
 
 
 @hook.command("clearoptout", autohelp=False)
-async def clear(conn, event, db, async_call):
+async def clear(conn: Client, event, db, async_call):
     """[channel] - Clears the optout list for a channel. Specify "global" to clear all data for this network"""
     chan, allowed = await check_global_perms(event)
 

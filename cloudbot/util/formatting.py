@@ -49,7 +49,6 @@ import copy
 import re
 import warnings
 from html.parser import HTMLParser
-from typing import Dict
 
 from cloudbot.util.colors import strip_irc
 
@@ -58,58 +57,58 @@ from cloudbot.util.colors import strip_irc
 IRC_COLOR_RE = re.compile(r"(\x03(\d+,\d+|\d)|[\x0f\x02\x16\x1f])")
 
 REPLACEMENTS = {
-    "a": "ä",
-    "b": "Б",
-    "c": "ċ",
-    "d": "đ",
-    "e": "ë",
-    "f": "ƒ",
-    "g": "ġ",
-    "h": "ħ",
-    "i": "í",
-    "j": "ĵ",
-    "k": "ķ",
-    "l": "ĺ",
-    "m": "ṁ",
-    "n": "ñ",
-    "o": "ö",
-    "p": "ρ",
-    "q": "ʠ",
-    "r": "ŗ",
-    "s": "š",
-    "t": "ţ",
-    "u": "ü",
+    "a": "\xe4",
+    "b": "\u0411",
+    "c": "\u010b",
+    "d": "\u0111",
+    "e": "\xeb",
+    "f": "\u0192",
+    "g": "\u0121",
+    "h": "\u0127",
+    "i": "\xed",
+    "j": "\u0135",
+    "k": "\u0137",
+    "l": "\u013a",
+    "m": "\u1e41",
+    "n": "\xf1",
+    "o": "\xf6",
+    "p": "\u03c1",
+    "q": "\u02a0",
+    "r": "\u0157",
+    "s": "\u0161",
+    "t": "\u0163",
+    "u": "\xfc",
     "v": "",
-    "w": "ω",
-    "x": "χ",
-    "y": "ÿ",
-    "z": "ź",
-    "A": "Å",
-    "B": "Β",
-    "C": "Ç",
-    "D": "Ď",
-    "E": "Ē",
-    "F": "Ḟ",
-    "G": "Ġ",
-    "H": "Ħ",
-    "I": "Í",
-    "J": "Ĵ",
-    "K": "Ķ",
-    "L": "Ĺ",
-    "M": "Μ",
-    "N": "Ν",
-    "O": "Ö",
-    "P": "Р",
-    "Q": "Ｑ",
-    "R": "Ŗ",
-    "S": "Š",
-    "T": "Ţ",
-    "U": "Ů",
-    "V": "Ṿ",
-    "W": "Ŵ",
-    "X": "Χ",
-    "Y": "Ỳ",
-    "Z": "Ż",
+    "w": "\u03c9",
+    "x": "\u03c7",
+    "y": "\xff",
+    "z": "\u017a",
+    "A": "\xc5",
+    "B": "\u0392",
+    "C": "\xc7",
+    "D": "\u010e",
+    "E": "\u0112",
+    "F": "\u1e1e",
+    "G": "\u0120",
+    "H": "\u0126",
+    "I": "\xcd",
+    "J": "\u0134",
+    "K": "\u0136",
+    "L": "\u0139",
+    "M": "\u039c",
+    "N": "\u039d",
+    "O": "\xd6",
+    "P": "\u0420",
+    "Q": "\uff31",
+    "R": "\u0156",
+    "S": "\u0160",
+    "T": "\u0162",
+    "U": "\u016e",
+    "V": "\u1e7e",
+    "W": "\u0174",
+    "X": "\u03a7",
+    "Y": "\u1ef2",
+    "Z": "\u017b",
 }
 
 
@@ -121,21 +120,21 @@ class HTMLTextExtractor(HTMLParser):
     Takes HTML and provides cleaned and stripped text.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         HTMLParser.__init__(self)
-        self.result = []
+        self.result: list[str] = []
 
-    def handle_data(self, d):
+    def handle_data(self, d: str) -> None:
         self.result.append(d)
 
-    def get_text(self):
+    def get_text(self) -> str:
         return "".join(self.result)
 
 
 # Functions
 
 
-def strip_html(to_strip):
+def strip_html(to_strip: str) -> str:
     """
     Takes HTML and returns cleaned and stripped text.
     """
@@ -218,14 +217,14 @@ truncate_str = truncate
 strip_colors = strip_irc
 
 
-def chunk_str(content, length=420):
+def chunk_str(content: str, length: int = 420) -> list[str]:
     """
     Chunks a string into smaller strings of given length. Returns chunks.
     """
 
     def chunk(c, l):
         while c:
-            out = (c + " ")[:l].rsplit(" ", 1)[0]
+            out = f"{c} "[:l].rsplit(" ", 1)[0]
             c = c[len(out) :].strip()
             yield out
 
@@ -264,7 +263,7 @@ def pluralize_suffix(num=0, text="", suffix="s"):
 pluralise_suffix = pluralize_suffix
 
 
-def pluralize_select(count, single, plural):
+def pluralize_select(count, single, plural) -> str:
     return f"{count:,} {single if count == 1 else plural}"
 
 
@@ -273,19 +272,19 @@ pluralise_select = pluralize_select
 
 def pluralize_auto(count, thing):
     if thing.endswith("us"):
-        return pluralize_select(count, thing, thing[:-2] + "i")
+        return pluralize_select(count, thing, f"{thing[:-2]}i")
 
     if thing.endswith("is"):
-        return pluralize_select(count, thing, thing[:-2] + "es")
+        return pluralize_select(count, thing, f"{thing[:-2]}es")
 
     if thing.endswith(("s", "ss", "sh", "ch", "x", "z")):
         return pluralize_suffix(count, thing, "es")
 
     if thing.endswith(("f", "fe")):
-        return pluralize_select(count, thing, thing.rsplit("f", 1)[0] + "ves")
+        return pluralize_select(count, thing, f"{thing.rsplit('f', 1)[0]}ves")
 
     if thing.endswith("y") and thing[-2:-1].lower() not in "aeiou":
-        return pluralize_select(count, thing, thing[:-1] + "ies")
+        return pluralize_select(count, thing, f"{thing[:-1]}ies")
 
     if thing.endswith("y") and thing[-2:-1].lower() in "aeiou":
         return pluralize_suffix(count, thing)
@@ -294,7 +293,7 @@ def pluralize_auto(count, thing):
         return pluralize_suffix(count, thing, "es")
 
     if thing.endswith("on"):
-        return pluralize_select(count, thing, thing[:-2] + "a")
+        return pluralize_select(count, thing, f"{thing[:-2]}a")
 
     return pluralize_suffix(count, thing)
 
@@ -303,11 +302,11 @@ pluralise_auto = pluralize_auto
 
 
 def dict_format(args, formats):
-    matches: Dict[str, int] = {}
+    matches: dict[str, int] = {}
     for f in formats:
         try:
             # Check if values can be mapped
-            m = f.format(**args)
+            m = f.format_map(args)
             # Insert match and number of matched values (max matched values if already in dict)
             matches[m] = max(
                 [matches.get(m, 0), len(re.findall(r"({.*?\})", f))]
@@ -369,12 +368,7 @@ def get_text_list(list_, last_word="or"):
     if len(list_) == 1:
         return list_[0]
 
-    return "{} {} {}".format(
-        # Translators: This string is used as a separator between list elements
-        ", ".join([i for i in list_][:-1]),
-        last_word,
-        list_[-1],
-    )
+    return f"{', '.join([i for i in list_][:-1])} {last_word} {list_[-1]}"
 
 
 def gen_markdown_table(headers, rows):
@@ -388,9 +382,7 @@ def gen_markdown_table(headers, rows):
     sizes = tuple(map(lambda l: max(max(map(len, l)), 3), rotated))
     rows.insert(1, tuple(("-" * size) for size in sizes))
     lines = [
-        "| {} |".format(
-            " | ".join(cell.ljust(sizes[i]) for i, cell in enumerate(row))
-        )
+        f"| {' | '.join((cell.ljust(sizes[i]) for i, cell in enumerate(row)))} |"
         for row in rows
     ]
     return "\n".join(lines)

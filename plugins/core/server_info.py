@@ -1,13 +1,22 @@
 """
-Tracks verious server info like ISUPPORT tokens
+Tracks various server info like ISUPPORT tokens
 """
 
-from typing import Callable, Dict, MutableMapping, TypeVar
+from __future__ import annotations
+
+from collections.abc import MutableMapping
+from typing import TYPE_CHECKING, TypeVar
 
 from cloudbot import hook
-from cloudbot.clients.irc import IrcClient
+from cloudbot.client import Client
 from cloudbot.util import web
 from cloudbot.util.irc import ChannelMode, ModeType, StatusMode
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from cloudbot.client import Client
+    from cloudbot.clients.irc import IrcClient
 
 DEFAULT_STATUS = (
     StatusMode.make("@", "o", 2),
@@ -16,7 +25,7 @@ DEFAULT_STATUS = (
 
 
 @hook.on_start()
-def do_isupport(bot):
+def do_isupport(bot) -> None:
     for conn in bot.connections.values():
         if conn.connected:
             clear_isupport(conn)
@@ -24,7 +33,7 @@ def do_isupport(bot):
 
 
 @hook.connect()
-def clear_isupport(conn: "IrcClient"):
+def clear_isupport(conn: IrcClient) -> None:
     serv_info = conn.memory.setdefault("server_info", {})
     statuses = get_status_modes(serv_info, clear=True)
     for s in DEFAULT_STATUS:
@@ -60,23 +69,23 @@ def _get_set_clear(
     return out
 
 
-def get_server_info(conn):
+def get_server_info(conn: Client):
     return conn.memory["server_info"]
 
 
 def get_status_modes(
     serv_info, *, clear: bool = False
-) -> Dict[str, StatusMode]:
+) -> dict[str, StatusMode]:
     return _get_set_clear(serv_info, "statuses", dict, clear=clear)
 
 
 def get_channel_modes(
     serv_info, *, clear: bool = False
-) -> Dict[str, ChannelMode]:
+) -> dict[str, ChannelMode]:
     return _get_set_clear(serv_info, "channel_modes", dict, clear=clear)
 
 
-def sync_statuses(serv_info):
+def sync_statuses(serv_info) -> None:
     """
     Copy channel status modes to the modelist
     """
@@ -87,7 +96,7 @@ def sync_statuses(serv_info):
         modes[status.character] = status
 
 
-def handle_prefixes(data, serv_info):
+def handle_prefixes(data, serv_info) -> None:
     modes, prefixes = data.split(")", 1)
     modes = modes.strip("(")
     parsed = enumerate(reversed(list(zip(modes, prefixes))))
@@ -100,7 +109,7 @@ def handle_prefixes(data, serv_info):
     sync_statuses(serv_info)
 
 
-def handle_chan_modes(value, serv_info):
+def handle_chan_modes(value, serv_info) -> None:
     types = "ABCD"
     modelist = get_channel_modes(serv_info, clear=True)
     for i, modes in enumerate(value.split(",")):
@@ -113,7 +122,7 @@ def handle_chan_modes(value, serv_info):
     sync_statuses(serv_info)
 
 
-def handle_extbans(value, serv_info):
+def handle_extbans(value, serv_info) -> None:
     pfx, extbans = value.split(",", 1)
     serv_info["extbans"] = extbans
     serv_info["extban_prefix"] = pfx
@@ -127,7 +136,7 @@ isupport_handlers = {
 
 
 @hook.irc_raw("005", singlethread=True)
-def on_isupport(conn, irc_paramlist, nick):
+def on_isupport(conn: Client, irc_paramlist, nick) -> None:
     serv_info = get_server_info(conn)
     token_data = serv_info["isupport_tokens"]
     serv_info["server_name"] = nick.casefold()
@@ -143,7 +152,7 @@ def on_isupport(conn, irc_paramlist, nick):
 
 
 @hook.command("dump_server_info", permissions=["botcontrol"], autohelp=False)
-def dump_server_info(conn):
+def dump_server_info(conn: Client):
     """- Dump all server info"""
     serv_info = get_server_info(conn)
     return web.paste(str(serv_info))

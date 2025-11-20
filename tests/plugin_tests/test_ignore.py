@@ -3,29 +3,25 @@ from unittest.mock import MagicMock
 import pytest
 
 from plugins.core import ignore
+from tests.util.mock_conn import MockClient
 
 
-class MockConn:
-    def __init__(self, name):
-        self.name = name
-
-
-def setup_db(mock_db):
+def setup_db(mock_db) -> None:
     ignore.table.create(mock_db.engine, checkfirst=True)
 
     sess = mock_db.session()
 
-    sess.execute(ignore.table.delete())
-
     ignore.load_cache(sess)
 
 
-def test_ignore(mock_db, patch_paste):
+@pytest.mark.asyncio
+async def test_ignore(mock_db, patch_paste, mock_bot_factory) -> None:
+    bot = mock_bot_factory(db=mock_db)
     setup_db(mock_db)
 
     sess = mock_db.session()
 
-    conn = MockConn("testconn")
+    conn = MockClient(bot=bot, name="testconn")
 
     ignore.add_ignore(sess, conn.name, "#chan", "*!*@host")
     ignore.add_ignore(sess, conn.name, "#chan", "*!*@host")
@@ -60,7 +56,7 @@ def test_ignore(mock_db, patch_paste):
     patch_paste.assert_called_with("*!*@evil.host\n")
 
 
-def test_remove_ignore(mock_db):
+def test_remove_ignore(mock_db) -> None:
     setup_db(mock_db)
 
     sess = mock_db.session()
@@ -76,7 +72,7 @@ def test_remove_ignore(mock_db):
     assert not ignore.is_ignored("testconn", "#chan", "nick!user@host")
 
 
-def test_ignore_case(mock_db):
+def test_ignore_case(mock_db) -> None:
     setup_db(mock_db)
 
     sess = mock_db.session()
@@ -93,7 +89,7 @@ def test_ignore_case(mock_db):
 
 
 @pytest.mark.asyncio
-async def test_ignore_sieve(mock_db, event_loop):
+async def test_ignore_sieve(mock_db) -> None:
     setup_db(mock_db)
 
     sess = mock_db.session()
@@ -130,7 +126,7 @@ async def test_ignore_sieve(mock_db, event_loop):
     assert (await ignore.ignore_sieve(bot, event, _hook)) is event
 
 
-def test_get_user():
+def test_get_user() -> None:
     conn = MagicMock()
 
     conn.memory = {}
@@ -145,7 +141,7 @@ def test_get_user():
     assert ignore.get_user(conn, "nick") == "*!*@host"
 
 
-def test_ignore_command(mock_db):
+def test_ignore_command(mock_db) -> None:
     setup_db(mock_db)
 
     sess = mock_db.session()
@@ -196,7 +192,7 @@ def test_ignore_command(mock_db):
     event.notice.assert_called_with("*!*@host is already globally ignored.")
 
 
-def test_unignore_command(mock_db):
+def test_unignore_command(mock_db) -> None:
     setup_db(mock_db)
 
     sess = mock_db.session()

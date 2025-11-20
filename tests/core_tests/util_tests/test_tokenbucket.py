@@ -6,8 +6,7 @@ import pytest
 from cloudbot.util import tokenbucket
 
 
-# noinspection PyProtectedMember
-def test_bucket_consume():
+def test_bucket_consume() -> None:
     bucket = tokenbucket.TokenBucket(10, 5)
     # larger then capacity
     assert bucket.consume(15) is False
@@ -19,8 +18,7 @@ def test_bucket_consume():
     assert bucket.consume(10) is False
 
 
-# noinspection PyProtectedMember
-def test_bucket_advanced():
+def test_bucket_advanced() -> None:
     bucket = tokenbucket.TokenBucket(10, 1)
     # tokens start at 10
     assert bucket._tokens == 10
@@ -35,7 +33,7 @@ def test_bucket_advanced():
 
 
 class MockTime:
-    def __init__(self, t_get=time.time):
+    def __init__(self, t_get=time.time) -> None:
         self.offset = 0
         self.t = None
         self.tg = t_get
@@ -49,13 +47,13 @@ class MockTime:
     def get(self):
         return self._get() + self.offset
 
-    def freeze(self):
+    def freeze(self) -> None:
         self.t = self._get()
 
-    def unfreeze(self):
+    def unfreeze(self) -> None:
         self.t = None
 
-    def sleep(self, n):
+    def sleep(self, n) -> None:
         self.offset += n
 
 
@@ -75,7 +73,7 @@ def freeze_time(mock_time):
         mock_time.unfreeze()
 
 
-def test_bucket_regen(freeze_time):
+def test_bucket_regen(freeze_time) -> None:
     bucket = tokenbucket.TokenBucket(10, 10)
     # success
     assert bucket.consume(10) is True

@@ -1,5 +1,6 @@
 import traceback
-from typing import Any, Iterable, List, Tuple
+from collections.abc import Iterable
+from typing import Any
 
 from requests.exceptions import RequestException
 
@@ -7,7 +8,7 @@ from cloudbot import hook
 from cloudbot.util import web
 
 
-def get_attrs(obj: object) -> List[str]:
+def get_attrs(obj: object) -> list[str]:
     """Returns a list of all of the attributes on an object,
     either from the __dict__ or from dir() if the object has no __dict__
 
@@ -49,7 +50,7 @@ def is_dunder(name: str) -> bool:
     return len(name) > 4 and name.startswith("__") and name.endswith("__")
 
 
-AttrList = Iterable[Tuple[str, Any]]
+AttrList = Iterable[tuple[str, Any]]
 
 
 def dump_attrs(obj: object, ignore_dunder: bool = False) -> AttrList:
@@ -126,7 +127,7 @@ SPECIAL_CASES = {
 }
 
 
-def format_error_data(exc: Exception) -> Iterable[str]:
+def format_error_data(exc: BaseException) -> Iterable[str]:
     yield repr(exc)
     yield from indent(format_attrs(exc, ignore_dunder=True))
 
@@ -145,13 +146,14 @@ def format_error_chain(exc: Exception) -> Iterable[str]:
     :param exc: The exception to format
     :return: An iterable of lines of the formatted data from the exception
     """
-    while exc:
-        yield from format_error_data(exc)
+    next_exc: BaseException | None = exc
+    while next_exc is not None:
+        yield from format_error_data(next_exc)
         # Get "direct cause of" or
         # "during handling of ..., another exception occurred" stack
-        cause = getattr(exc, "__cause__", None)
-        context = getattr(exc, "__context__", None)
-        exc = cause or context
+        cause = next_exc.__cause__
+        context = next_exc.__context__
+        next_exc = cause or context
 
 
 def format_attrs(obj: object, ignore_dunder: bool = False) -> Iterable[str]:
@@ -173,15 +175,13 @@ def format_attrs(obj: object, ignore_dunder: bool = False) -> Iterable[str]:
 
 
 @hook.post_hook()
-def on_hook_end(error, launched_hook, launched_event, admin_log):
+def on_hook_end(error, launched_hook, launched_event, admin_log) -> None:
     if error is None:
         return
 
     should_broadcast = True
     messages = [
-        "Error occurred in {}.{}".format(
-            launched_hook.plugin.title, launched_hook.function_name
-        )
+        f"Error occurred in {launched_hook.plugin.title}.{launched_hook.function_name}"
     ]
 
     try:
@@ -194,7 +194,7 @@ def on_hook_end(error, launched_hook, launched_event, admin_log):
     else:
         try:
             url = web.paste("\n".join(lines))
-            messages.append("Traceback: " + url)
+            messages.append(f"Traceback: {url}")
         except Exception:
             msg = traceback.format_exc()[-1]
             messages.append(f"Error occurred while gathering traceback {msg}")
@@ -209,7 +209,7 @@ def on_hook_end(error, launched_hook, launched_event, admin_log):
         lines.extend(indent(format_error_chain(exc)))
 
         url = web.paste("\n".join(lines))
-        messages.append("Event: " + url)
+        messages.append(f"Event: {url}")
     except Exception:
         msg = traceback.format_exc()[-1]
         messages.append(f"Error occurred while gathering error data {msg}")

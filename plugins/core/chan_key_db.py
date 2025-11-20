@@ -5,20 +5,28 @@ Author:
 - linuxdaemon
 """
 
-from itertools import zip_longest
-from typing import Any, Dict, List, Optional
+from __future__ import annotations
 
-from irclib.parser import Message
-from sqlalchemy import Column, PrimaryKeyConstraint, String, Table, and_, select
-from sqlalchemy.orm import Session
-from sqlalchemy.sql.elements import BooleanClauseList, ClauseElement
+from itertools import zip_longest
+from typing import TYPE_CHECKING, Any, cast
+
+import sqlalchemy as sa
+from sqlalchemy import Column, PrimaryKeyConstraint, String, Table, select
 
 from cloudbot import hook
 from cloudbot.client import Client
-from cloudbot.clients.irc import IrcClient
 from cloudbot.util import database
 from cloudbot.util.irc import parse_mode_string
 from plugins.core import server_info
+
+if TYPE_CHECKING:
+    import sqlalchemy.orm as sa_orm
+    from irclib.parser import Message
+    from sqlalchemy import CursorResult
+    from sqlalchemy.orm import Session
+
+    from cloudbot.client import Client
+    from cloudbot.clients.irc import IrcClient
 
 table = Table(
     "channel_keys",
@@ -35,17 +43,17 @@ def load_keys(conn: IrcClient, db) -> None:
     """
     Load channel keys to the client
     """
-    query = select(
-        [table.c.chan, table.c.key], table.c.conn == conn.name.lower()
+    query = select(table.c.chan, table.c.key).where(
+        table.c.conn == conn.name.lower()
     )
     conn.clear_channel_keys()
     for row in db.execute(query):
-        conn.set_channel_key(row["chan"], row["key"])
+        conn.set_channel_key(row.chan, row.key)
 
 
 @hook.irc_raw("MODE")
 def handle_modes(
-    irc_paramlist: List[str], conn: IrcClient, db, chan: str
+    irc_paramlist: list[str], conn: IrcClient, db, chan: str
 ) -> None:
     """
     Handle mode changes
@@ -73,38 +81,41 @@ def handle_modes(
 
 
 def insert_or_update(
-    db: Session, tbl: Table, data: Dict[str, Any], query: ClauseElement
+    db: sa_orm.Session,
+    tbl: sa.Table,
+    data: dict[str, Any],
+    query: sa.ColumnElement[bool],
 ) -> None:
     """
     Insert a new row or update an existing matching row
     """
-    result = db.execute(tbl.update().where(query).values(**data))
+    result = cast(
+        "CursorResult", db.execute(tbl.update().where(query).values(**data))
+    )
     if not result.rowcount:
         db.execute(tbl.insert().values(**data))
 
     db.commit()
 
 
-def make_clause(conn: Client, chan: str) -> BooleanClauseList:
+def make_clause(conn: Client, chan: str) -> sa.ColumnElement[bool]:
     """
     Generate a WHERE clause to match keys for this conn+channel
     """
-    return and_(
+    return sa.and_(
         table.c.conn == conn.name.lower(),
         table.c.chan == chan.lower(),
     )
 
 
-def clear_key(db: Session, conn, chan: str) -> None:
+def clear_key(db: Session, conn: Client, chan: str) -> None:
     """
     Remove a channel's key from the DB
     """
     db.execute(table.delete().where(make_clause(conn, chan)))
 
 
-def set_key(
-    db: Session, conn: IrcClient, chan: str, key: Optional[str]
-) -> None:
+def set_key(db: Session, conn: IrcClient, chan: str, key: str | None) -> None:
     """
     Set the key for a channel
     """

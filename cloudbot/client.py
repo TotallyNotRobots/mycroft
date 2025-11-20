@@ -1,29 +1,32 @@
+from __future__ import annotations
+
 import asyncio
-import collections
 import logging
 import random
-from typing import Any, Dict
+from collections import defaultdict, deque
+from typing import TYPE_CHECKING, Any
 
 from cloudbot.permissions import PermissionManager
-from cloudbot.util import async_util
+from cloudbot.util import CLIENT_ATTR
+
+if TYPE_CHECKING:
+    from cloudbot.bot import AbstractBot
 
 logger = logging.getLogger("cloudbot")
 
 
 def client(_type):
     def _decorate(cls):
-        cls._cloudbot_client = _type
+        setattr(cls, CLIENT_ATTR, _type)
         return cls
 
     return _decorate
 
 
 class ClientConnectError(Exception):
-    def __init__(self, client_name, server):
+    def __init__(self, client_name, server) -> None:
         super().__init__(
-            "Unable to connect to client {} with server {}".format(
-                client_name, server
-            )
+            f"Unable to connect to client {client_name} with server {server}"
         )
         self.client_name = client_name
         self.server = server
@@ -34,14 +37,26 @@ class Client:
     A Client representing each connection the bot makes to a single server
     """
 
-    def __init__(self, bot, _type, name, nick, *, channels=None, config=None):
+    def __init__(
+        self,
+        bot: AbstractBot,
+        _type: str,
+        name: str,
+        nick: str,
+        *,
+        channels=None,
+        config=None,
+    ) -> None:
         self.bot = bot
+        if bot.loop is None:
+            raise ValueError("Missing event loop on bot")
+
         self.loop = bot.loop
         self.name = name
         self.nick = nick
         self._type = _type
 
-        self.channels = []
+        self.channels = list[str]()
 
         if channels is None:
             self.config_channels = []
@@ -52,32 +67,35 @@ class Client:
             self.config = {}
         else:
             self.config = config
-        self.vars = {}
-        self.history = {}
+
+        self.vars = dict[str, Any]()
+        self.history = defaultdict[str, deque[tuple[str, float, str]]](
+            lambda: deque[tuple[str, float, str]](maxlen=100)
+        )
 
         # create permissions manager
         self.permissions = PermissionManager(self)
 
         # for plugins to abuse
-        self.memory: Dict[str, Any] = collections.defaultdict()
+        self.memory = defaultdict[str, Any]()
 
         # set when on_load in core_misc is done
         self.ready = False
 
         self._active = False
 
-        self.cancelled_future = async_util.create_future(self.loop)
+        self.cancelled_future = self.loop.create_future()
 
     def describe_server(self):
         raise NotImplementedError
 
-    async def auto_reconnect(self):
+    async def auto_reconnect(self) -> None:
         if not self._active:
             return
 
         await self.try_connect()
 
-    async def try_connect(self):
+    async def try_connect(self) -> None:
         timeout = 30
         while self.active and not self.connected:
             try:
@@ -172,8 +190,8 @@ class Client:
         return self._active
 
     @active.setter
-    def active(self, value):
+    def active(self, value) -> None:
         self._active = value
 
-    def reload(self):
+    def reload(self) -> None:
         self.permissions.reload()

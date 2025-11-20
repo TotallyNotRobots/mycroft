@@ -3,10 +3,11 @@ from unittest.mock import call, patch
 from cloudbot.util import http
 
 
-def test_open_request():
-    with patch("urllib.request.Request") as mocked, patch(
-        "urllib.request.build_opener"
-    ) as mocked_open_build:
+def test_open_request() -> None:
+    with (
+        patch("urllib.request.Request") as mocked,
+        patch("urllib.request.build_opener") as mocked_open_build,
+    ):
         http.open_request("https://host.invalid")
         assert mocked.mock_calls == [
             call("https://host.invalid", None, method=None),
@@ -17,12 +18,12 @@ def test_open_request():
         assert mocked_open_build.mock_calls == [call(), call().open(mocked())]
 
 
-def test_open_request_with_cookies():
-    with patch("urllib.request.Request") as mocked, patch(
-        "urllib.request.build_opener"
-    ) as mocked_open_build, patch(
-        "urllib.request.HTTPCookieProcessor"
-    ) as mocked_cookie_proc:
+def test_open_request_with_cookies() -> None:
+    with (
+        patch("urllib.request.Request") as mocked,
+        patch("urllib.request.build_opener") as mocked_open_build,
+        patch("urllib.request.HTTPCookieProcessor") as mocked_cookie_proc,
+    ):
         http.open_request(
             "https://host.invalid", cookies=True, referer="https://example.com"
         )
@@ -39,7 +40,7 @@ def test_open_request_with_cookies():
         ]
 
 
-def test_get_soup():
+def test_get_soup() -> None:
     test_data = """
     <html>
         <body>
@@ -49,4 +50,8 @@ def test_get_soup():
     """
     with patch("cloudbot.util.http.get", lambda *a, **k: test_data):
         soup = http.get_soup("http://example.com")
-        assert soup.find("div", {"class": "thing"}).p.text == "foobar"
+        tag = soup.find("div", {"class": "thing"})
+        assert tag is not None
+        subtag = tag.p
+        assert subtag is not None
+        assert subtag.text == "foobar"

@@ -4,32 +4,34 @@ import sys
 import time
 from collections import OrderedDict
 from pathlib import Path
+from typing import cast
 
 logger = logging.getLogger("cloudbot")
 
 
 class Config(OrderedDict):
-    def __init__(self, bot, *, filename="config.json"):
+    def __init__(self, *, filename: str = "config.json") -> None:
         super().__init__()
         self.filename = filename
         self.path = Path(self.filename).resolve()
-        self.bot = bot
 
-        self._api_keys = {}
+        self._api_keys: dict[str, str | None] = {}
 
         # populate self with config data
         self.load_config()
 
-    def get_api_key(self, name, default=None):
+    def get_api_key(self, name: str, default: str | None = None) -> str | None:
         try:
             return self._api_keys[name]
         except LookupError:
-            self._api_keys[name] = value = self.get("api_keys", {}).get(
-                name, default
+            value = cast(
+                "str | None", self.get("api_keys", {}).get(name, default)
             )
+
+            self._api_keys[name] = value
             return value
 
-    def load_config(self):
+    def load_config(self) -> None:
         """(re)loads the bot config from the config file"""
         self._api_keys.clear()
         if not self.path.exists():
@@ -49,10 +51,3 @@ class Config(OrderedDict):
 
         self.update(data)
         logger.debug("Config loaded from file.")
-
-    def save_config(self):
-        """saves the contents of the config dict to the config file"""
-        with self.path.open("w", encoding="utf-8") as f:
-            json.dump(self, f, indent=4)
-
-        logger.info("Config saved to file.")

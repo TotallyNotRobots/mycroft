@@ -5,6 +5,8 @@ Author:
     - linuxdaemon <linuxdaemon@snoonet.org>
 """
 
+from __future__ import annotations
+
 import datetime
 import re
 import shlex
@@ -15,7 +17,7 @@ from collections import defaultdict
 from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 from operator import itemgetter
-from typing import Dict, List, Tuple
+from typing import TYPE_CHECKING
 
 from requests import RequestException
 from sqlalchemy import column, func
@@ -30,6 +32,9 @@ from plugins.user_tracking import (
     rfc_casefold,
 )
 
+if TYPE_CHECKING:
+    from cloudbot.client import Client
+
 
 def format_list(name, data):
     begin = colors.parse(f"$(dgreen){name}$(clear): ")
@@ -38,21 +43,21 @@ def format_list(name, data):
     return chunk_str(begin + body)
 
 
-def get_all_channels(conn):
+def get_all_channels(conn: Client):
     conf = conn.config["plugins"]["sherlock"]["channels"]
     return conf["normal"], conf["admin"]
 
 
-def get_channels(conn):
+def get_channels(conn: Client):
     normal, admin = get_all_channels(conn)
     return normal + admin
 
 
-def get_admin_channels(conn):
+def get_admin_channels(conn: Client):
     return get_all_channels(conn)[1]
 
 
-def check_channel(conn, chan):
+def check_channel(conn: Client, chan):
     normal_chans, admin_chans = get_all_channels(conn)
     if chan.lower() not in (normal_chans + admin_chans):
         return False, False
@@ -101,7 +106,7 @@ def paste_results(nicks, masks, hosts, addresses, is_admin):
             yield ""
 
 
-def format_count(nicks, masks, hosts, addresses, is_admin, duration):
+def format_count(nicks, masks, hosts, addresses, is_admin, duration) -> str:
     counts = [
         (len(nicks), "nick"),
         (len(masks), "mask"),
@@ -116,13 +121,13 @@ def format_count(nicks, masks, hosts, addresses, is_admin, duration):
 
     if all(count == 0 for count, thing in counts):
         return "None."
-    else:
-        return "Done. Found {} in {:.3f} seconds".format(
-            get_text_list(
-                [pluralize_auto(count, thing) for count, thing in counts], "and"
-            ),
-            duration,
-        )
+
+    return "Done. Found {} in {:.3f} seconds".format(
+        get_text_list(
+            [pluralize_auto(count, thing) for count, thing in counts], "and"
+        ),
+        duration,
+    )
 
 
 def compress(s):
@@ -139,10 +144,12 @@ def encode_cipher(cipher):
     return cipher
 
 
-def do_paste(it):
+def do_paste(it) -> str:
     try:
         url = web.pastebins["privatebin"].paste(
-            "\n".join(it), "yaml", expire="1hour"
+            "\n".join(it),
+            "yaml",
+            expire="1hour",  # type: ignore[call-arg]
         )
     except (RequestException, web.ServiceError) as e:
         return f"Paste failed. ({e})"
@@ -220,7 +227,7 @@ CLOAK_FORMATS = [
 
 
 def get_nicks_for_mask(db, mask, last_seen=None):
-    new_masks: List[Tuple[str, ...]] = []
+    new_masks: list[tuple[str, ...]] = []
     for m in mask:
         msk, *other = m
         cloak = CLOAK_STRIP_PREFIX_RE.match(msk)
@@ -244,7 +251,7 @@ def get_nicks_for_addr(db, addr, last_seen=None):
 
 
 class QueryResults:
-    def __init__(self, nicks=(), masks=(), hosts=(), addrs=()):
+    def __init__(self, nicks=(), masks=(), hosts=(), addrs=()) -> None:
         self.nicks = list(nicks)
         self.masks = list(masks)
         self.hosts = list(hosts)
@@ -306,8 +313,10 @@ def query(
     def _to_list(var):
         if not var:
             return []
-        elif isinstance(var, str):
+
+        if isinstance(var, str):
             return [(var, datetime.datetime.now())]
+
         return var
 
     nicks = _to_list(nicks)
@@ -349,7 +358,8 @@ def query_and_format(
     def _to_list(_arg):
         if _arg is None:
             return []
-        elif isinstance(_arg, str):
+
+        if isinstance(_arg, str):
             return [_arg]
 
         return _arg
@@ -398,7 +408,7 @@ def query_and_format(
         "addresses": addrs,
     }
 
-    data: Dict[str, Dict[str, datetime.datetime]] = {
+    data: dict[str, dict[str, datetime.datetime]] = {
         name: defaultdict(lambda: datetime.datetime.fromtimestamp(0))
         for name in tables
     }
@@ -434,7 +444,7 @@ def query_and_format(
 
 
 @hook.command("checkadv", "newcheck", "checkadvanced", singlethread=True)
-def new_check(conn, chan, triggered_command, text, db, reply):
+def new_check(conn: Client, chan, triggered_command, text, db, reply):
     """[options] - Use -h to view full help for this command"""
     allowed, admin = check_channel(conn, chan)
 
@@ -524,7 +534,7 @@ def new_check(conn, chan, triggered_command, text, db, reply):
 
 
 @hook.command("check")
-def check_command(conn, chan, text, db):
+def check_command(conn: Client, chan, text, db):
     """<nick> [last_seen] - Looks up [nick] in the users database, optionally filtering to entries newer than [last_seen] specified in the format [-|+]5w4d3h2m1s, defaulting to forever"""
     allowed, admin = check_channel(conn, chan)
 
@@ -539,10 +549,12 @@ def check_command(conn, chan, text, db):
         if interval_str == "*":
             last_time = None
         else:
-            time_span = datetime.timedelta(
-                seconds=timeparse.time_parse(interval_str)
-            )
-            last_time = now + time_span
+            seconds = timeparse.time_parse(interval_str)
+            if seconds is not None:
+                time_span = datetime.timedelta(seconds=seconds)
+                last_time = now + time_span
+            else:
+                last_time = None
     else:
         last_time = None
 
@@ -550,7 +562,7 @@ def check_command(conn, chan, text, db):
 
 
 @hook.command("checkhost", "check2")
-def check_host_command(db, conn, chan, text):
+def check_host_command(db, conn: Client, chan, text):
     """<host|mask|addr> [last_seen] - Looks up [host|mask|addr] in the users database, optionally filtering to entries newer than [last_seen] specified in the format [-|+]5w4d3h2m1s, defaulting to forever"""
     allowed, admin = check_channel(conn, chan)
 
@@ -566,10 +578,12 @@ def check_host_command(db, conn, chan, text):
         if interval_str == "*":
             last_time = None
         else:
-            time_span = datetime.timedelta(
-                seconds=timeparse.time_parse(interval_str)
-            )
-            last_time = now + time_span
+            seconds = timeparse.time_parse(interval_str)
+            if seconds is not None:
+                time_span = datetime.timedelta(seconds=seconds)
+                last_time = now + time_span
+            else:
+                last_time = None
     else:
         last_time = None
 
@@ -591,7 +605,7 @@ def check_host_command(db, conn, chan, text):
 
 
 @hook.command("rawquery", permissions=["botcontrol"])
-def raw_query(text, db, reply, conn):
+def raw_query(text, db, reply, conn: Client):
     """
     <query> - Execute a raw query against the database
 
@@ -621,12 +635,10 @@ def raw_query(text, db, reply, conn):
             ]
         else:
             lines = [
-                "{} rows affected in {:.3f} seconds.".format(
-                    res.rowcount, duration.total_seconds()
-                )
+                f"{res.rowcount} rows affected in {duration.total_seconds():.3f} seconds."
             ]
 
         if len(lines) > 5:
             return web.paste("\n".join(lines))
-        else:
-            return lines
+
+        return lines

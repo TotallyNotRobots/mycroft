@@ -1,26 +1,19 @@
 import ssl
-from unittest.mock import MagicMock
+from unittest.mock import call
 
 import pytest
 
-from cloudbot.clients.irc import IrcClient
 from plugins.core import core_connect
+from tests.util.mock_irc_client import MockIrcClient
 
 
-class MockClient(IrcClient):
-    send = MagicMock()
-
-    async def connect(self, timeout=None):
-        pass
-
-
-def test_ssl_client(event_loop, mock_bot_factory):
-    bot = mock_bot_factory(loop=event_loop)
-    client = MockClient(
-        bot,
-        "mock",
-        "foo",
-        "FooBot",
+@pytest.mark.asyncio
+async def test_ssl_client(mock_bot_factory, mock_db) -> None:
+    bot = mock_bot_factory(db=mock_db)
+    client = MockIrcClient(
+        bot=bot,
+        name="foo",
+        nick="FooBot",
         config={
             "connection": {
                 "server": "example.com",
@@ -38,13 +31,13 @@ def test_ssl_client(event_loop, mock_bot_factory):
     assert client.ssl_context.verify_mode is ssl.CERT_REQUIRED
 
 
-def test_ssl_client_no_verify(event_loop, mock_bot_factory):
-    bot = mock_bot_factory(loop=event_loop)
-    client = MockClient(
-        bot,
-        "mock",
-        "foo",
-        "FooBot",
+@pytest.mark.asyncio
+async def test_ssl_client_no_verify(mock_bot_factory, mock_db) -> None:
+    bot = mock_bot_factory(db=mock_db)
+    client = MockIrcClient(
+        bot=bot,
+        name="foo",
+        nick="FooBot",
         config={
             "connection": {
                 "server": "example.com",
@@ -64,26 +57,29 @@ def test_ssl_client_no_verify(event_loop, mock_bot_factory):
 
 
 @pytest.mark.asyncio()
-async def test_core_connects(event_loop, mock_bot_factory):
-    bot = mock_bot_factory(loop=event_loop)
-    client = MockClient(
-        bot,
-        "mock",
-        "foo",
-        "FooBot",
+async def test_core_connects(mock_bot_factory, mock_db) -> None:
+    bot = mock_bot_factory(db=mock_db)
+    client = MockIrcClient(
+        bot=bot,
+        name="foo",
+        nick="FooBot",
         config={
             "connection": {"server": "example.com", "password": "foobar123"}
         },
     )
-    assert client.type == "mock"
+    assert client.type == "irc"
 
     await client.connect()
 
     core_connect.conn_pass(client)
-    client.send.assert_called_with("PASS foobar123")
     core_connect.conn_nick(client)
-    client.send.assert_called_with("NICK FooBot")
     core_connect.conn_user(client, bot)
-    client.send.assert_called_with(
-        "USER cloudbot 3 * :CloudBot - https://github.com/foobar/baz"
-    )
+
+    assert client.mock_calls() == [
+        call.connect(),
+        call.send("PASS foobar123"),
+        call.send("NICK FooBot"),
+        call.send(
+            "USER cloudbot 3 * :CloudBot - https://github.com/foobar/baz"
+        ),
+    ]

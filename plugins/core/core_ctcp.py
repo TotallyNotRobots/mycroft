@@ -7,14 +7,12 @@ from cloudbot.event import EventType
 
 # CTCP responses
 @hook.event([EventType.other])
-async def ctcp_version(notice, irc_ctcp_text):
+async def ctcp_version(notice, irc_ctcp_text) -> None:
     if irc_ctcp_text:
         command, _, params = irc_ctcp_text.partition(" ")
         if command == "VERSION":
             notice(
-                "\x01VERSION gonzobot a fork of Cloudbot {} - https://snoonet.org/gonzobot\x01".format(
-                    cloudbot.__version__
-                )
+                f"\x01VERSION gonzobot a fork of Cloudbot {cloudbot.__version__} - https://snoonet.org/gonzobot\x01"
             )
         elif command == "PING":
             # Bot should return exactly what the user sends as the ping parameter

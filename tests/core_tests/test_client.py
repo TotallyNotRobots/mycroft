@@ -3,31 +3,11 @@ from unittest.mock import MagicMock, call, patch
 import pytest
 
 from cloudbot.client import Client
+from tests.util.mock_conn import MockClient
 
 
-class Bot(MagicMock):
-    def __init__(self, loop, *args, **kw):
-        super().__init__(*args, **kw)
-        self.loop = loop
-
-
-class MockClient(Client):  # pylint: disable=abstract-method
-    _connected = False
-
-    def __init__(self, bot, *args, **kwargs):
-        super().__init__(bot, "TestClient", *args, **kwargs)
-        self.active = True
-
-    @property
-    def connected(self):
-        return self._connected
-
-    async def connect(self, timeout=None):
-        self._connected = True
-
-
-class FailingMockClient(MockClient):  # pylint: disable=abstract-method
-    def __init__(self, *args, fail_count=None, **kwargs):
+class FailingMockClient(MockClient):
+    def __init__(self, *args, fail_count=None, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.fail_count = fail_count
 
@@ -37,58 +17,80 @@ class FailingMockClient(MockClient):  # pylint: disable=abstract-method
             raise ValueError("This is a test")
 
 
-def test_reload(event_loop):
-    client = MockClient(Bot(event_loop), "foo", "foobot", channels=["#foo"])
+@pytest.mark.asyncio
+async def test_reload(mock_bot_factory, mock_db) -> None:
+    client = MockClient(
+        bot=mock_bot_factory(db=mock_db),
+        name="foo",
+        nick="foobot",
+        channels=["#foo"],
+    )
     client.permissions = MagicMock()
-    client.reload()
+    Client.reload(client)
     assert client.permissions.mock_calls == [call.reload()]
 
 
-def test_client_no_config(event_loop):
-    client = MockClient(Bot(event_loop), "foo", "foobot", channels=["#foo"])
+@pytest.mark.asyncio
+async def test_client_no_config(mock_bot_factory, mock_db) -> None:
+    client = MockClient(
+        bot=mock_bot_factory(db=mock_db),
+        name="foo",
+        nick="foobot",
+        channels=["#foo"],
+    )
     assert client.config.get("a") is None
 
 
-def test_client(event_loop):
+@pytest.mark.asyncio
+async def test_client_no_loop(mock_bot_factory, mock_db) -> None:
+    bot = mock_bot_factory(db=mock_db)
+    bot.loop = None
+    with pytest.raises(ValueError, match="Missing event loop on bot"):
+        _ = MockClient(bot=bot, name="foo", nick="foobot", channels=["#foo"])
+
+
+@pytest.mark.asyncio
+async def test_client(mock_bot_factory, mock_db) -> None:
     client = MockClient(
-        Bot(event_loop),
-        "foo",
-        "foobot",
+        bot=mock_bot_factory(db=mock_db),
+        name="foo",
+        nick="foobot",
         channels=["#foo"],
         config={"name": "foo"},
     )
 
     assert client.config_channels == ["#foo"]
     assert client.config["name"] == "foo"
-    assert client.type == "TestClient"
+    assert client.type == "mock"
 
     assert client.active is True
     client.active = False
     assert client.active is False
     client.active = True
 
-    client.loop.run_until_complete(client.try_connect())
+    await client.try_connect()
 
 
-def test_client_connect_exc(event_loop):
+@pytest.mark.asyncio
+async def test_client_connect_exc(mock_bot_factory, mock_db) -> None:
     with patch("random.randrange", return_value=1):
         client = FailingMockClient(
-            Bot(event_loop),
-            "foo",
-            "foobot",
+            bot=mock_bot_factory(db=mock_db),
+            name="foo",
+            nick="foobot",
             channels=["#foo"],
             config={"name": "foo"},
             fail_count=1,
         )
-        client.loop.run_until_complete(client.try_connect())
+        await client.try_connect()
 
 
 @pytest.mark.asyncio()
-async def test_try_connect(event_loop):
+async def test_try_connect(mock_bot_factory, mock_db) -> None:
     client = MockClient(
-        Bot(event_loop),
-        "foo",
-        "foobot",
+        bot=mock_bot_factory(db=mock_db),
+        name="foo",
+        nick="foobot",
         channels=["#foo"],
         config={"name": "foo"},
     )
@@ -97,23 +99,25 @@ async def test_try_connect(event_loop):
     await client.try_connect()
 
 
-def test_auto_reconnect(event_loop):
+@pytest.mark.asyncio
+async def test_auto_reconnect(mock_bot_factory, mock_db) -> None:
     client = MockClient(
-        Bot(event_loop),
-        "foo",
-        "foobot",
+        bot=mock_bot_factory(db=mock_db),
+        name="foo",
+        nick="foobot",
         channels=["#foo"],
         config={"name": "foo"},
+        connected=False,
     )
 
     client.active = False
     assert client.active is False
     assert client.connected is False
-    client.loop.run_until_complete(client.auto_reconnect())
+    await client.auto_reconnect()
     assert client.connected is False
 
     client.active = True
     assert client.active is True
     assert client.connected is False
-    client.loop.run_until_complete(client.auto_reconnect())
+    await client.auto_reconnect()
     assert client.connected is True

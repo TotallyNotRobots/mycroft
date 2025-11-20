@@ -6,8 +6,7 @@
     "dockerFile": "./Dockerfile",
     "context": "..",
     "features": {
-        "ghcr.io/devcontainers-contrib/features/zsh-plugins:0": {
-            "plugins": "ssh-agent",
+        "ghcr.io/devcontainers-extra/features/zsh-plugins:0": {
             "omzPlugins": "https://github.com/zsh-users/zsh-autosuggestions"
         }
     },
@@ -33,11 +32,12 @@
                 "ms-python.python",
                 "ms-python.vscode-pylance",
                 "EditorConfig.EditorConfig",
-                "GitHub.vscode-pull-request-github"
+                "GitHub.vscode-pull-request-github",
+                "redhat.vscode-yaml",
+                "charliermarsh.ruff"
             ],
             "settings": {
-                "python.pythonPath": "/usr/local/bin/python",
-                "python.testing.pytestArgs": ["--no-cov"],
+                "python.defaultInterpreterPath": "/usr/local/bin/python",
                 "terminal.integrated.profiles.linux": {
                     "zsh": {
                         "path": "/usr/bin/zsh"

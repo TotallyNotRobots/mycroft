@@ -17,7 +17,7 @@ submit a pull request.
 This project uses [pre-commit]
 1. [Install pre-commit]
 2. Run `pre-commit install` to add it as a git precommit hook to run checks on each `git commit` in the repository
-3. Run `pre-commit run` before commiting, to check your changes easily
+3. Run `pre-commit run` before committing, to check your changes easily
 
 ## Submit Changes
 1. Push your changes to a topic branch in your fork of the repository.

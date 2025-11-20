@@ -23,8 +23,8 @@ from cloudbot.util.formatting import (
 
 test_munge_input = "The quick brown fox jumps over the lazy dog"
 test_munge_count = 3
-test_munge_result_a = "Ţħë ʠüíċķ Бŗöωñ ƒöχ ĵüṁρš övëŗ ţħë ĺäźÿ đöġ"
-test_munge_result_b = "Ţħë quick brown fox jumps over the lazy dog"
+test_munge_result_a = "\u0162\u0127\xeb \u02a0\xfc\xed\u010b\u0137 \u0411\u0157\xf6\u03c9\xf1 \u0192\xf6\u03c7 \u0135\xfc\u1e41\u03c1\u0161 \xf6v\xeb\u0157 \u0163\u0127\xeb \u013a\xe4\u017a\xff \u0111\xf6\u0121"
+test_munge_result_b = "\u0162\u0127\xeb quick brown fox jumps over the lazy dog"
 
 test_format_formats = ["{a} {b} {c}", "{a} {b}", "{a}"]
 test_format_data = {"a": "First Thing", "b": "Second Thing"}
@@ -52,7 +52,7 @@ test_truncate_words_result_a = "I am the example string..."
 test_truncate_words_result_b = "I am the example string for a unit test"
 
 test_strip_html_input = "<strong>Cats &amp; Dogs: &#181;</strong>"
-test_strip_html_result = "Cats & Dogs: µ"
+test_strip_html_result = "Cats & Dogs: \xb5"
 
 test_multiword_replace_dict = {"<bit1>": "<replace1>", "[bit2]": "[replace2]"}
 test_multiword_replace_text = "<bit1> likes [bit2]"
@@ -70,19 +70,19 @@ test_chunk_str_result = [
 ]
 
 
-def test_munge():
+def test_munge() -> None:
     assert munge(test_munge_input) == test_munge_result_a
     assert munge(test_munge_input, test_munge_count) == test_munge_result_b
 
 
-def test_dict_format():
+def test_dict_format() -> None:
     assert (
         dict_format(test_format_data, test_format_formats) == test_format_result
     )
     assert dict_format({}, test_format_formats) is None
 
 
-def test_pluralize():
+def test_pluralize() -> None:
     assert (
         pluralize_suffix(test_pluralize_num_a, test_pluralize_text)
         == test_pluralize_result_a
@@ -111,16 +111,16 @@ def test_pluralize():
         ("tree", 2, "2 trees"),
     ],
 )
-def test_auto_pluralize(item, count, output):
+def test_auto_pluralize(item, count, output) -> None:
     assert pluralize_auto(count, item) == output
 
 
-def test_strip_colors():
+def test_strip_colors() -> None:
     # compatibility
     assert strip_colors(test_strip_colors_input) == test_strip_colors_result
 
 
-def test_truncate_str():
+def test_truncate_str() -> None:
     assert (
         truncate(test_truncate_str_input, length=test_truncate_str_length_a)
         == test_truncate_str_result_a
@@ -141,8 +141,7 @@ def test_truncate_str():
     )
 
 
-# noinspection PyPep8
-def test_truncate_words():
+def test_truncate_words() -> None:
     assert (
         truncate_words(
             test_truncate_words_input, length=test_truncate_words_length_a
@@ -157,11 +156,11 @@ def test_truncate_words():
     )
 
 
-def test_strip_html():
+def test_strip_html() -> None:
     assert strip_html(test_strip_html_input) == test_strip_html_result
 
 
-def test_multiword_replace():
+def test_multiword_replace() -> None:
     assert (
         multi_replace(test_multiword_replace_text, test_multiword_replace_dict)
         == test_multiword_replace_result
@@ -176,7 +175,7 @@ def test_multiword_replace():
     )
 
 
-def test_ireplace():
+def test_ireplace() -> None:
     assert (
         ireplace(test_ireplace_input, "fox", "cat")
         == "The quick brown cat cat cat jumped over the lazy dog"
@@ -198,11 +197,11 @@ def test_ireplace():
     assert ireplace("Hello", "", "?") == "?H?e?l?l?o?"
 
 
-def test_chunk_str():
+def test_chunk_str() -> None:
     assert chunk_str(test_chunk_str_input, 10) == test_chunk_str_result
 
 
-def test_get_text_list():
+def test_get_text_list() -> None:
     assert get_text_list(["a", "b", "c", "d"]) == "a, b, c or d"
     assert get_text_list(["a", "b", "c"], "and") == "a, b and c"
     assert get_text_list(["a", "b"], "and") == "a and b"
@@ -210,7 +209,7 @@ def test_get_text_list():
     assert get_text_list([]) == ""
 
 
-def test_smart_split():
+def test_smart_split() -> None:
     assert list(smart_split(r'This is "a person\'s" test.')) == [
         "This",
         "is",
@@ -229,7 +228,7 @@ def test_smart_split():
     ]
 
 
-def test_gen_md_table():
+def test_gen_md_table() -> None:
     headers = ["ColumnA", "Column B"]
     data = [
         ["1", "2"],

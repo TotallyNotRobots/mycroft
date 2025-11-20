@@ -1,5 +1,5 @@
 # default all files as text with lf
-* text eol=lf
+* text=auto eol=lf
 
 # mmdb files are binary
 *.mmdb binary

@@ -2,22 +2,35 @@
 database - contains variables set by cloudbot to be easily access
 """
 
-from sqlalchemy import MetaData
-from sqlalchemy.engine import Engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import close_all_sessions, scoped_session, sessionmaker
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from sqlalchemy.orm import (
+    DeclarativeBase,
+    close_all_sessions,
+    scoped_session,
+    sessionmaker,
+)
+
+if TYPE_CHECKING:
+    from sqlalchemy import MetaData
+    from sqlalchemy.engine import Engine
 
 __all__ = ("metadata", "base", "Base", "Session", "configure")
 
 
-Base = declarative_base()
+class Base(DeclarativeBase):
+    pass
+
+
 base = Base
+
 metadata: MetaData = Base.metadata
-Session = scoped_session(sessionmaker())
+Session = scoped_session(sessionmaker(future=True))
 
 
-def configure(bind: Engine = None) -> None:
-    metadata.bind = bind
+def configure(bind: Engine | None = None) -> None:
     close_all_sessions()
     Session.remove()
     Session.configure(bind=bind)

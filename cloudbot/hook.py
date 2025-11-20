@@ -1,12 +1,22 @@
+from __future__ import annotations
+
 import collections
 import collections.abc
 import inspect
 import re
 import warnings
+from collections.abc import Callable
 from enum import Enum, IntEnum, unique
+from typing import TYPE_CHECKING, Any, TypeVar, overload
+
+from typing_extensions import ParamSpec
 
 from cloudbot.event import EventType
 from cloudbot.util import HOOK_ATTR
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+    from re import Pattern
 
 valid_command_re = re.compile(r"^\w+$")
 
@@ -34,27 +44,29 @@ class Action(Enum):
 
 
 class _Hook:
-    def __init__(self, function, _type):
+    def __init__(self, function, _type) -> None:
         self.function = function
         self.type = _type
-        self.kwargs = {}
+        self.kwargs: dict[str, Any] = {}
 
-    def _add_hook(self, kwargs):
+    def _add_hook(self, kwargs) -> None:
         # update kwargs, overwriting duplicates
         self.kwargs.update(kwargs)
 
 
 class _CommandHook(_Hook):
-    def __init__(self, function):
+    def __init__(self, function) -> None:
         _Hook.__init__(self, function, "command")
-        self.aliases = set()
-        self.main_alias = None
+        self.aliases = set[str]()
+        self.main_alias: str | None = None
 
         if function.__doc__:
-            doc = inspect.cleandoc(function.__doc__)
             # Split on the first entirely blank line
-            self.doc = " ".join(
-                doc.split("\n\n", 1)[0].strip("\n").split("\n")
+            self.doc: str | None = " ".join(
+                inspect.cleandoc(function.__doc__)
+                .split("\n\n", 1)[0]
+                .strip("\n")
+                .split("\n")
             ).strip()
         else:
             self.doc = None
@@ -75,11 +87,11 @@ class _CommandHook(_Hook):
 
 
 class _RegexHook(_Hook):
-    def __init__(self, function):
+    def __init__(self, function) -> None:
         _Hook.__init__(self, function, "regex")
-        self.regexes = []
+        self.regexes: list[Pattern[str]] = []
 
-    def add_hook(self, regex_param, kwargs):
+    def add_hook(self, regex_param, kwargs) -> None:
         self._add_hook(kwargs)
         # add all regex_parameters to valid regexes
         if isinstance(regex_param, str):
@@ -102,11 +114,11 @@ class _RegexHook(_Hook):
 
 
 class _RawHook(_Hook):
-    def __init__(self, function):
+    def __init__(self, function) -> None:
         _Hook.__init__(self, function, "irc_raw")
-        self.triggers = set()
+        self.triggers = set[str]()
 
-    def add_hook(self, trigger_param, kwargs):
+    def add_hook(self, trigger_param, kwargs) -> None:
         self._add_hook(kwargs)
 
         if isinstance(trigger_param, str):
@@ -117,11 +129,11 @@ class _RawHook(_Hook):
 
 
 class _PeriodicHook(_Hook):
-    def __init__(self, function):
+    def __init__(self, function) -> None:
         _Hook.__init__(self, function, "periodic")
         self.interval = 60.0
 
-    def add_hook(self, interval, kwargs):
+    def add_hook(self, interval, kwargs) -> None:
         self._add_hook(kwargs)
 
         if interval:
@@ -129,11 +141,11 @@ class _PeriodicHook(_Hook):
 
 
 class _EventHook(_Hook):
-    def __init__(self, function):
+    def __init__(self, function) -> None:
         _Hook.__init__(self, function, "event")
-        self.types = set()
+        self.types = set[EventType]()
 
-    def add_hook(self, trigger_param, kwargs):
+    def add_hook(self, trigger_param, kwargs) -> None:
         self._add_hook(kwargs)
 
         if isinstance(trigger_param, EventType):
@@ -144,26 +156,26 @@ class _EventHook(_Hook):
 
 
 class _CapHook(_Hook):
-    def __init__(self, func, _type):
+    def __init__(self, func, _type) -> None:
         super().__init__(func, f"on_cap_{_type}")
-        self.caps = set()
+        self.caps = set[str]()
 
-    def add_hook(self, caps, kwargs):
+    def add_hook(self, caps, kwargs) -> None:
         self._add_hook(kwargs)
         self.caps.update(caps)
 
 
 class _PermissionHook(_Hook):
-    def __init__(self, func):
+    def __init__(self, func) -> None:
         super().__init__(func, "perm_check")
-        self.perms = set()
+        self.perms = set[str]()
 
-    def add_hook(self, perms, kwargs):
+    def add_hook(self, perms, kwargs) -> None:
         self._add_hook(kwargs)
         self.perms.update(perms)
 
 
-def _add_hook(func, hook):
+def _add_hook(func, hook) -> None:
     if not hasattr(func, HOOK_ATTR):
         setattr(func, HOOK_ATTR, {})
     else:
@@ -180,16 +192,42 @@ def _get_hook(func, hook_type):
     return None
 
 
-def _hook_warn():
+def _hook_warn() -> None:
     warnings.warn(
         "Direct decorators are deprecated", DeprecationWarning, stacklevel=3
     )
 
 
-def command(*args, **kwargs):
+_T = TypeVar("_T")
+_P = ParamSpec("_P")
+_Func = Callable[_P, _T]
+
+
+@overload
+def command(arg: Callable[_P, _T], /) -> Callable[_P, _T]: ...
+
+
+@overload
+def command(
+    arg: str | Sequence[str] | None = None,
+    /,
+    *args: str | Sequence[str],
+    **kwargs: Any,
+) -> Callable[[Callable[_P, _T]], Callable[_P, _T]]: ...
+
+
+def command(
+    arg: Callable[_P, _T] | str | Sequence[str] | None = None,
+    /,
+    *args: str | Sequence[str],
+    **kwargs: Any,
+) -> Callable[_P, _T] | Callable[[Callable[_P, _T]], Callable[_P, _T]]:
     """External command decorator. Can be used directly as a decorator, or with args to return a decorator."""
 
-    def _command_hook(func, alias_param=None):
+    def _command_hook(
+        func: Callable[_P, _T],
+        alias_param: Sequence[Sequence[str] | str] | None = None,
+    ) -> Callable[_P, _T]:
         hook = _get_hook(func, "command")
         if hook is None:
             hook = _CommandHook(func)
@@ -198,13 +236,17 @@ def command(*args, **kwargs):
         hook.add_hook(alias_param, kwargs)
         return func
 
-    if len(args) == 1 and callable(args[0]):
+    if arg is not None and not isinstance(arg, (str, collections.abc.Sequence)):
         # this decorator is being used directly
         _hook_warn()
-        return _command_hook(args[0])
+        return _command_hook(arg)
+
+    arg_list: list[str | Sequence[str]] = list(args)
+    if arg:
+        arg_list.insert(0, arg)
 
     # this decorator is being used indirectly, so return a decorator function
-    return lambda func: _command_hook(func, alias_param=args)
+    return lambda func: _command_hook(func, alias_param=arg_list)
 
 
 def irc_raw(triggers_param, **kwargs):
@@ -277,9 +319,10 @@ def sieve(param=None, **kwargs):
     """External sieve decorator. Can be used directly as a decorator, or with args to return a decorator"""
 
     def _sieve_hook(func):
-        assert (
-            len(inspect.signature(func).parameters) == 3
-        ), "Sieve plugin has incorrect argument count. Needs params: bot, input, plugin"
+        if len(inspect.signature(func).parameters) != 3:
+            raise ValueError(
+                "Sieve hook has incorrect argument count. Needs params: bot, input, plugin"
+            )
 
         hook = _get_hook(func, "sieve")
         if hook is None:
@@ -332,10 +375,22 @@ def config(**kwargs):
     return _config_hook
 
 
-def on_start(param=None, **kwargs):
+@overload
+def on_start(
+    **kwargs: Any,
+) -> Callable[[Callable[_P, _T]], Callable[_P, _T]]: ...
+
+
+@overload
+def on_start(param: Callable[_P, _T], /) -> Callable[_P, _T]: ...
+
+
+def on_start(
+    param: Callable[_P, _T] | None = None, /, **kwargs: Any
+) -> Callable[_P, _T] | Callable[[Callable[_P, _T]], Callable[_P, _T]]:
     """External on_start decorator. Can be used directly as a decorator, or with args to return a decorator"""
 
-    def _on_start_hook(func):
+    def _on_start_hook(func: Callable[_P, _T]) -> Callable[_P, _T]:
         hook = _get_hook(func, "on_start")
         if hook is None:
             hook = _Hook(func, "on_start")

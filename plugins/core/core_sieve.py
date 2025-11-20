@@ -1,28 +1,31 @@
+from __future__ import annotations
+
 import logging
 from time import time
-from typing import Dict, Optional
+from typing import TYPE_CHECKING
 
 from cloudbot import hook
-from cloudbot.bot import CloudBot
-from cloudbot.event import CommandEvent, Event
-from cloudbot.plugin_hooks import Hook
 from cloudbot.util.tokenbucket import TokenBucket
 
+if TYPE_CHECKING:
+    from cloudbot.bot import CloudBot
+    from cloudbot.event import CommandEvent, Event
+    from cloudbot.plugin_hooks import Hook
+
 ready = False
-buckets: Dict[str, TokenBucket] = {}
+buckets: dict[str, TokenBucket] = {}
 logger = logging.getLogger("cloudbot")
 
 
 @hook.periodic(600)
-def task_clear():
+def task_clear() -> None:
     for uid, _bucket in buckets.copy().items():
         if (time() - _bucket.timestamp) > 600:
             del buckets[uid]
 
 
-# noinspection PyUnusedLocal
 @hook.sieve()
-def check_acls(bot: CloudBot, event: Event, _hook: Hook) -> Optional[Event]:
+def check_acls(bot: CloudBot, event: Event, _hook: Hook) -> Event | None:
     """
     Handle config ACLs
     """
@@ -33,16 +36,14 @@ def check_acls(bot: CloudBot, event: Event, _hook: Hook) -> Optional[Event]:
 
     # check acls
     acl = conn.config.get("acls", {}).get(_hook.function_name, {})
-    allowlist = acl.get("deny-except")
-    denylist = acl.get("allow-except")
 
     chan = event.chan.lower()
-    if allowlist is not None:
+    if (allowlist := acl.get("deny-except")) is not None:
         allowed_channels = list(map(str.lower, allowlist))
         if chan not in allowed_channels:
             return None
 
-    if denylist is not None:
+    if (denylist := acl.get("allow-except")) is not None:
         denied_channels = list(map(str.lower, denylist))
         if chan in denied_channels:
             return None
@@ -50,11 +51,8 @@ def check_acls(bot: CloudBot, event: Event, _hook: Hook) -> Optional[Event]:
     return event
 
 
-# noinspection PyUnusedLocal
 @hook.sieve()
-async def perm_sieve(
-    bot: CloudBot, event: Event, _hook: Hook
-) -> Optional[Event]:
+async def perm_sieve(bot: CloudBot, event: Event, _hook: Hook) -> Event | None:
     """check permissions"""
     allowed_permissions = _hook.permissions
     if allowed_permissions:
@@ -71,11 +69,10 @@ async def perm_sieve(
     return event
 
 
-# noinspection PyUnusedLocal
 @hook.sieve()
 def check_disabled(
     bot: CloudBot, event: CommandEvent, _hook: Hook
-) -> Optional[Event]:
+) -> Event | None:
     """
     check disabled_commands
     """
@@ -88,16 +85,15 @@ def check_disabled(
     return event
 
 
-# noinspection PyUnusedLocal
 @hook.sieve()
-def rate_limit(bot: CloudBot, event: Event, _hook: Hook) -> Optional[Event]:
+def rate_limit(bot: CloudBot, event: Event, _hook: Hook) -> Event | None:
     """
     Handle rate limiting certain hooks
     """
     conn = event.conn
     # check command spam tokens
     if _hook.type in ("command", "regex"):
-        uid = "!".join([conn.name, event.chan, event.nick]).lower()
+        uid = f"{conn.name}!{event.chan}!{event.nick}".lower()
 
         config = conn.config.get("ratelimit", {})
         tokens = config.get("tokens", 17.5)

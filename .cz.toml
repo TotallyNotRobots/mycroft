@@ -1,0 +1,10 @@
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "v$version"
+version_scheme = "semver2"
+update_changelog_on_bump = true
+version_files = ["cloudbot/__init__.py:__version__"]
+version = "1.5.0"
+version_provider = "scm"
+annotated_tag = true
+major_version_zero = true

@@ -7,10 +7,11 @@ import time
 from pathlib import Path
 
 from cloudbot.bot import CloudBot
-from cloudbot.util import async_util
+from cloudbot.db import db_init
+from cloudbot.errors import ShouldBeUnreachable
 
 
-async def async_main():
+async def async_main() -> int:
     # store the original working directory, for use when restarting
     original_wd = Path().resolve()
 
@@ -23,7 +24,7 @@ async def async_main():
     logger.info("Starting CloudBot.")
 
     # create the bot
-    _bot = CloudBot()
+    _bot: CloudBot | None = CloudBot(loop=asyncio.get_running_loop())
 
     # whether we are killed while restarting
     stopped_while_restarting = False
@@ -34,14 +35,16 @@ async def async_main():
     # define closure for signal handling
     # The handler is called with two arguments: the signal number and the current stack frame
     # These parameters should NOT be removed
-    # noinspection PyUnusedLocal
     def exit_gracefully(signum, frame):
         nonlocal stopped_while_restarting
         if not _bot:
             # we are currently in the process of restarting
             stopped_while_restarting = True
         else:
-            async_util.run_coroutine_threadsafe(
+            if _bot.loop is None:
+                raise ShouldBeUnreachable
+
+            asyncio.run_coroutine_threadsafe(
                 _bot.stop(f"Killed (Received SIGINT {signum})"),
                 _bot.loop,
             )
@@ -55,11 +58,17 @@ async def async_main():
 
     # start the bot
 
+    if _bot is None:  # pragma: no cover # This shouldn't happen
+        logger.info("Bot terminated before running, exiting")
+        return 0
+
     # CloudBot.run() will return True if it should restart, False otherwise
     restart = await _bot.run()
 
     # the bot has stopped, do we want to restart?
-    if restart:
+    if (
+        restart
+    ):  # pragma: no cover # not covered, will be dropping support eventually
         # remove reference to cloudbot, so exit_gracefully won't try to stop it
         _bot = None
         # sleep one second for timeouts
@@ -78,16 +87,22 @@ async def async_main():
             # close logging, and exit the program.
             logger.debug("Stopping logging engine")
             logging.shutdown()
-            os.execv(sys.executable, [sys.executable] + args)  # nosec
+            os.execv(sys.executable, [sys.executable] + args)
 
     # close logging, and exit the program.
     logger.debug("Stopping logging engine")
     logging.shutdown()
+    return 0
 
 
-def main():
-    asyncio.run(async_main())
+def main() -> int:
+    if not db_init():
+        return 1
+
+    return asyncio.run(async_main())
 
 
-if __name__ == "__main__":
-    main()
+# This is a simple call to main, so test coverage doesn't matter. We will
+# track coverage of `main`.
+if __name__ == "__main__":  # pragma: no cover
+    sys.exit(main())
