@@ -11,4 +11,4 @@ sjcl == 0.2.1
 SQLAlchemy == 1.4.32
 venusian == 1.2.0
 watchdog ==6.0.0
-yarl ==1.22.0
+yarl ==1.23.0
